@@ -1,0 +1,4 @@
+/cable/*
+  Basic-Auth: xavier:ThisSpring26!
+/scan/*
+  Basic-Auth: xavier:ThisSpring26!
