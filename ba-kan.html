@@ -1,1 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BA-KAN Workspace</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Mono:wght@300;400;500&family=Lora:ital@0;1&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<style>
+  :root{
+    --ink:#1a1a18;--paper:#f5f0e8;--paper-dark:#ece6d5;--cream:#faf7f0;
+    --rust:#c0522a;--rust-light:#e8724a;--sage:#5a7a5e;--slate:#4a5568;--gold:#b8963e;
+    --col-todo:#e8e0d0;--col-inprog:#dde8dd;--col-done:#d8dde8;
+    --shadow:0 2px 12px rgba(26,26,24,0.10);--shadow-card:0 1px 4px rgba(26,26,24,0.13);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'DM Mono',monospace;background:var(--paper);color:var(--ink);min-height:100vh;
+    background-image:repeating-linear-gradient(0deg,transparent,transparent 27px,rgba(180,170,150,0.13) 27px,rgba(180,170,150,0.13) 28px);}
 
+  /* ── AUTH ── */
+  #auth-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1.2rem;
+    background:var(--ink);background-image:repeating-linear-gradient(0deg,transparent,transparent 27px,rgba(255,255,255,0.03) 27px,rgba(255,255,255,0.03) 28px);}
+  .auth-lang-toggle{display:flex;gap:0;}
+  .auth-lang-btn{background:none;border:1px solid rgba(245,240,232,0.2);color:rgba(245,240,232,0.5);
+    font-family:'DM Mono',monospace;font-size:0.68rem;letter-spacing:0.1em;padding:0.3rem 0.85rem;cursor:pointer;transition:all 0.15s;}
+  .auth-lang-btn:first-child{border-radius:3px 0 0 3px;}
+  .auth-lang-btn:last-child{border-radius:0 3px 3px 0;border-left:none;}
+  .auth-lang-btn.active{background:var(--rust);border-color:var(--rust);color:#fff;}
+  .auth-box{background:var(--cream);border-radius:6px;padding:2.5rem 2rem;width:360px;max-width:95vw;
+    box-shadow:0 16px 60px rgba(0,0,0,0.4);display:flex;flex-direction:column;gap:1rem;}
+  .auth-brand{font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:700;font-style:italic;color:var(--ink);text-align:center;}
+  .auth-brand span{color:var(--rust);}
+  .auth-subtitle{text-align:center;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--slate);margin-top:-0.5rem;}
+  .auth-tabs{display:flex;border-bottom:2px solid var(--paper-dark);}
+  .auth-tab{flex:1;background:none;border:none;cursor:pointer;font-family:'DM Mono',monospace;font-size:0.72rem;
+    letter-spacing:0.1em;text-transform:uppercase;padding:0.6rem;color:var(--slate);
+    border-bottom:2px solid transparent;margin-bottom:-2px;transition:all 0.15s;}
+  .auth-tab.active{color:var(--rust);border-bottom-color:var(--rust);}
+  .auth-fields{display:flex;flex-direction:column;gap:0.65rem;}
+  .auth-input{width:100%;font-family:'DM Mono',monospace;font-size:0.82rem;padding:0.65rem 0.8rem;
+    border:1px solid rgba(26,26,24,0.18);border-radius:3px;background:var(--paper);color:var(--ink);outline:none;transition:border-color 0.15s;}
+  .auth-input:focus{border-color:var(--rust);}
+  .auth-btn{width:100%;font-family:'DM Mono',monospace;font-size:0.78rem;letter-spacing:0.1em;text-transform:uppercase;
+    padding:0.75rem;background:var(--rust);color:#fff;border:none;border-radius:3px;cursor:pointer;transition:background 0.15s;}
+  .auth-btn:hover{background:var(--rust-light);}
+  .auth-divider{display:flex;align-items:center;gap:0.75rem;font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--slate);}
+  .auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--paper-dark);}
+  .google-btn{width:100%;font-family:'DM Mono',monospace;font-size:0.75rem;padding:0.65rem;
+    display:flex;align-items:center;justify-content:center;gap:0.6rem;
+    background:#fff;color:var(--ink);border:1px solid rgba(26,26,24,0.18);border-radius:3px;cursor:pointer;transition:all 0.15s;}
+  .google-btn:hover{background:var(--paper);border-color:var(--rust);}
+  .auth-error{font-size:0.73rem;color:#b02020;background:#fde8e8;border-radius:3px;padding:0.5rem 0.75rem;display:none;}
+  .auth-error.show{display:block;}
+
+  /* ── NAV ── */
+  nav{background:var(--ink);color:var(--paper);display:flex;align-items:center;
+    padding:0 2rem;height:54px;border-bottom:3px solid var(--rust);position:sticky;top:0;z-index:100;}
+  .nav-brand{font-family:'Playfair Display',serif;font-size:1.25rem;font-style:italic;color:var(--paper);margin-right:auto;}
+  .nav-brand span{color:var(--rust-light);}
+  .nav-user{font-size:0.68rem;color:rgba(245,240,232,0.45);margin-right:0.75rem;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .tab-btn{background:none;border:none;cursor:pointer;font-family:'DM Mono',monospace;font-size:0.75rem;
+    letter-spacing:0.12em;text-transform:uppercase;color:rgba(245,240,232,0.55);padding:0 1.2rem;height:54px;
+    border-bottom:3px solid transparent;margin-bottom:-3px;transition:color 0.2s,border-color 0.2s;}
+  .tab-btn:hover{color:var(--paper);}
+  .tab-btn.active{color:var(--rust-light);border-bottom-color:var(--rust-light);}
+  .nav-lang-toggle{display:flex;gap:0;margin-right:0.5rem;}
+  .nav-lang-btn{background:none;border:1px solid rgba(245,240,232,0.18);color:rgba(245,240,232,0.45);
+    font-family:'DM Mono',monospace;font-size:0.62rem;letter-spacing:0.08em;padding:0.2rem 0.6rem;cursor:pointer;transition:all 0.15s;}
+  .nav-lang-btn:first-child{border-radius:3px 0 0 3px;}
+  .nav-lang-btn:last-child{border-radius:0 3px 3px 0;border-left:none;}
+  .nav-lang-btn.active{background:var(--rust);border-color:var(--rust);color:#fff;}
+  .logout-btn{background:none;border:1px solid rgba(245,240,232,0.2);border-radius:3px;
+    color:rgba(245,240,232,0.55);font-family:'DM Mono',monospace;font-size:0.65rem;
+    padding:0.3rem 0.7rem;cursor:pointer;margin-left:0.5rem;transition:all 0.15s;}
+  .logout-btn:hover{color:var(--paper);border-color:rgba(245,240,232,0.5);}
+  .sync-wrap{display:flex;align-items:center;gap:0.4rem;margin:0 0.5rem;}
+  .sync-dot{width:7px;height:7px;border-radius:50%;background:var(--sage);transition:background 0.3s;}
+  .sync-dot.syncing{background:var(--gold);animation:blink 0.8s infinite;}
+  .sync-dot.error{background:#c0392b;}
+  .sync-lbl{font-size:0.62rem;letter-spacing:0.08em;text-transform:uppercase;color:rgba(245,240,232,0.4);}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+
+  /* ── VIEWS ── */
+  .view{display:none;padding:2rem;max-width:1300px;margin:0 auto;}
+  .view.active{display:block;}
+
+  /* ── KANBAN ── */
+  .board-header{display:flex;align-items:baseline;gap:1rem;margin-bottom:1.5rem;}
+  .board-header h1{font-family:'Playfair Display',serif;font-size:2rem;font-weight:700;}
+  .board-header .date-stamp{font-size:0.72rem;letter-spacing:0.1em;color:var(--slate);text-transform:uppercase;}
+  .board{display:grid;grid-template-columns:repeat(3,1fr);gap:1.25rem;align-items:start;}
+  .column{background:var(--cream);border-radius:4px;border:1px solid rgba(26,26,24,0.10);box-shadow:var(--shadow);min-height:320px;display:flex;flex-direction:column;transition:background 0.3s,border-color 0.3s;}
+  .col-header{display:flex;align-items:center;justify-content:space-between;padding:0.85rem 1rem 0.65rem;border-bottom:2px solid;transition:background 0.3s,border-color 0.3s;}
+  .col-todo .col-header{border-color:var(--gold);background:var(--col-todo);}
+  .col-inprog .col-header{border-color:var(--sage);background:var(--col-inprog);}
+  .col-inprog.wip-warn .col-header{border-color:#c0392b !important;background:#fde8e8 !important;}
+  .col-inprog.wip-warn{background:#fff5f5 !important;border-color:#e8b4b4 !important;}
+  .col-done .col-header{border-color:var(--slate);background:var(--col-done);}
+  .col-title{font-size:0.7rem;letter-spacing:0.18em;text-transform:uppercase;font-weight:500;}
+  .col-count{font-size:0.7rem;background:rgba(26,26,24,0.10);border-radius:20px;padding:1px 8px;}
+  .col-inprog.wip-warn .col-count{background:#c0392b;color:#fff;}
+  .wip-warning{font-size:0.65rem;letter-spacing:0.06em;color:#c0392b;padding:0.35rem 1rem 0;text-align:center;display:none;}
+  .col-inprog.wip-warn .wip-warning{display:block;}
+  .cards-area{padding:0.75rem;flex:1;display:flex;flex-direction:column;gap:0.6rem;min-height:60px;}
+  .cards-area.drag-over{background:rgba(192,82,42,0.06);border-radius:4px;}
+  .card{background:#fff;border:1px solid rgba(26,26,24,0.10);border-radius:3px;padding:0.7rem 0.8rem;
+    box-shadow:var(--shadow-card);cursor:grab;position:relative;transition:box-shadow 0.15s,transform 0.15s;animation:cardIn 0.2s ease;}
+  @keyframes cardIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+  .card:hover{box-shadow:0 4px 16px rgba(26,26,24,0.16);transform:translateY(-1px);}
+  .card.dragging{opacity:0.45;transform:rotate(1.5deg);}
+  .card-text{font-size:0.82rem;line-height:1.55;word-break:break-word;padding-right:2rem;}
+  .card-meta{display:flex;flex-wrap:wrap;gap:4px;margin-top:0.35rem;align-items:center;}
+  .card-tag{display:inline-block;font-size:0.62rem;letter-spacing:0.1em;text-transform:uppercase;padding:1px 7px;border-radius:2px;background:var(--paper-dark);color:var(--slate);}
+  .card-due{display:inline-flex;align-items:center;gap:3px;font-size:0.62rem;letter-spacing:0.06em;padding:2px 7px;border-radius:2px;font-weight:500;}
+  .due-future{background:#e8f4e8;color:var(--sage);}
+  .due-today{background:#fff3cd;color:#856404;}
+  .due-overdue{background:#fde8e8;color:#b02020;}
+  .due-done{background:#e8e8e8;color:#888;text-decoration:line-through;}
+  .card.is-overdue{border-left:3px solid #c0392b;}
+  .card.is-today{border-left:3px solid var(--gold);}
+  .card-actions{position:absolute;top:0.4rem;right:0.4rem;display:flex;gap:4px;opacity:0;transition:opacity 0.15s;}
+  .card:hover .card-actions{opacity:1;}
+  .card-btn{background:none;border:none;cursor:pointer;font-size:0.75rem;padding:2px 5px;border-radius:2px;color:var(--slate);transition:background 0.15s;}
+  .card-btn:hover{background:var(--paper-dark);color:var(--rust);}
+  .filter-bar{display:flex;align-items:center;gap:0.6rem;margin-bottom:1.25rem;flex-wrap:wrap;}
+  .filter-label{font-size:0.68rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--slate);}
+  .filter-btn{font-family:'DM Mono',monospace;font-size:0.7rem;padding:0.28rem 0.8rem;border-radius:20px;
+    border:1px solid rgba(26,26,24,0.18);background:var(--cream);color:var(--ink);cursor:pointer;transition:all 0.15s;letter-spacing:0.06em;}
+  .filter-btn:hover{border-color:var(--rust);color:var(--rust);}
+  .filter-btn.active{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+  .filter-date-input{font-family:'DM Mono',monospace;font-size:0.7rem;padding:0.28rem 0.5rem;
+    border:1px solid rgba(26,26,24,0.18);border-radius:3px;background:var(--cream);color:var(--ink);}
+  .filter-date-input:focus{outline:none;border-color:var(--rust);}
+  .filter-sep{color:rgba(26,26,24,0.3);}
+  .filter-clear{font-family:'DM Mono',monospace;font-size:0.68rem;background:none;border:none;cursor:pointer;color:var(--slate);text-decoration:underline;}
+  .filter-clear:hover{color:var(--rust);}
+  .add-card-area{padding:0 0.75rem 0.75rem;}
+  .add-card-input{width:100%;font-family:'DM Mono',monospace;font-size:0.8rem;padding:0.5rem 0.65rem;
+    border:1px dashed rgba(26,26,24,0.25);border-radius:3px;background:var(--cream);color:var(--ink);resize:none;transition:border-color 0.15s;line-height:1.5;}
+  .add-card-input:focus{outline:none;border-color:var(--rust);}
+  .add-card-row{display:flex;gap:0.4rem;margin-top:0.4rem;align-items:center;flex-wrap:wrap;}
+  .tag-input{flex:1;min-width:55px;font-family:'DM Mono',monospace;font-size:0.72rem;padding:0.35rem 0.5rem;
+    border:1px solid rgba(26,26,24,0.15);border-radius:3px;background:var(--cream);color:var(--slate);}
+  .tag-input:focus{outline:none;border-color:var(--gold);}
+  .add-btn{font-family:'DM Mono',monospace;font-size:0.72rem;letter-spacing:0.08em;padding:0.35rem 0.85rem;
+    background:var(--rust);color:#fff;border:none;border-radius:3px;cursor:pointer;transition:background 0.15s;}
+  .add-btn:hover{background:var(--rust-light);}
+
+  /* ── JOURNAL ── */
+  .journal-layout{display:grid;grid-template-columns:220px 1fr;gap:1.5rem;align-items:start;}
+  .journal-sidebar{background:var(--cream);border:1px solid rgba(26,26,24,0.10);border-radius:4px;box-shadow:var(--shadow);overflow:hidden;position:sticky;top:70px;}
+  .sidebar-header{padding:0.75rem 1rem;background:var(--ink);color:var(--paper);font-size:0.68rem;letter-spacing:0.18em;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;}
+  .new-entry-btn{background:var(--rust);border:none;color:#fff;font-family:'DM Mono',monospace;font-size:0.65rem;padding:2px 8px;border-radius:2px;cursor:pointer;transition:background 0.15s;}
+  .new-entry-btn:hover{background:var(--rust-light);}
+  .entry-list{max-height:60vh;overflow-y:auto;}
+  .entry-item{padding:0.7rem 1rem;border-bottom:1px solid rgba(26,26,24,0.07);cursor:pointer;transition:background 0.15s;}
+  .entry-item:hover{background:var(--paper-dark);}
+  .entry-item.active{background:rgba(192,82,42,0.10);border-left:3px solid var(--rust);}
+  .entry-item-date{font-size:0.68rem;letter-spacing:0.08em;color:var(--slate);}
+  .entry-item-preview{font-size:0.77rem;color:var(--ink);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .journal-editor{background:var(--cream);border:1px solid rgba(26,26,24,0.10);border-radius:4px;box-shadow:var(--shadow);display:flex;flex-direction:column;min-height:75vh;}
+  .editor-toolbar{display:flex;align-items:center;gap:0.5rem;padding:0.75rem 1.25rem;border-bottom:1px solid rgba(26,26,24,0.10);background:var(--paper-dark);border-radius:4px 4px 0 0;flex-wrap:wrap;}
+  .editor-date-input{font-family:'DM Mono',monospace;font-size:0.75rem;border:1px solid rgba(26,26,24,0.15);border-radius:3px;padding:0.3rem 0.5rem;background:var(--cream);color:var(--ink);}
+  .mood-label{font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--slate);}
+  .mood-select{font-family:'DM Mono',monospace;font-size:0.8rem;border:1px solid rgba(26,26,24,0.15);border-radius:3px;padding:0.25rem 0.4rem;background:var(--cream);color:var(--ink);cursor:pointer;}
+  .save-entry-btn{margin-left:auto;font-family:'DM Mono',monospace;font-size:0.72rem;padding:0.35rem 1rem;background:var(--sage);color:#fff;border:none;border-radius:3px;cursor:pointer;transition:background 0.15s;}
+  .save-entry-btn:hover{background:#6e9472;}
+  .delete-entry-btn{font-family:'DM Mono',monospace;font-size:0.72rem;padding:0.35rem 0.75rem;background:none;color:var(--slate);border:1px solid rgba(26,26,24,0.15);border-radius:3px;cursor:pointer;transition:all 0.15s;}
+  .delete-entry-btn:hover{background:#fee;color:var(--rust);border-color:var(--rust);}
+  .journal-title-input{width:100%;font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:700;border:none;background:transparent;color:var(--ink);padding:1.1rem 1.5rem 0.3rem;outline:none;}
+  .journal-title-input::placeholder{color:rgba(26,26,24,0.25);}
+  .journal-body-input{flex:1;width:100%;font-family:'Lora',serif;font-size:0.95rem;line-height:1.85;border:none;background:transparent;color:var(--ink);padding:0.5rem 1.5rem 1.5rem;outline:none;resize:none;min-height:400px;
+    background-image:repeating-linear-gradient(0deg,transparent,transparent 34px,rgba(180,170,150,0.18) 34px,rgba(180,170,150,0.18) 35px);background-attachment:local;}
+  .journal-body-input::placeholder{color:rgba(26,26,24,0.22);font-style:italic;}
+  .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:60vh;color:rgba(26,26,24,0.25);gap:0.5rem;}
+  .empty-state .big-icon{font-size:2.5rem;}
+  .empty-state p{font-size:0.8rem;letter-spacing:0.1em;text-transform:uppercase;}
+
+  /* ── FOOTER ── */
+  footer{text-align:center;padding:1.5rem 2rem;border-top:1px solid rgba(26,26,24,0.08);margin-top:2rem;
+    font-size:0.68rem;letter-spacing:0.08em;color:var(--slate);}
+  footer a{color:var(--rust);text-decoration:none;transition:color 0.15s;}
+  footer a:hover{color:var(--rust-light);}
+
+  /* ── TOAST ── */
+  .toast{position:fixed;bottom:2rem;right:2rem;background:var(--ink);color:var(--paper);font-size:0.78rem;padding:0.65rem 1.1rem;border-radius:3px;border-left:3px solid var(--rust);opacity:0;transform:translateY(10px);transition:opacity 0.25s,transform 0.25s;pointer-events:none;z-index:999;}
+  .toast.show{opacity:1;transform:translateY(0);}
+
+  @media(max-width:900px){
+    .board{grid-template-columns:1fr;}
+    .journal-layout{grid-template-columns:1fr;}
+    .journal-sidebar{position:static;}
+    nav{padding:0 1rem;}
+    .nav-user{display:none;}
+  }
+  ::-webkit-scrollbar{width:5px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:rgba(26,26,24,0.2);border-radius:3px;}
+</style>
+</head>
+<body>
+
+<!-- ══ AUTH ══ -->
+<div id="auth-screen">
+  <div class="auth-lang-toggle">
+    <button class="auth-lang-btn active" onclick="setLang('en')">EN</button>
+    <button class="auth-lang-btn" onclick="setLang('es')">ES</button>
+  </div>
+  <div class="auth-box">
+    <div class="auth-brand">BA-<span>KAN</span></div>
+    <div class="auth-subtitle" data-i18n="subtitle">Your personal workspace</div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login" onclick="showAuthTab('login')" data-i18n="signin">Sign In</button>
+      <button class="auth-tab" id="tab-register" onclick="showAuthTab('register')" data-i18n="register">Register</button>
+    </div>
+    <div id="auth-error" class="auth-error"></div>
+    <!-- LOGIN -->
+    <div id="auth-login" class="auth-fields">
+      <input class="auth-input" id="login-email" type="email" data-i18n-ph="email" placeholder="Email address">
+      <input class="auth-input" id="login-password" type="password" data-i18n-ph="password" placeholder="Password">
+      <button class="auth-btn" onclick="emailLogin()" data-i18n="signin">Sign In</button>
+      <div class="auth-divider" data-i18n="or">or</div>
+      <button class="google-btn" onclick="googleLogin()">
+        <svg width="16" height="16" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+        <span data-i18n="googlebtn">Continue with Google</span>
+      </button>
+    </div>
+    <!-- REGISTER -->
+    <div id="auth-register" class="auth-fields" style="display:none;">
+      <input class="auth-input" id="reg-email" type="email" data-i18n-ph="email" placeholder="Email address">
+      <input class="auth-input" id="reg-password" type="password" data-i18n-ph="password6" placeholder="Password (min 6 chars)">
+      <input class="auth-input" id="reg-password2" type="password" data-i18n-ph="confirm" placeholder="Confirm password">
+      <button class="auth-btn" onclick="emailRegister()" data-i18n="createaccount">Create Account</button>
+      <div class="auth-divider" data-i18n="or">or</div>
+      <button class="google-btn" onclick="googleLogin()">
+        <svg width="16" height="16" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+        <span data-i18n="googlebtn">Continue with Google</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ APP ══ -->
+<div id="app" style="display:none;">
+  <nav>
+    <div class="nav-brand">BA-<span>KAN</span></div>
+    <button class="tab-btn active" id="nav-kanban" onclick="switchTab('kanban')" data-i18n="kanban">Kanban</button>
+    <button class="tab-btn" id="nav-journal" onclick="switchTab('journal')" data-i18n="journal">Journal</button>
+    <div class="sync-wrap"><div class="sync-dot" id="sync-dot"></div><span class="sync-lbl" id="sync-lbl">Synced</span></div>
+    <div class="nav-lang-toggle">
+      <button class="nav-lang-btn active" onclick="setLang('en')">EN</button>
+      <button class="nav-lang-btn" onclick="setLang('es')">ES</button>
+    </div>
+    <span class="nav-user" id="nav-user"></span>
+    <button class="logout-btn" onclick="doLogout()" data-i18n="signout">Sign out</button>
+  </nav>
+
+  <!-- KANBAN VIEW -->
+  <div class="view active" id="view-kanban">
+    <div class="board-header"><h1 data-i18n="board">Board</h1><span class="date-stamp" id="board-date"></span></div>
+    <div class="filter-bar">
+      <span class="filter-label" data-i18n="filter">Filter:</span>
+      <button class="filter-btn active" onclick="setFilter('all',this)" data-i18n="all">All</button>
+      <button class="filter-btn" onclick="setFilter('overdue',this)" data-i18n="overdue">⚠ Overdue</button>
+      <button class="filter-btn" onclick="setFilter('today',this)" data-i18n="today">📅 Today</button>
+      <button class="filter-btn" onclick="setFilter('upcoming',this)" data-i18n="upcoming">🔜 Upcoming</button>
+      <button class="filter-btn" onclick="setFilter('no-date',this)" data-i18n="nodate">— No date</button>
+      <span class="filter-sep">|</span>
+      <span class="filter-label" data-i18n="range">Range:</span>
+      <input type="date" class="filter-date-input" id="filter-from" onchange="setFilter('range',null)">
+      <span class="filter-sep">→</span>
+      <input type="date" class="filter-date-input" id="filter-to" onchange="setFilter('range',null)">
+      <button class="filter-clear" onclick="clearFilter()" data-i18n="clear">clear</button>
+    </div>
+    <div class="board">
+      <!-- TO DO -->
+      <div class="column col-todo" ondragover="dragOver(event)" ondrop="drop(event,'todo')">
+        <div class="col-header"><span class="col-title" data-i18n="todo">To Do</span><span class="col-count" id="count-todo">0</span></div>
+        <div class="cards-area" id="cards-todo"></div>
+        <div class="add-card-area">
+          <textarea class="add-card-input" id="input-todo" rows="2" data-i18n-ph="addtask" placeholder="Add a task…"></textarea>
+          <div class="add-card-row">
+            <input class="tag-input" id="tag-todo" data-i18n-ph="tag" placeholder="tag">
+            <input type="date" class="filter-date-input" id="due-todo">
+            <button class="add-btn" onclick="addCard('todo')" data-i18n="add">+ Add</button>
+          </div>
+        </div>
+      </div>
+      <!-- IN PROGRESS -->
+      <div class="column col-inprog" id="col-inprog-el" ondragover="dragOver(event)" ondrop="drop(event,'inprog')">
+        <div class="col-header"><span class="col-title" data-i18n="inprog">In Progress</span><span class="col-count" id="count-inprog">0</span></div>
+        <div class="wip-warning" id="wip-warning" data-i18n="wipwarn">⚠ Recommended max: 2 tasks</div>
+        <div class="cards-area" id="cards-inprog"></div>
+        <div class="add-card-area">
+          <textarea class="add-card-input" id="input-inprog" rows="2" data-i18n-ph="addtask" placeholder="Add a task…"></textarea>
+          <div class="add-card-row">
+            <input class="tag-input" id="tag-inprog" data-i18n-ph="tag" placeholder="tag">
+            <input type="date" class="filter-date-input" id="due-inprog">
+            <button class="add-btn" onclick="addCard('inprog')" data-i18n="add">+ Add</button>
+          </div>
+        </div>
+      </div>
+      <!-- DONE -->
+      <div class="column col-done" ondragover="dragOver(event)" ondrop="drop(event,'done')">
+        <div class="col-header"><span class="col-title" data-i18n="done">Done</span><span class="col-count" id="count-done">0</span></div>
+        <div class="cards-area" id="cards-done"></div>
+        <div class="add-card-area">
+          <textarea class="add-card-input" id="input-done" rows="2" data-i18n-ph="addtask" placeholder="Add a task…"></textarea>
+          <div class="add-card-row">
+            <input class="tag-input" id="tag-done" data-i18n-ph="tag" placeholder="tag">
+            <input type="date" class="filter-date-input" id="due-done">
+            <button class="add-btn" onclick="addCard('done')" data-i18n="add">+ Add</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JOURNAL VIEW -->
+  <div class="view" id="view-journal">
+    <div class="journal-layout">
+      <div class="journal-sidebar">
+        <div class="sidebar-header"><span data-i18n="entries">Entries</span><button class="new-entry-btn" onclick="newEntry()" data-i18n="newentry">+ New</button></div>
+        <div class="entry-list" id="entry-list"></div>
+      </div>
+      <div class="journal-editor">
+        <div class="empty-state" id="journal-empty"><div class="big-icon">📖</div><p data-i18n="selectentry">Select or create an entry</p></div>
+        <div id="journal-form" style="display:none;flex-direction:column;flex:1;">
+          <div class="editor-toolbar">
+            <input type="date" class="editor-date-input" id="entry-date">
+            <span class="mood-label" data-i18n="mood">Mood:</span>
+            <select class="mood-select" id="entry-mood">
+              <option value="😊">😊 Good</option><option value="😐">😐 Okay</option>
+              <option value="😔">😔 Low</option><option value="🔥">🔥 Energized</option>
+              <option value="😴">😴 Tired</option><option value="🎉">🎉 Great</option><option value="😤">😤 Frustrated</option>
+            </select>
+            <button class="delete-entry-btn" onclick="deleteEntry()" data-i18n="delete">Delete</button>
+            <button class="save-entry-btn" onclick="saveEntry()" data-i18n="save">Save ✓</button>
+          </div>
+          <input type="text" class="journal-title-input" id="entry-title" data-i18n-ph="entrytitle" placeholder="Entry title…">
+          <textarea class="journal-body-input" id="entry-body" data-i18n-ph="writethoughts" placeholder="Write your thoughts here…"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    © <span id="copy-year"></span> Xavier Velastegui &nbsp;·&nbsp;
+    <a href="https://xaviapps.com" target="_blank" rel="noopener">xaviapps.com</a>
+  </footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══ i18n ══
+const T = {
+  en:{
+    subtitle:'Your personal workspace',signin:'Sign In',register:'Register',createaccount:'Create Account',
+    googlebtn:'Continue with Google',or:'or',email:'Email address',password:'Password',
+    password6:'Password (min 6 chars)',confirm:'Confirm password',
+    kanban:'Kanban',journal:'Journal',signout:'Sign out',board:'Board',
+    filter:'Filter:',all:'All',overdue:'⚠ Overdue',today:'📅 Today',upcoming:'🔜 Upcoming',
+    nodate:'— No date',range:'Range:',clear:'clear',
+    todo:'To Do',inprog:'In Progress',done:'Done',addtask:'Add a task…',tag:'tag',add:'+ Add',
+    wipwarn:'⚠ Recommended max: 2 tasks',
+    entries:'Entries',newentry:'+ New',selectentry:'Select or create an entry',
+    mood:'Mood:',delete:'Delete',save:'Save ✓',entrytitle:'Entry title…',
+    writethoughts:'Write your thoughts here…',
+    synced:'Synced',saving:'Saving…',error:'Error',
+    cardadded:'Card added!',removed:'Removed.',moved:'Card moved!',updated:'Card updated.',
+    entrysaved:'Entry saved ✓',entrydeleted:'Entry deleted.',errorentry:'Error creating entry.',
+    fill:'Please fill in all fields.',nomatch:'Passwords do not match.',short:'Password must be at least 6 characters.',
+    cancel:'Cancel',
+    noentries:'No entries yet.',
+    confirmdelete:'Delete this entry?',
+    errnofound:'No account with that email.',errwrongpw:'Incorrect password.',
+    errinvcred:'Invalid email or password.',errinuse:'Email already registered.',
+    errinvemail:'Enter a valid email.',errweakpw:'Password too weak.',
+    errpopup:'Google sign-in cancelled.',errgeneric:'Something went wrong. Try again.',
+  },
+  es:{
+    subtitle:'Tu espacio de trabajo personal',signin:'Iniciar sesión',register:'Registrarse',createaccount:'Crear cuenta',
+    googlebtn:'Continuar con Google',or:'o',email:'Correo electrónico',password:'Contraseña',
+    password6:'Contraseña (mín. 6 caracteres)',confirm:'Confirmar contraseña',
+    kanban:'Kanban',journal:'Diario',signout:'Cerrar sesión',board:'Tablero',
+    filter:'Filtrar:',all:'Todo',overdue:'⚠ Vencido',today:'📅 Hoy',upcoming:'🔜 Próximo',
+    nodate:'— Sin fecha',range:'Rango:',clear:'limpiar',
+    todo:'Por hacer',inprog:'En progreso',done:'Hecho',addtask:'Agregar tarea…',tag:'etiqueta',add:'+ Agregar',
+    wipwarn:'⚠ Máximo recomendado: 2 tareas',
+    entries:'Entradas',newentry:'+ Nueva',selectentry:'Selecciona o crea una entrada',
+    mood:'Ánimo:',delete:'Eliminar',save:'Guardar ✓',entrytitle:'Título de la entrada…',
+    writethoughts:'Escribe tus pensamientos aquí…',
+    synced:'Guardado',saving:'Guardando…',error:'Error',
+    cardadded:'¡Tarea añadida!',removed:'Eliminada.',moved:'¡Tarea movida!',updated:'¡Tarea actualizada.',
+    entrysaved:'Entrada guardada ✓',entrydeleted:'Entrada eliminada.',errorentry:'Error al crear entrada.',
+    fill:'Por favor completa todos los campos.',nomatch:'Las contraseñas no coinciden.',short:'La contraseña debe tener al menos 6 caracteres.',
+    cancel:'Cancelar',
+    noentries:'Aún no hay entradas.',
+    confirmdelete:'¿Eliminar esta entrada?',
+    errnofound:'No hay cuenta con ese correo.',errwrongpw:'Contraseña incorrecta.',
+    errinvcred:'Correo o contraseña inválidos.',errinuse:'El correo ya está registrado.',
+    errinvemail:'Ingresa un correo válido.',errweakpw:'Contraseña muy débil.',
+    errpopup:'Inicio con Google cancelado.',errgeneric:'Algo salió mal. Intenta de nuevo.',
+  }
+};
+let lang = localStorage.getItem('bakan-lang') || 'en';
+
+function t(key){ return (T[lang][key]) || (T['en'][key]) || key; }
+
+function applyLang() {
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const k=el.getAttribute('data-i18n');
+    if(el.tagName==='INPUT'||el.tagName==='TEXTAREA') el.placeholder=t(k);
+    else el.textContent=t(k);
+  });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el=>{
+    el.placeholder=t(el.getAttribute('data-i18n-ph'));
+  });
+  // lang toggle active states
+  document.querySelectorAll('.auth-lang-btn,.nav-lang-btn').forEach(b=>{
+    b.classList.toggle('active', b.textContent.trim().toLowerCase()===lang);
+  });
+  // sync label
+  const lbl=document.getElementById('sync-lbl');
+  if(lbl) { const cur=lbl.textContent; if(cur===T['en'].synced||cur===T['es'].synced) lbl.textContent=t('synced'); }
+}
+
+function setLang(l) {
+  lang=l; localStorage.setItem('bakan-lang',l);
+  applyLang();
+}
+
+// ══ FIREBASE ══
+firebase.initializeApp({
+  apiKey:"AIzaSyCZI25BzuC6D2PCPLc0w7aOyG9awcS0pIg",
+  authDomain:"ba-kan-a1041.firebaseapp.com",
+  projectId:"ba-kan-a1041",
+  storageBucket:"ba-kan-a1041.firebasestorage.app",
+  messagingSenderId:"349153104365",
+  appId:"1:349153104365:web:351bcee2ba0b4f2ef757e4"
+});
+const auth = firebase.auth();
+const db   = firebase.firestore();
+
+// Configure Google provider to always show account picker
+const googleProvider = new firebase.auth.GoogleAuthProvider();
+googleProvider.setCustomParameters({ prompt: 'select_account' });
+
+// ── STATE ──
+let currentUser=null, kanban={todo:[],inprog:[],done:[]}, journals=[];
+let activeEntryId=null, activeFilter='all', dragId=null, dragCol=null;
+let unsubKanban=null, unsubJournal=null;
+
+// ── SYNC ──
+function setSyncing(s){
+  document.getElementById('sync-dot').className='sync-dot'+(s==='syncing'?' syncing':s==='error'?' error':'');
+  document.getElementById('sync-lbl').textContent=s==='syncing'?t('saving'):s==='error'?t('error'):t('synced');
+}
+
+// ── AUTH UI ──
+function showAuthTab(tab){
+  document.getElementById('auth-login').style.display=tab==='login'?'flex':'none';
+  document.getElementById('auth-register').style.display=tab==='register'?'flex':'none';
+  document.getElementById('tab-login').classList.toggle('active',tab==='login');
+  document.getElementById('tab-register').classList.toggle('active',tab==='register');
+  document.getElementById('auth-error').classList.remove('show');
+}
+function authErr(msg){const e=document.getElementById('auth-error');e.textContent=msg;e.classList.add('show');}
+function friendlyErr(code){
+  const map={'auth/user-not-found':t('errnofound'),'auth/wrong-password':t('errwrongpw'),
+    'auth/invalid-credential':t('errinvcred'),'auth/email-already-in-use':t('errinuse'),
+    'auth/invalid-email':t('errinvemail'),'auth/weak-password':t('errweakpw'),
+    'auth/popup-closed-by-user':t('errpopup'),'auth/cancelled-popup-request':t('errpopup'),
+    'auth/popup-blocked':t('errpopup')};
+  return map[code]||t('errgeneric');
+}
+function emailLogin(){
+  const em=document.getElementById('login-email').value.trim();
+  const pw=document.getElementById('login-password').value;
+  if(!em||!pw) return authErr(t('fill'));
+  auth.signInWithEmailAndPassword(em,pw).catch(e=>authErr(friendlyErr(e.code)));
+}
+function emailRegister(){
+  const em=document.getElementById('reg-email').value.trim();
+  const pw=document.getElementById('reg-password').value;
+  const pw2=document.getElementById('reg-password2').value;
+  if(!em||!pw) return authErr(t('fill'));
+  if(pw!==pw2) return authErr(t('nomatch'));
+  if(pw.length<6) return authErr(t('short'));
+  auth.createUserWithEmailAndPassword(em,pw).catch(e=>authErr(friendlyErr(e.code)));
+}
+function googleLogin(){
+  auth.signInWithPopup(googleProvider).catch(e=>{
+    if(e.code!=='auth/cancelled-popup-request') authErr(friendlyErr(e.code));
+  });
+}
+function doLogout(){
+  if(unsubKanban) unsubKanban();
+  if(unsubJournal) unsubJournal();
+  kanban={todo:[],inprog:[],done:[]}; journals=[]; activeEntryId=null;
+  auth.signOut();
+}
+
+// ── AUTH STATE ──
+auth.onAuthStateChanged(user=>{
+  if(user){
+    currentUser=user;
+    document.getElementById('auth-screen').style.display='none';
+    document.getElementById('app').style.display='block';
+    document.getElementById('nav-user').textContent=user.email;
+    document.getElementById('board-date').textContent=
+      new Date().toLocaleDateString(lang==='es'?'es-ES':'en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+    document.getElementById('copy-year').textContent=new Date().getFullYear();
+    startListeners();
+  } else {
+    currentUser=null;
+    document.getElementById('auth-screen').style.display='flex';
+    document.getElementById('app').style.display='none';
+  }
+});
+
+// ── FIRESTORE ──
+function kanbanRef(){return db.collection('users').doc(currentUser.uid).collection('data').doc('kanban');}
+function journalsRef(){return db.collection('users').doc(currentUser.uid).collection('journals');}
+
+function startListeners(){
+  unsubKanban=kanbanRef().onSnapshot(snap=>{
+    if(snap.exists){const d=snap.data();kanban={todo:d.todo||[],inprog:d.inprog||[],done:d.done||[]};}
+    else{kanban={todo:[],inprog:[],done:[]};}
+    renderBoard();
+  },()=>setSyncing('error'));
+  unsubJournal=journalsRef().orderBy('date','desc').onSnapshot(snap=>{
+    journals=snap.docs.map(d=>({id:d.id,...d.data()}));
+    renderEntryList();
+  },()=>setSyncing('error'));
+}
+
+async function saveKanban(){
+  setSyncing('syncing');
+  try{await kanbanRef().set({todo:kanban.todo,inprog:kanban.inprog,done:kanban.done});setSyncing('ok');}
+  catch(e){setSyncing('error');console.error(e);}
+}
+
+// ── UTILS ──
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2);}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
+function todayStr(){return new Date().toISOString().slice(0,10);}
+function dueStat(due,col){if(!due)return'none';if(col==='done')return'done';if(due<todayStr())return'overdue';if(due===todayStr())return'today';return'future';}
+function dueLabel(due){return due?new Date(due+'T12:00:00').toLocaleDateString(lang==='es'?'es-ES':'en-US',{month:'short',day:'numeric'}):'';}
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// ── TABS ──
+function switchTab(tab){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('view-'+tab).classList.add('active');
+  document.getElementById('nav-'+tab).classList.add('active');
+}
+
+// ── FILTER ──
+function setFilter(type,btn){
+  activeFilter=type;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  if(type!=='range'){document.getElementById('filter-from').value='';document.getElementById('filter-to').value='';}
+  renderBoard();
+}
+function clearFilter(){
+  document.getElementById('filter-from').value='';document.getElementById('filter-to').value='';
+  activeFilter='all';
+  document.querySelectorAll('.filter-btn').forEach((b,i)=>b.classList.toggle('active',i===0));
+  renderBoard();
+}
+function matchesFilter(card,col){
+  const today=todayStr(),from=document.getElementById('filter-from').value,to=document.getElementById('filter-to').value;
+  if(activeFilter==='all') return true;
+  if(activeFilter==='overdue') return card.due&&card.due<today&&col!=='done';
+  if(activeFilter==='today') return card.due===today;
+  if(activeFilter==='upcoming') return card.due&&card.due>today;
+  if(activeFilter==='no-date') return !card.due;
+  if(activeFilter==='range'){if(!card.due)return false;if(from&&card.due<from)return false;if(to&&card.due>to)return false;return true;}
+  return true;
+}
+
+// ── BOARD ──
+function renderBoard(){
+  ['todo','inprog','done'].forEach(col=>{
+    const area=document.getElementById('cards-'+col);area.innerHTML='';let shown=0;
+    [...kanban[col]].sort((a,b)=>{if(!a.due&&!b.due)return 0;if(!a.due)return 1;if(!b.due)return -1;return a.due.localeCompare(b.due);})
+    .forEach(card=>{if(!matchesFilter(card,col))return;area.appendChild(makeCardEl(card,col));shown++;});
+    document.getElementById('count-'+col).textContent=shown+'/'+kanban[col].length;
+  });
+  // WIP warning — based on total inprog count (not filtered)
+  const wipEl=document.getElementById('col-inprog-el');
+  const inprogCount=kanban.inprog.length;
+  wipEl.classList.toggle('wip-warn', inprogCount>2);
+}
+
+function makeCardEl(card,col){
+  const stat=dueStat(card.due,col);
+  const el=document.createElement('div');
+  el.className='card'+(stat==='overdue'?' is-overdue':stat==='today'?' is-today':'');
+  el.draggable=true;el.dataset.id=card.id;el.dataset.col=col;
+  const dc={overdue:'due-overdue',today:'due-today',future:'due-future',done:'due-done',none:''};
+  const di={overdue:'⚠ ',today:'📅 ',future:'🔜 ',done:'✓ ',none:''};
+  const badge=card.due?`<span class="card-due ${dc[stat]}">${di[stat]}${dueLabel(card.due)}</span>`:'';
+  el.innerHTML=`
+    <div class="card-text">${escHtml(card.text)}</div>
+    ${card.tag||card.due?`<div class="card-meta">${card.tag?`<span class="card-tag">${escHtml(card.tag)}</span>`:''}${badge}</div>`:''}
+    <div class="card-actions">
+      <button class="card-btn" onclick="editCard('${col}','${card.id}')">✏️</button>
+      <button class="card-btn" onclick="deleteCard('${col}','${card.id}')">✕</button>
+    </div>`;
+  el.addEventListener('dragstart',e=>{dragId=card.id;dragCol=col;setTimeout(()=>el.classList.add('dragging'),0);e.dataTransfer.effectAllowed='move';});
+  el.addEventListener('dragend',()=>el.classList.remove('dragging'));
+  return el;
+}
+function addCard(col){
+  const txt=document.getElementById('input-'+col).value.trim();if(!txt)return;
+  kanban[col].push({id:uid(),text:txt,tag:document.getElementById('tag-'+col).value.trim(),due:document.getElementById('due-'+col).value||''});
+  document.getElementById('input-'+col).value='';document.getElementById('tag-'+col).value='';document.getElementById('due-'+col).value='';
+  saveKanban();showToast(t('cardadded'));
+}
+document.addEventListener('keydown',e=>{
+  if(e.target.classList.contains('add-card-input')&&e.key==='Enter'&&!e.shiftKey){e.preventDefault();addCard(e.target.id.replace('input-',''));}
+});
+function deleteCard(col,id){kanban[col]=kanban[col].filter(c=>c.id!==id);saveKanban();showToast(t('removed'));}
+function editCard(col,id){
+  const card=kanban[col].find(c=>c.id===id);if(!card)return;
+  const ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:rgba(26,26,24,0.5);z-index:500;display:flex;align-items:center;justify-content:center;';
+  ov.innerHTML=`
+    <div style="background:var(--cream);border-radius:6px;padding:1.5rem;width:360px;max-width:95vw;box-shadow:0 8px 40px rgba(0,0,0,0.3);display:flex;flex-direction:column;gap:0.75rem;">
+      <div style="font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;">Edit Card</div>
+      <textarea id="et" style="font-family:'DM Mono',monospace;font-size:0.82rem;padding:0.6rem;border:1px solid rgba(26,26,24,0.2);border-radius:3px;resize:vertical;min-height:70px;background:var(--cream);color:var(--ink);">${escHtml(card.text)}</textarea>
+      <input id="eg" type="text" value="${escHtml(card.tag||'')}" placeholder="Tag" style="font-family:'DM Mono',monospace;font-size:0.78rem;padding:0.45rem 0.6rem;border:1px solid rgba(26,26,24,0.18);border-radius:3px;background:var(--cream);color:var(--ink);">
+      <div style="display:flex;align-items:center;gap:0.5rem;">
+        <label style="font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--slate);white-space:nowrap;">Due date</label>
+        <input id="ed" type="date" value="${card.due||''}" style="font-family:'DM Mono',monospace;font-size:0.75rem;padding:0.35rem 0.5rem;border:1px solid rgba(26,26,24,0.18);border-radius:3px;background:var(--cream);color:var(--ink);flex:1;">
+        <button onclick="document.getElementById('ed').value=''" style="font-size:0.7rem;background:none;border:1px solid rgba(26,26,24,0.15);border-radius:3px;padding:3px 8px;cursor:pointer;color:var(--slate);">✕</button>
+      </div>
+      <div style="display:flex;gap:0.5rem;justify-content:flex-end;">
+        <button id="ec" style="font-family:'DM Mono',monospace;font-size:0.72rem;padding:0.4rem 1rem;border:1px solid rgba(26,26,24,0.18);border-radius:3px;background:none;cursor:pointer;color:var(--slate);">${t('cancel')}</button>
+        <button id="es" style="font-family:'DM Mono',monospace;font-size:0.72rem;padding:0.4rem 1rem;background:var(--rust);color:#fff;border:none;border-radius:3px;cursor:pointer;">${t('save')}</button>
+      </div>
+    </div>`;
+  document.body.appendChild(ov);
+  document.getElementById('et').focus();
+  document.getElementById('ec').onclick=()=>ov.remove();
+  ov.addEventListener('click',e=>{if(e.target===ov)ov.remove();});
+  document.getElementById('es').onclick=()=>{
+    const txt=document.getElementById('et').value.trim();if(!txt)return;
+    card.text=txt;card.tag=document.getElementById('eg').value.trim();card.due=document.getElementById('ed').value;
+    ov.remove();saveKanban();showToast(t('updated'));
+  };
+}
+function dragOver(e){e.preventDefault();e.currentTarget.querySelector('.cards-area').classList.add('drag-over');}
+document.querySelectorAll('.column').forEach(col=>{
+  col.addEventListener('dragleave',e=>{if(!col.contains(e.relatedTarget))col.querySelector('.cards-area').classList.remove('drag-over');});
+});
+function drop(e,tc){
+  e.preventDefault();document.querySelectorAll('.cards-area').forEach(a=>a.classList.remove('drag-over'));
+  if(!dragId||dragCol===tc)return;
+  const idx=kanban[dragCol].findIndex(c=>c.id===dragId);if(idx===-1)return;
+  const [card]=kanban[dragCol].splice(idx,1);kanban[tc].push(card);
+  dragId=null;dragCol=null;saveKanban();showToast(t('moved'));
+}
+
+// ── JOURNAL ──
+function renderEntryList(){
+  const list=document.getElementById('entry-list');
+  if(!journals.length){list.innerHTML=`<div style="padding:1rem;font-size:0.75rem;color:#888;text-align:center;">${t('noentries')}</div>`;return;}
+  list.innerHTML='';
+  journals.forEach(entry=>{
+    const el=document.createElement('div');
+    el.className='entry-item'+(entry.id===activeEntryId?' active':'');
+    const d=entry.date?new Date(entry.date+'T12:00:00').toLocaleDateString(lang==='es'?'es-ES':'en-US',{month:'short',day:'numeric',year:'numeric'}):'—';
+    el.innerHTML=`<div class="entry-item-date">${d} ${entry.mood||''}</div><div class="entry-item-preview">${escHtml(entry.title||(entry.body||'').slice(0,45)||'Untitled')}</div>`;
+    el.onclick=()=>openEntry(entry.id);
+    list.appendChild(el);
+  });
+}
+function openEntry(id){
+  const e=journals.find(j=>j.id===id);if(!e)return;
+  activeEntryId=id;
+  document.getElementById('journal-empty').style.display='none';
+  document.getElementById('journal-form').style.display='flex';
+  document.getElementById('entry-date').value=e.date||'';
+  document.getElementById('entry-mood').value=e.mood||'😊';
+  document.getElementById('entry-title').value=e.title||'';
+  document.getElementById('entry-body').value=e.body||'';
+  renderEntryList();
+}
+function newEntry(){
+  journalsRef().add({date:new Date().toISOString().slice(0,10),mood:'😊',title:'',body:'',createdAt:Date.now()})
+  .then(ref=>{activeEntryId=ref.id;}).catch(()=>showToast(t('errorentry')));
+}
+function saveEntry(){
+  if(!activeEntryId)return;
+  setSyncing('syncing');
+  journalsRef().doc(activeEntryId).update({
+    date:document.getElementById('entry-date').value,
+    mood:document.getElementById('entry-mood').value,
+    title:document.getElementById('entry-title').value.trim(),
+    body:document.getElementById('entry-body').value,
+    updatedAt:Date.now()
+  }).then(()=>{setSyncing('ok');showToast(t('entrysaved'));}).catch(()=>setSyncing('error'));
+}
+function deleteEntry(){
+  if(!activeEntryId||!confirm(t('confirmdelete')))return;
+  setSyncing('syncing');
+  journalsRef().doc(activeEntryId).delete().then(()=>{
+    activeEntryId=null;
+    document.getElementById('journal-empty').style.display='flex';
+    document.getElementById('journal-form').style.display='none';
+    setSyncing('ok');showToast(t('entrydeleted'));
+  }).catch(()=>setSyncing('error'));
+}
+document.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key==='s'&&activeEntryId){e.preventDefault();saveEntry();}
+});
+
+// ── INIT ──
+applyLang();
+document.getElementById('copy-year').textContent=new Date().getFullYear();
+</script>
+</body>
+</html>
