@@ -296,8 +296,8 @@
 
 <!-- NAV — UNCHANGED -->
 <nav>
-    <div onclick="toggleView('inventory')" id="nav-inv" class="active" id="t-nav-inv">📦 INVENTARIO</div>
-    <div onclick="toggleView('shopping')" id="nav-shop" id="t-nav-shop">🛒 COMPRAS</div>
+    <div onclick="toggleView('inventory')" id="nav-inv" class="active">📦 INVENTARIO</div>
+    <div onclick="toggleView('shopping')" id="nav-shop" >🛒 COMPRAS</div>
 </nav>
 
 <script type="module">
@@ -653,7 +653,7 @@ function renderShoppingView(data, today, nextWeek) {
     const t       = T[lang];
 
     // ── AISLES ORDER ──
-    const AISLES = ['PRODUCE','BAKERY','MEAT_DELI','PANTRY_DRY','FROZEN','DAIRY','CLEANING'_'OTHERS'];
+    const AISLES = ['PRODUCE','BAKERY','MEAT_DELI','PANTRY_DRY','FROZEN','DAIRY','CLEANING','OTHERS'];
 
     const prioritarios = data.filter(item => item.expiry && new Date(item.expiry) <= nextWeek);
     const bajoStock    = data.filter(item => (item.qty <= item.min) && !(item.expiry && new Date(item.expiry) <= nextWeek));
