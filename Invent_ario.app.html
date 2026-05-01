@@ -127,103 +127,68 @@
 </nav>
 
 <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
-    import { getFirestore, collection, doc, setDoc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
-    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
-    import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+import { getFirestore, collection, doc, setDoc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
 
-    const firebaseConfig = {
-        apiKey: "AIzaSyD8dsAejvIEFDxu_Z2YZCtMnAkXhZr1H3E",
-        authDomain: "velastegui-pantry.firebaseapp.com",
-        projectId: "velastegui-pantry",
-        storageBucket: "velastegui-pantry.firebasestorage.app",
-        messagingSenderId: "927651602097",
-        appId: "1:927651602097:web:b243cfa8aff28886900c90"
-    };
+const firebaseConfig = {
+    apiKey: "AIzaSyD8dsAejvIEFDxu_Z2YZCtMnAkXhZr1H3E",
+    authDomain: "velastegui-pantry.firebaseapp.com",
+    projectId: "velastegui-pantry",
+    storageBucket: "velastegui-pantry.firebasestorage.app",
+    messagingSenderId: "927651602097",
+    appId: "1:927651602097:web:b243cfa8aff28886900c90"
+};
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const auth = getAuth(app);
-    const genAI = new GoogleGenerativeAI("AIzaSyCxMRqavNSSeRNfVk7UayR-llE_71R4NNI");
-    const aiModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+const genAI = new GoogleGenerativeAI("AIzaSyCxMRqavNSSeRNfVk7UayR-llE_71R4NNI");
+const aiModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-    let inventoryData = [], familyId = null;
+let inventoryData = [], familyId = null;
 
-    // --- LOGIN GOOGLE ---
-    window.doGoogleLogin = async () => {
-        const provider = new GoogleAuthProvider();
-        try {
-            const result = await signInWithPopup(auth, provider);
-            const user = result.user;
-            const userRef = doc(db, "users", user.uid);
-            const uDoc = await getDoc(userRef);
-            if (!uDoc.exists()) {
-                const newFamilyId = "FAM-" + Math.random().toString(36).substr(2,5).toUpperCase();
-                await setDoc(userRef, { name: user.displayName, email: user.email, familyId: newFamilyId });
-            }
-        } catch (e) {
-            console.error(e);
-            Swal.fire("Error", "No se pudo conectar con Google", "error");
+// --- ASIGNACIÓN GLOBAL (Para que los botones funcionen) ---
+window.doLogin = async () => {
+    const email = document.getElementById('auth-email').value;
+    const pass = document.getElementById('auth-pass').value;
+    try {
+        await signInWithEmailAndPassword(auth, email, pass);
+    } catch (e) {
+        Swal.fire("Error", "Credenciales incorrectas", "error");
+    }
+};
+
+window.doGoogleLogin = async () => {
+    const provider = new GoogleAuthProvider();
+    try {
+        const result = await signInWithPopup(auth, provider);
+        const user = result.user;
+        const userRef = doc(db, "users", user.uid);
+        const uDoc = await getDoc(userRef);
+        if (!uDoc.exists()) {
+            const newFamilyId = "FAM-" + Math.random().toString(36).substr(2,5).toUpperCase();
+            await setDoc(userRef, { name: user.displayName, email: user.email, familyId: newFamilyId });
         }
-    };
+    } catch (e) {
+        Swal.fire("Error", "No se pudo conectar con Google", "error");
+    }
+};
 
-    // --- ESTADO DE SESIÓN ---
-    onAuthStateChanged(auth, async (user) => {
-        const authScreen = document.getElementById('auth-screen');
-        const mainApp = document.getElementById('main-app');
-        if (user) {
-            const userRef = doc(db, "users", user.uid);
-            const uDoc = await getDoc(userRef);
-            familyId = uDoc.exists() ? uDoc.data().familyId : "FAM-NEW";
-            
-            authScreen.style.display = 'none';
-            mainApp.style.display = 'block';
-            
-            onSnapshot(collection(db, "families", familyId, "inventory"), (snap) => {
-                inventoryData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                renderList();
-            });
-        } else {
-            authScreen.style.display = 'flex';
-            mainApp.style.display = 'none';
-        }
-        hideLoading();
-    });
+window.doLogout = () => signOut(auth);
 
-    // --- IA ---
-    window.sugerenciaChefIA = async () => {
-        const stock = inventoryData.filter(i => i.qty > 0).map(i => i.name).join(", ");
-        if(!stock) return Swal.fire("Aviso", "Inventario vacío", "info");
-        showLoading("Cocinando ideas...");
-        try {
-            const result = await aiModel.generateContent(`Tengo: ${stock}. Receta latina rápida.`);
-            const text = await result.response.text();
-            hideLoading();
-            Swal.fire({ title: 'Chef IA', html: `<div style="text-align:left;">${text.replace(/\n/g, '<br>')}</div>` });
-        } catch(e) { hideLoading(); Swal.fire("Error", "IA no disponible", "error"); }
-    };
+window.toggleView = (v) => {
+    document.getElementById('nav-inv').className = v === 'inventory' ? 'active' : '';
+    renderList();
+};
 
-    // --- ESCÁNER ---
-    window.startScan = async function () {
-        const container = document.getElementById("video-container");
-        container.style.display = "block";
-        const { BrowserMultiFormatReader } = await import("https://cdn.jsdelivr.net/npm/@zxing/browser@latest/+esm");
-        const reader = new BrowserMultiFormatReader();
-        const video = document.createElement("video");
-        video.setAttribute('playsinline', true); video.autoplay = true;
-        container.innerHTML = ""; container.appendChild(video);
-        const controls = await reader.decodeFromVideoDevice(undefined, video, (result) => {
-            if (result) {
-                document.getElementById("upc").value = result.text;
-                controls.stop(); container.style.display = "none";
-            }
-        });
-    };
-
-    // --- CRUD ---
-    window.saveItem = async () => {
-        const upc = document.getElementById("upc").value;
-        if(!upc) return;
+window.saveItem = async () => {
+    const upc = document.getElementById("upc").value;
+    if(!upc) return Swal.fire("Aviso", "Falta el código UPC", "warning");
+    
+    showLoading("Guardando...");
+    try {
         await setDoc(doc(db, "families", familyId, "inventory", upc), {
             name: document.getElementById("product").value,
             qty: parseInt(document.getElementById("qty").value) || 0,
@@ -232,32 +197,101 @@
             updatedAt: Date.now()
         }, { merge: true });
         Swal.fire("Listo", "Producto guardado", "success");
-    };
+    } catch (e) {
+        Swal.fire("Error", "No se pudo guardar", "error");
+    } finally {
+        hideLoading();
+    }
+};
 
-    // --- UTILS ---
-    window.doLogout = () => signOut(auth);
-    window.doLogin = () => signInWithEmailAndPassword(auth, document.getElementById('auth-email').value, document.getElementById('auth-pass').value);
-    window.toggleView = (v) => { document.getElementById('nav-inv').className = v==='inventory'?'active':''; renderList(); };
-
-    function renderList() {
-        const list = document.getElementById("inventory-list");
-        list.innerHTML = "";
-        inventoryData.forEach(item => {
-            const div = document.createElement("div");
-            div.className = `card ${item.qty <= 1 ? 'status-low' : 'status-ok'}`;
-            div.innerHTML = `<b>${item.name}</b> - Stock: ${item.qty}<br><small>${item.category}</small>`;
-            list.appendChild(div);
+window.startScan = async function () {
+    const container = document.getElementById("video-container");
+    container.style.display = "block";
+    try {
+        const { BrowserMultiFormatReader } = await import("https://cdn.jsdelivr.net/npm/@zxing/browser@latest/+esm");
+        const reader = new BrowserMultiFormatReader();
+        const video = document.createElement("video");
+        video.setAttribute('playsinline', true); 
+        video.autoplay = true;
+        container.innerHTML = ""; 
+        container.appendChild(video);
+        
+        const controls = await reader.decodeFromVideoDevice(undefined, video, (result) => {
+            if (result) {
+                document.getElementById("upc").value = result.text;
+                controls.stop(); 
+                container.style.display = "none";
+            }
         });
+    } catch (e) {
+        Swal.fire("Error", "No se pudo acceder a la cámara", "error");
     }
+};
 
-    function showLoading(m) { 
-        const ls = document.getElementById('loading-screen');
-        if(ls) { ls.style.display='flex'; document.getElementById('loading-msg').innerText=m; }
+window.sugerenciaChefIA = async () => {
+    const stock = inventoryData.filter(i => i.qty > 0).map(i => i.name).join(", ");
+    if(!stock) return Swal.fire("Aviso", "Inventario vacío", "info");
+    
+    showLoading("Cocinando ideas...");
+    try {
+        const result = await aiModel.generateContent(`Tengo: ${stock}. Receta latina rápida.`);
+        const text = await result.response.text();
+        Swal.fire({ title: 'Chef IA', html: `<div style="text-align:left;">${text.replace(/\n/g, '<br>')}</div>` });
+    } catch(e) { 
+        Swal.fire("Error", "IA no disponible", "error"); 
+    } finally {
+        hideLoading();
     }
-    function hideLoading() { 
-        const ls = document.getElementById('loading-screen');
-        if(ls) { ls.classList.add('fade'); setTimeout(()=>ls.style.display='none', 300); }
+};
+
+// --- LÓGICA INTERNA ---
+onAuthStateChanged(auth, async (user) => {
+    const authScreen = document.getElementById('auth-screen');
+    const mainApp = document.getElementById('main-app');
+    if (user) {
+        const userRef = doc(db, "users", user.uid);
+        const uDoc = await getDoc(userRef);
+        familyId = uDoc.exists() ? uDoc.data().familyId : "FAM-NEW";
+        
+        authScreen.style.display = 'none';
+        mainApp.style.display = 'block';
+        
+        onSnapshot(collection(db, "families", familyId, "inventory"), (snap) => {
+            inventoryData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            renderList();
+        });
+    } else {
+        authScreen.style.display = 'flex';
+        mainApp.style.display = 'none';
     }
+    hideLoading();
+});
+
+function renderList() {
+    const list = document.getElementById("inventory-list");
+    list.innerHTML = "";
+    inventoryData.forEach(item => {
+        const div = document.createElement("div");
+        div.className = `card ${item.qty <= 1 ? 'status-low' : 'status-ok'}`;
+        div.innerHTML = `<b>${item.name}</b> - Stock: ${item.qty}<br><small>${item.category}</small>`;
+        list.appendChild(div);
+    });
+}
+
+function showLoading(m) { 
+    const ls = document.getElementById('loading-screen');
+    ls.style.display='flex'; 
+    ls.classList.remove('fade');
+    document.getElementById('loading-msg').innerText=m; 
+}
+
+function hideLoading() { 
+    const ls = document.getElementById('loading-screen');
+    if(ls) { 
+        ls.classList.add('fade'); 
+        setTimeout(()=>ls.style.display='none', 300); 
+    }
+}
 </script>
 </body>
 </html>
