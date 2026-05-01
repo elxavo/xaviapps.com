@@ -5,585 +5,101 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
     <title>Velastegui Pantry Gold PRO</title>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-
     <style>
-        :root {
-            --primary: #1a2332;
-            --primary-light: #243447;
-            --accent: #3b82f6;
-            --accent-glow: rgba(59,130,246,0.18);
-            --danger: #ef4444;
-            --warning: #f59e0b;
-            --success: #10b981;
-            --expired: #8b5cf6;
-            --bg: #f0f4f8;
-            --card: #ffffff;
-            --text: #1e293b;
-            --muted: #64748b;
-            --border: #e2e8f0;
-            --radius: 14px;
-            --shadow: 0 2px 12px rgba(0,0,0,0.07);
+        :root { 
+            --primary: #2c3e50; --accent: #3498db; --danger: #e74c3c; 
+            --warning: #f39c12; --success: #27ae60; --expired: #9b59b6;
+            --bg: #f4f7f6; --text: #333; 
         }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-
-        body {
-            font-family: 'DM Sans', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            padding-bottom: 90px;
-            min-height: 100vh;
+        body { margin:0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding-bottom: 90px; }
+        header { 
+            background: var(--primary); color: white; padding: 15px; 
+            text-align: center; font-weight: bold; position: sticky; top: 0; z-index: 1000;
+            display: flex; justify-content: space-between; align-items: center;
         }
+        .container { padding: 15px; max-width: 700px; margin: auto; }
+        .card { background: white; padding: 18px; margin-bottom: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border-left: 6px solid #ddd; }
+        
+        /* Auth Screen */
+        #auth-screen { position: fixed; inset: 0; background: var(--primary); z-index: 5000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .auth-card { background: white; padding: 25px; border-radius: 12px; width: 100%; max-width: 350px; }
+        .auth-card input { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px; }
+        .google-btn { background: #db4437; color: white; margin-top: 10px; }
 
-        /* ─── AUTH SCREEN ─── */
-        #auth-screen {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            background: linear-gradient(145deg, #1a2332 0%, #243447 50%, #1e3a5f 100%);
-        }
+        .status-ok { border-left-color: var(--success); }
+        .status-low { border-left-color: var(--warning); }
+        .status-critical { border-left-color: var(--danger); }
+        .status-expired { border-left-color: var(--expired); animation: blink 1.5s infinite; }
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
 
-        .auth-logo {
-            font-family: 'Space Mono', monospace;
-            font-size: 13px;
-            font-weight: 700;
-            color: #3b82f6;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            margin-bottom: 6px;
-        }
-
-        .auth-title {
-            font-size: 28px;
-            font-weight: 700;
-            color: #fff;
-            margin-bottom: 4px;
-            text-align: center;
-        }
-
-        .auth-sub {
-            font-size: 13px;
-            color: rgba(255,255,255,0.45);
-            margin-bottom: 32px;
-            text-align: center;
-        }
-
-        .auth-card {
-            background: rgba(255,255,255,0.06);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 20px;
-            padding: 28px 24px;
-            width: 100%;
-            max-width: 400px;
-            backdrop-filter: blur(12px);
-        }
-
-        .auth-tabs {
-            display: flex;
-            background: rgba(0,0,0,0.2);
-            border-radius: 10px;
-            padding: 4px;
-            margin-bottom: 22px;
-        }
-
-        .auth-tab {
-            flex: 1;
-            text-align: center;
-            padding: 9px;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 600;
-            color: rgba(255,255,255,0.45);
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .auth-tab.active {
-            background: var(--accent);
-            color: white;
-            box-shadow: 0 2px 8px rgba(59,130,246,0.4);
-        }
-
-        .auth-input {
-            width: 100%;
-            padding: 13px 15px;
-            border-radius: 10px;
-            border: 1px solid rgba(255,255,255,0.12);
-            background: rgba(255,255,255,0.07);
-            color: white;
-            font-size: 15px;
-            font-family: 'DM Sans', sans-serif;
-            margin-bottom: 12px;
-            outline: none;
-            transition: border 0.2s;
-        }
-        .auth-input::placeholder { color: rgba(255,255,255,0.3); }
-        .auth-input:focus { border-color: var(--accent); }
-
-        .auth-btn {
-            width: 100%;
-            padding: 14px;
-            border-radius: 10px;
-            border: none;
-            background: var(--accent);
-            color: white;
-            font-size: 15px;
-            font-weight: 700;
-            font-family: 'DM Sans', sans-serif;
-            cursor: pointer;
-            margin-bottom: 10px;
-            transition: all 0.2s;
-            box-shadow: 0 4px 14px rgba(59,130,246,0.35);
-        }
-        .auth-btn:active { transform: scale(0.97); }
-
-        .auth-divider {
-            text-align: center;
-            color: rgba(255,255,255,0.3);
-            font-size: 12px;
-            margin: 4px 0 10px;
-            position: relative;
-        }
-        .auth-divider::before, .auth-divider::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            width: 42%;
-            height: 1px;
-            background: rgba(255,255,255,0.1);
-        }
-        .auth-divider::before { left: 0; }
-        .auth-divider::after { right: 0; }
-
-        .google-btn {
-            width: 100%;
-            padding: 13px;
-            border-radius: 10px;
-            border: 1px solid rgba(255,255,255,0.15);
-            background: rgba(255,255,255,0.08);
-            color: white;
-            font-size: 14px;
-            font-weight: 600;
-            font-family: 'DM Sans', sans-serif;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            transition: all 0.2s;
-        }
-        .google-btn:active { background: rgba(255,255,255,0.14); }
-
-        .google-icon {
-            width: 20px; height: 20px;
-            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath fill='%23EA4335' d='M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z'/%3E%3Cpath fill='%234285F4' d='M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z'/%3E%3Cpath fill='%23FBBC05' d='M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z'/%3E%3Cpath fill='%2334A853' d='M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.36-8.16 2.36-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z'/%3E%3C/svg%3E") center/contain no-repeat;
-        }
-
-        .auth-error {
-            color: #fca5a5;
-            font-size: 12px;
-            text-align: center;
-            margin-top: 8px;
-            min-height: 18px;
-        }
-
-        /* ─── MAIN APP ─── */
-        #app-screen { display: none; }
-
-        header {
-            background: var(--primary);
-            color: white;
-            padding: 14px 16px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-        }
-
-        .header-title {
-            font-family: 'Space Mono', monospace;
-            font-size: 13px;
-            font-weight: 700;
-            letter-spacing: 1.5px;
-            color: white;
-        }
-
-        .header-actions { display: flex; gap: 8px; align-items: center; }
-
-        .lang-toggle {
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.15);
-            color: white;
-            font-size: 11px;
-            font-weight: 700;
-            font-family: 'Space Mono', monospace;
-            padding: 5px 10px;
-            border-radius: 6px;
-            cursor: pointer;
-            letter-spacing: 1px;
-            transition: all 0.2s;
-        }
-        .lang-toggle:hover { background: rgba(255,255,255,0.18); }
-
-        .icon-btn {
-            background: rgba(255,255,255,0.1);
-            border: none;
-            color: white;
-            width: 34px;
-            height: 34px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-        }
-        .icon-btn:hover { background: rgba(255,255,255,0.18); }
-
-        .container { padding: 14px; max-width: 700px; margin: auto; }
-
-        /* ─── CARD ─── */
-        .card {
-            background: var(--card);
-            padding: 16px;
-            margin-bottom: 12px;
-            border-radius: var(--radius);
-            box-shadow: var(--shadow);
-            border-left: 5px solid #ddd;
-        }
-
-        .status-ok     { border-left-color: var(--success); }
-        .status-low    { border-left-color: var(--warning); }
-        .status-critical{ border-left-color: var(--danger); }
-        .status-expired { border-left-color: var(--expired); animation: blink 1.8s infinite; }
-
-        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.55} }
-
-        /* ─── FORM ─── */
-        .form-card {
-            background: var(--card);
-            padding: 18px;
-            border-radius: var(--radius);
-            box-shadow: var(--shadow);
-            margin-bottom: 14px;
-        }
-
-        .form-group { margin-bottom: 11px; }
-
-        label {
-            display: block;
-            font-size: 10px;
-            font-weight: 700;
-            color: var(--muted);
-            margin-bottom: 5px;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-
-        input, select {
-            width: 100%;
-            padding: 11px 13px;
-            border-radius: 9px;
-            border: 1.5px solid var(--border);
-            background: #f8fafc;
-            font-size: 15px;
-            font-family: 'DM Sans', sans-serif;
-            color: var(--text);
-            outline: none;
-            transition: border 0.2s;
-        }
-        input:focus, select:focus { border-color: var(--accent); background: white; }
-
-        .btn {
-            width: 100%;
-            padding: 12px;
-            border-radius: 9px;
-            border: none;
-            font-size: 14px;
-            font-weight: 700;
-            font-family: 'DM Sans', sans-serif;
-            cursor: pointer;
-            transition: all 0.18s;
-        }
-        .btn:active { transform: scale(0.96); }
-        .btn-primary { background: var(--accent); color: white; box-shadow: 0 3px 10px var(--accent-glow); }
-        .btn-success { background: var(--success); color: white; }
-        .btn-warning { background: var(--warning); color: white; }
-        .btn-danger  { background: var(--danger);  color: white; }
-        .btn-purple  { background: #8b5cf6; color: white; }
-
+        input, select, button { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; font-size: 16px; box-sizing: border-box; }
+        button { background: var(--accent); color: white; border: none; font-weight: bold; cursor: pointer; }
         .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-
-        /* ─── NAV ─── */
-        nav {
-            position: fixed;
-            bottom: 0;
-            width: 100%;
-            background: white;
-            display: flex;
-            border-top: 1px solid var(--border);
-            z-index: 2000;
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.06);
-        }
-        nav div {
-            flex: 1;
-            text-align: center;
-            padding: 16px 8px 12px;
-            font-size: 11px;
-            font-weight: 700;
-            color: #94a3b8;
-            cursor: pointer;
-            letter-spacing: 0.5px;
-            transition: all 0.2s;
-        }
-        nav div.active { color: var(--accent); border-top: 3px solid var(--accent); }
-
-        #video-container { width: 100%; display: none; background: #000; border-radius: 12px; margin-bottom: 14px; overflow: hidden; }
-        video { width: 100%; height: auto; }
-
-        .section-title {
-            margin: 20px 0 10px;
-            padding-bottom: 6px;
-            font-size: 12px;
-            font-weight: 700;
-            border-bottom: 2px solid;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-        }
-
-        /* ─── SHARE PANEL ─── */
-        .share-panel {
-            background: linear-gradient(135deg, #1a2332, #243447);
-            color: white;
-            border-radius: var(--radius);
-            padding: 18px;
-            margin-bottom: 14px;
-        }
-        .share-panel h3 { font-size: 14px; margin-bottom: 4px; }
-        .share-panel p  { font-size: 12px; color: rgba(255,255,255,0.5); margin-bottom: 14px; }
-
-        .code-display {
-            background: rgba(255,255,255,0.08);
-            border: 1px dashed rgba(255,255,255,0.2);
-            border-radius: 10px;
-            padding: 12px 16px;
-            font-family: 'Space Mono', monospace;
-            font-size: 22px;
-            letter-spacing: 5px;
-            text-align: center;
-            margin-bottom: 12px;
-            color: #60a5fa;
-        }
-
-        .user-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            background: rgba(255,255,255,0.08);
-            border-radius: 20px;
-            padding: 5px 10px;
-            font-size: 11px;
-            color: rgba(255,255,255,0.7);
-            margin: 3px;
-        }
-
-        /* ─── FOOTER ─── */
-        footer {
-            text-align: center;
-            padding: 18px 16px 100px;
-            color: var(--muted);
-            font-size: 11px;
-            letter-spacing: 0.5px;
-        }
-        footer a { color: var(--accent); text-decoration: none; font-weight: 600; }
-        footer a:hover { text-decoration: underline; }
-
-        /* ─── QTY BADGES ─── */
-        .qty-badge {
-            display: inline-block;
-            min-width: 28px;
-            height: 28px;
-            line-height: 28px;
-            text-align: center;
-            border-radius: 7px;
-            font-size: 13px;
-            font-weight: 700;
-            background: #f1f5f9;
-            color: var(--text);
-        }
-
-        /* Loading spinner */
-        .spinner {
-            display: none;
-            width: 18px;
-            height: 18px;
-            border: 2px solid rgba(255,255,255,0.3);
-            border-top-color: white;
-            border-radius: 50%;
-            animation: spin 0.7s linear infinite;
-            margin: 0 auto;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        .family-members { display: flex; flex-wrap: wrap; margin-top: 10px; }
+        nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; border-top: 1px solid #ddd; z-index: 2000; }
+        nav div { flex: 1; text-align: center; padding: 18px; font-weight: bold; color: #95a5a6; cursor: pointer; }
+        nav div.active { color: var(--accent); border-top: 4px solid var(--accent); }
+        .aisle-header { background: #eee; padding: 5px 10px; border-radius: 5px; font-size: 12px; font-weight: bold; margin: 15px 0 5px 0; color: var(--primary); }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-<!-- ═══════════════════ AUTH SCREEN ═══════════════════ -->
 <div id="auth-screen">
-    <div class="auth-logo">PANTRY PRO</div>
-    <div class="auth-title">Velastegui</div>
-    <div class="auth-sub">Family Kitchen Manager</div>
-
     <div class="auth-card">
-        <div class="auth-tabs">
-            <div class="auth-tab active" id="tab-login" onclick="switchAuthTab('login')" data-es="Iniciar Sesión" data-en="Sign In">Iniciar Sesión</div>
-            <div class="auth-tab" id="tab-register" onclick="switchAuthTab('register')" data-es="Registrarse" data-en="Sign Up">Registrarse</div>
+        <h3 style="text-align:center">PANTRY LOGIN</h3>
+        <div id="auth-fields">
+            <input id="user-name" type="text" placeholder="Tu Nombre (Solo Registro)">
+            <input id="email" type="email" placeholder="Email">
+            <input id="pass" type="password" placeholder="Password">
+            <input id="family-code" type="text" placeholder="Código Familiar (Unirse)">
+            <button onclick="handleAuth('login')">ENTRAR</button>
+            <button onclick="handleAuth('register')" style="background:none; color:var(--accent); margin-top:5px;">REGISTRARSE</button>
+            <hr>
+            <button class="google-btn" onclick="loginGoogle()">CONTINUAR CON GOOGLE</button>
         </div>
-
-        <div id="auth-form-login">
-            <input class="auth-input" id="login-email" type="email" placeholder="correo@email.com" />
-            <input class="auth-input" id="login-pass" type="password" placeholder="Contraseña" />
-            <button class="auth-btn" onclick="loginEmail()" id="btn-login">Iniciar Sesión</button>
-        </div>
-
-        <div id="auth-form-register" style="display:none;">
-            <input class="auth-input" id="reg-name" type="text" placeholder="Tu nombre" />
-            <input class="auth-input" id="reg-email" type="email" placeholder="correo@email.com" />
-            <input class="auth-input" id="reg-pass" type="password" placeholder="Contraseña (mín. 6 chars)" />
-            <input class="auth-input" id="reg-code" type="text" placeholder="Código familiar (opcional)" style="letter-spacing:3px; text-transform:uppercase;" />
-            <button class="auth-btn" onclick="registerEmail()" id="btn-register">Crear Cuenta</button>
-        </div>
-
-        <div class="auth-divider" id="auth-or">o</div>
-
-        <button class="google-btn" onclick="loginGoogle()">
-            <div class="google-icon"></div>
-            <span id="google-btn-text">Continuar con Google</span>
-        </button>
-
-        <div class="auth-error" id="auth-error"></div>
     </div>
 </div>
 
-<!-- ═══════════════════ MAIN APP ═══════════════════ -->
-<div id="app-screen">
+<div id="main-app" class="hidden">
     <header>
-        <div class="header-title">🏠 PANTRY PRO</div>
-        <div class="header-actions">
-            <button class="lang-toggle" onclick="toggleLang()" id="lang-btn">EN</button>
-            <button class="icon-btn" onclick="showSharePanel()" title="Compartir">👨‍👩‍👧‍👦</button>
-            <button class="icon-btn" onclick="signOut()" title="Salir">⎋</button>
-        </div>
+        <button onclick="logout()" style="width:auto; padding:5px; background:transparent; font-size:18px">⎋</button>
+        <div id="family-display">CARGANDO...</div>
+        <div style="width:30px"></div>
     </header>
 
     <div class="container">
-        <!-- FAMILY SHARE PANEL -->
-        <div id="share-panel" style="display:none;" class="share-panel">
-            <h3 data-es="👨‍👩‍👧‍👦 Compartir con Familia" data-en="👨‍👩‍👧‍👦 Share with Family">👨‍👩‍👧‍👦 Compartir con Familia</h3>
-            <p data-es="Comparte este código para que tu familia acceda al mismo inventario" data-en="Share this code so your family can access the same inventory">Comparte este código para que tu familia acceda al mismo inventario</p>
-            <div class="code-display" id="family-code-display">------</div>
-            <div class="grid-2" style="gap:8px; margin-bottom:12px;">
-                <button class="btn btn-primary" onclick="copyCode()" data-es="📋 Copiar Código" data-en="📋 Copy Code">📋 Copiar Código</button>
-                <button class="btn" style="background:rgba(255,255,255,0.1);color:white;" onclick="shareCode()" data-es="📤 Enviar" data-en="📤 Share">📤 Enviar</button>
-            </div>
-            <div class="family-members" id="family-members-list"></div>
-            <button class="btn btn-danger" onclick="document.getElementById('share-panel').style.display='none'" style="margin-top:10px; background:rgba(255,255,255,0.08); color:rgba(255,255,255,0.6);" data-es="Cerrar" data-en="Close">Cerrar</button>
-        </div>
-
-        <!-- ADD FORM -->
-        <div class="form-card" id="view-add">
-            <button class="btn btn-purple" onclick="startScan()" style="margin-bottom:13px;" data-es="📷 ESCANEAR CÓDIGO" data-en="📷 SCAN BARCODE">📷 ESCANEAR CÓDIGO</button>
+        <div id="view-add" class="card">
+            <button onclick="startScan()" style="background:#8e44ad; margin-bottom:15px;">📷 ESCANEAR</button>
             <div id="video-container"></div>
-
-            <div class="form-group">
-                <label data-es="Código UPC / Barcode" data-en="UPC Code / Barcode">Código UPC / Barcode</label>
-                <input id="upc" type="text" placeholder="Escanea o escribe..." onchange="handleUPCChange(this.value)" />
-            </div>
-
-            <div class="form-group">
-                <label data-es="Nombre del Producto" data-en="Product Name">Nombre del Producto</label>
-                <input id="product" type="text" placeholder="Ej. Arroz Integral 1kg" />
-            </div>
-
+            <input id="upc" type="text" placeholder="UPC" onchange="handleUPCChange(this.value)" style="margin-bottom:10px">
+            <input id="product" type="text" placeholder="Nombre Producto" style="margin-bottom:10px">
             <div class="grid-3">
-                <div class="form-group">
-                    <label data-es="Categoría" data-en="Category">Categoría</label>
-                    <select id="category">
-                        <option>FRIDGE</option><option>FREEZER</option><option>BREAD</option>
-                        <option>CONDIMENTS</option><option>FLOUR</option><option>PANTRY</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label data-es="Vencimiento" data-en="Expiry">Vencimiento</label>
-                    <input id="expiry" type="date" />
-                </div>
-                <div class="form-group">
-                    <label data-es="Stock Actual" data-en="Current Stock">Stock Actual</label>
-                    <input id="qty" type="number" value="0" />
-                </div>
+                <select id="category">
+                    <option>PANTRY</option><option>FRIDGE</option><option>FREEZER</option>
+                    <option>CLEANING</option><option>BREAD</option><option>DRINKS</option>
+                </select>
+                <input id="expiry" type="date">
+                <input id="qty" type="number" placeholder="Cant.">
             </div>
-
-            <div class="grid-3">
-                <div class="form-group">
-                    <label data-es="Mínimo" data-en="Minimum">Mínimo</label>
-                    <input id="min" type="number" value="1" />
-                </div>
-                <div class="form-group">
-                    <label data-es="Máximo" data-en="Maximum">Máximo</label>
-                    <input id="max" type="number" value="10" />
-                </div>
-                <div class="form-group" style="display:flex; align-items:flex-end;">
-                    <button class="btn btn-success" onclick="saveItem()" data-es="GUARDAR" data-en="SAVE" style="height:44px; margin:0;">GUARDAR</button>
-                </div>
+            <div class="grid-3" style="margin-top:10px">
+                <input id="min" type="number" placeholder="Min">
+                <input id="max" type="number" placeholder="Max">
+                <button onclick="saveItem()" style="background:var(--success)">GARDAR</button>
             </div>
         </div>
-
-        <h3 id="list-title" style="margin-bottom:10px; font-size:15px; color:var(--primary);" data-es="📦 Inventario en Mano" data-en="📦 Current Inventory">📦 Inventario en Mano</h3>
         <div id="inventory-list"></div>
     </div>
 
-    <footer>
-        &copy; <span id="footer-year"></span>
-        <strong>Xavier Velastegui</strong> &mdash;
-        <a href="https://xaviapps.com" target="_blank">xaviapps.com</a>
-    </footer>
+    <nav>
+        <div onclick="toggleView('inventory')" id="nav-inv" class="active">📦 STOCK</div>
+        <div onclick="toggleView('shopping')" id="nav-shop">🛒 COMPRAS</div>
+    </nav>
 </div>
 
-<nav>
-    <div onclick="toggleView('inventory')" id="nav-inv" class="active" data-es="📦 INVENTARIO" data-en="📦 INVENTORY">📦 INVENTARIO</div>
-    <div onclick="toggleView('shopping')" id="nav-shop" data-es="🛒 COMPRAS" data-en="🛒 SHOPPING">🛒 COMPRAS</div>
-</nav>
-
 <script type="module">
-// ════════════════════════════════════════════════
-//  FIREBASE IMPORTS
-// ════════════════════════════════════════════════
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
-import {
-    getFirestore, collection, doc, setDoc, updateDoc, deleteDoc,
-    increment, onSnapshot, getDoc, getDocs, query, where
-} from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
-import {
-    getAuth,
-    createUserWithEmailAndPassword,
-    signInWithEmailAndPassword,
-    signInWithPopup,
-    GoogleAuthProvider,
-    onAuthStateChanged,
-    signOut as fbSignOut,
-    updateProfile
-} from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+import { getFirestore, collection, doc, setDoc, updateDoc, deleteDoc, increment, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyD8dsAejvIEFDxu_Z2YZCtMnAkXhZr1H3E",
@@ -594,489 +110,124 @@ const firebaseConfig = {
     appId: "1:927651602097:web:b243cfa8aff28886900c90"
 };
 
-const app    = initializeApp(firebaseConfig);
-const db     = getFirestore(app);
-const auth   = getAuth(app);
-const gProvider = new GoogleAuthProvider();
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
 
-// ════════════════════════════════════════════════
-//  STATE
-// ════════════════════════════════════════════════
-let currentView   = 'inventory';
+let familyId = null;
+let currentView = 'inventory';
 let inventoryData = [];
-let currentLang   = localStorage.getItem('pantry-lang') || 'es';
-let currentUser   = null;
-let familyId      = null;   // The Firestore collection key for inventory
-let unsubSnapshot = null;
 
-// ════════════════════════════════════════════════
-//  LANGUAGE
-// ════════════════════════════════════════════════
-window.toggleLang = function() {
-    currentLang = currentLang === 'es' ? 'en' : 'es';
-    localStorage.setItem('pantry-lang', currentLang);
-    applyLang();
-};
+// ================= AUTH =================
+window.handleAuth = async (type) => {
+    const email = document.getElementById('email').value;
+    const pass = document.getElementById('pass').value;
+    const name = document.getElementById('user-name').value;
+    const fCode = document.getElementById('family-code').value.trim().toUpperCase();
 
-function applyLang() {
-    document.getElementById('lang-btn').textContent = currentLang === 'es' ? 'EN' : 'ES';
-    document.querySelectorAll('[data-es]').forEach(el => {
-        const key = `data-${currentLang}`;
-        if (el.dataset[currentLang]) {
-            if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
-                el.placeholder = el.dataset[currentLang];
-            } else {
-                el.textContent = el.dataset[currentLang];
-            }
+    try {
+        if (type === 'login') {
+            await signInWithEmailAndPassword(auth, email, pass);
+        } else {
+            const res = await createUserWithEmailAndPassword(auth, email, pass);
+            await updateProfile(res.user, { displayName: name });
+            const finalFid = fCode || Math.random().toString(36).substring(7).toUpperCase();
+            await setDoc(doc(db, "users", res.user.uid), { familyId: finalFid });
         }
-    });
-    // Update auth tab placeholders
-    const phMap = {
-        es: { email: 'correo@email.com', pass: 'Contraseña', name: 'Tu nombre', passMin: 'Contraseña (mín. 6 chars)', code: 'Código familiar (opcional)', scan: 'Escanea o escribe...', prod: 'Ej. Arroz Integral 1kg' },
-        en: { email: 'email@example.com', pass: 'Password', name: 'Your name', passMin: 'Password (min. 6 chars)', code: 'Family code (optional)', scan: 'Scan or type...', prod: 'e.g. Brown Rice 1kg' }
-    };
-    const ph = phMap[currentLang];
-    const safeSet = (id, val) => { const el = document.getElementById(id); if(el) el.placeholder = val; };
-    safeSet('login-email', ph.email);
-    safeSet('login-pass', ph.pass);
-    safeSet('reg-name', ph.name);
-    safeSet('reg-email', ph.email);
-    safeSet('reg-pass', ph.passMin);
-    safeSet('reg-code', ph.code);
-    safeSet('upc', ph.scan);
-    safeSet('product', ph.prod);
-
-    const googleTexts = { es: 'Continuar con Google', en: 'Continue with Google' };
-    const gt = document.getElementById('google-btn-text');
-    if (gt) gt.textContent = googleTexts[currentLang];
-
-    renderList();
-}
-
-// ════════════════════════════════════════════════
-//  AUTH TAB SWITCH
-// ════════════════════════════════════════════════
-window.switchAuthTab = function(tab) {
-    document.getElementById('auth-form-login').style.display    = tab === 'login'    ? '' : 'none';
-    document.getElementById('auth-form-register').style.display = tab === 'register' ? '' : 'none';
-    document.getElementById('tab-login').classList.toggle('active',    tab === 'login');
-    document.getElementById('tab-register').classList.toggle('active', tab === 'register');
-    document.getElementById('auth-error').textContent = '';
+    } catch (e) { Swal.fire('Error', e.message, 'error'); }
 };
 
-function showAuthError(msg) {
-    document.getElementById('auth-error').textContent = msg;
-}
-
-// ════════════════════════════════════════════════
-//  FAMILY ID HELPERS
-// ════════════════════════════════════════════════
-function generateCode() {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    let code = '';
-    for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
-    return code;
-}
-
-async function resolveFamilyId(user, inviteCode) {
-    const userDocRef = doc(db, "users", user.uid);
-    const userSnap = await getDoc(userDocRef);
-
-    if (userSnap.exists() && userSnap.data().familyId) {
-        return userSnap.data().familyId;
-    }
-
-    // Check if invite code matches a family
-    if (inviteCode) {
-        const code = inviteCode.trim().toUpperCase();
-        const fQuery = query(collection(db, "families"), where("code", "==", code));
-        const fSnap = await getDocs(fQuery);
-        if (!fSnap.empty) {
-            const fId = fSnap.docs[0].id;
-            await setDoc(userDocRef, { familyId: fId, name: user.displayName || '', email: user.email }, { merge: true });
-            // Add member
-            await updateDoc(doc(db, "families", fId), {});
-            await setDoc(doc(db, "families", fId, "members", user.uid), { name: user.displayName || user.email, email: user.email });
-            return fId;
+window.loginGoogle = async () => {
+    try {
+        const res = await signInWithPopup(auth, provider);
+        const uDoc = await getDoc(doc(db, "users", res.user.uid));
+        if (!uDoc.exists()) {
+            const finalFid = Math.random().toString(36).substring(7).toUpperCase();
+            await setDoc(doc(db, "users", res.user.uid), { familyId: finalFid });
         }
-    }
-
-    // Create new family
-    const code = generateCode();
-    const newFamilyRef = doc(collection(db, "families"));
-    await setDoc(newFamilyRef, { code, owner: user.uid, createdAt: Date.now() });
-    await setDoc(doc(db, "families", newFamilyRef.id, "members", user.uid), { name: user.displayName || user.email, email: user.email });
-    await setDoc(userDocRef, { familyId: newFamilyRef.id, name: user.displayName || '', email: user.email }, { merge: true });
-    return newFamilyRef.id;
-}
-
-// ════════════════════════════════════════════════
-//  AUTH ACTIONS
-// ════════════════════════════════════════════════
-window.loginEmail = async function() {
-    const email = document.getElementById('login-email').value.trim();
-    const pass  = document.getElementById('login-pass').value;
-    if (!email || !pass) return showAuthError(currentLang === 'es' ? 'Ingresa email y contraseña' : 'Enter email and password');
-    try {
-        await signInWithEmailAndPassword(auth, email, pass);
-    } catch(e) {
-        showAuthError(friendlyError(e.code));
-    }
+    } catch (e) { console.error(e); }
 };
 
-window.registerEmail = async function() {
-    const name  = document.getElementById('reg-name').value.trim();
-    const email = document.getElementById('reg-email').value.trim();
-    const pass  = document.getElementById('reg-pass').value;
-    const code  = document.getElementById('reg-code').value.trim();
-    if (!name || !email || !pass) return showAuthError(currentLang === 'es' ? 'Completa todos los campos' : 'Fill all fields');
-    try {
-        const cred = await createUserWithEmailAndPassword(auth, email, pass);
-        await updateProfile(cred.user, { displayName: name });
-        // resolveFamilyId with invite code (handled in onAuthStateChanged)
-        window._pendingInviteCode = code;
-    } catch(e) {
-        showAuthError(friendlyError(e.code));
-    }
-};
+window.logout = () => signOut(auth);
 
-window.loginGoogle = async function() {
-    try {
-        await signInWithPopup(auth, gProvider);
-    } catch(e) {
-        showAuthError(friendlyError(e.code));
-    }
-};
-
-window.signOut = async function() {
-    const label = currentLang === 'es' ? '¿Cerrar sesión?' : 'Sign out?';
-    const res = await Swal.fire({ title: label, icon: 'question', showCancelButton: true, confirmButtonColor: '#ef4444' });
-    if (res.isConfirmed) {
-        if (unsubSnapshot) unsubSnapshot();
-        await fbSignOut(auth);
-    }
-};
-
-function friendlyError(code) {
-    const msgs = {
-        'auth/wrong-password': currentLang === 'es' ? 'Contraseña incorrecta' : 'Wrong password',
-        'auth/user-not-found': currentLang === 'es' ? 'Usuario no encontrado' : 'User not found',
-        'auth/email-already-in-use': currentLang === 'es' ? 'Email ya registrado' : 'Email already registered',
-        'auth/weak-password': currentLang === 'es' ? 'Contraseña muy débil' : 'Password too weak',
-        'auth/invalid-email': currentLang === 'es' ? 'Email inválido' : 'Invalid email',
-        'auth/popup-closed-by-user': currentLang === 'es' ? 'Popup cerrado' : 'Popup closed',
-    };
-    return msgs[code] || code;
-}
-
-// ════════════════════════════════════════════════
-//  AUTH STATE OBSERVER
-// ════════════════════════════════════════════════
 onAuthStateChanged(auth, async (user) => {
     if (user) {
-        currentUser = user;
-        const inviteCode = window._pendingInviteCode || null;
-        window._pendingInviteCode = null;
-        familyId = await resolveFamilyId(user, inviteCode);
-
-        document.getElementById('auth-screen').style.display = 'none';
-        document.getElementById('app-screen').style.display  = '';
-
-        // Fetch family code for display
-        const fSnap = await getDoc(doc(db, "families", familyId));
-        if (fSnap.exists()) {
-            document.getElementById('family-code-display').textContent = fSnap.data().code;
-        }
-
-        // Subscribe to inventory
-        if (unsubSnapshot) unsubSnapshot();
-        const col = collection(db, "families", familyId, "inventory");
-        unsubSnapshot = onSnapshot(col, (snap) => {
+        const uDoc = await getDoc(doc(db, "users", user.uid));
+        familyId = uDoc.data()?.familyId;
+        document.getElementById('auth-screen').classList.add('hidden');
+        document.getElementById('main-app').classList.remove('hidden');
+        document.getElementById('family-display').innerText = `FAMILIA: ${familyId}`;
+        onSnapshot(collection(db, "families", familyId, "inventory"), (snap) => {
             inventoryData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
             renderList();
         });
-
-        applyLang();
-        document.getElementById('footer-year').textContent = new Date().getFullYear();
     } else {
-        currentUser = null;
-        familyId    = null;
-        document.getElementById('auth-screen').style.display = '';
-        document.getElementById('app-screen').style.display  = 'none';
+        document.getElementById('auth-screen').classList.remove('hidden');
+        document.getElementById('main-app').classList.add('hidden');
     }
 });
 
-// ════════════════════════════════════════════════
-//  FAMILY SHARE PANEL
-// ════════════════════════════════════════════════
-window.showSharePanel = async function() {
-    const panel = document.getElementById('share-panel');
-    panel.style.display = panel.style.display === 'none' ? '' : 'none';
-    if (panel.style.display !== 'none') {
-        // Load members
-        const membersSnap = await getDocs(collection(db, "families", familyId, "members"));
-        const list = document.getElementById('family-members-list');
-        list.innerHTML = '';
-        membersSnap.forEach(m => {
-            const d = m.data();
-            const badge = document.createElement('div');
-            badge.className = 'user-badge';
-            badge.textContent = `👤 ${d.name || d.email}`;
-            list.appendChild(badge);
+// ================= RENDER & AISLES =================
+function renderList() {
+    const listDiv = document.getElementById("inventory-list");
+    listDiv.innerHTML = "";
+    
+    if (currentView === 'inventory') {
+        inventoryData.forEach(item => {
+            const card = document.createElement("div");
+            card.className = `card ${item.qty <= item.min ? 'status-low' : 'status-ok'}`;
+            card.innerHTML = `<b>${item.name}</b> [${item.qty}/${item.max}]<br><small>${item.category}</small>
+                <div class="grid-3" style="margin-top:10px">
+                    <button onclick="updateQty('${item.id}', 1)" style="background:var(--success)">+1</button>
+                    <button onclick="updateQty('${item.id}', -1)" style="background:var(--warning)">-1</button>
+                    <button onclick="deleteItem('${item.id}')" style="background:var(--danger)">X</button>
+                </div>`;
+            listDiv.appendChild(card);
+        });
+    } else {
+        const categories = [...new Set(inventoryData.filter(i => i.qty < i.max).map(i => i.category))];
+        categories.forEach(cat => {
+            const h = document.createElement("div");
+            h.className = "aisle-header"; h.innerText = `PASILLO: ${cat}`;
+            listDiv.appendChild(h);
+            inventoryData.filter(i => i.category === cat && i.qty < i.max).forEach(item => {
+                const card = document.createElement("div");
+                card.className = "card";
+                card.innerHTML = `<b>${item.name}</b> (Faltan: ${item.max - item.qty})
+                    <div style="margin-top:10px; display:flex; gap:10px;">
+                        <input type="number" id="buy_${item.id}" placeholder="Cant.">
+                        <button onclick="processPurchase('${item.id}')">OK</button>
+                    </div>`;
+                listDiv.appendChild(card);
+            });
         });
     }
-};
+}
 
-window.copyCode = function() {
-    const code = document.getElementById('family-code-display').textContent;
-    navigator.clipboard.writeText(code).then(() => {
-        Swal.fire({ title: currentLang === 'es' ? 'Copiado!' : 'Copied!', icon: 'success', timer: 900, showConfirmButton: false });
-    });
+window.updateQty = (id, v) => updateDoc(doc(db, "families", familyId, "inventory", id), { qty: increment(v) });
+window.deleteItem = (id) => deleteDoc(doc(db, "families", familyId, "inventory", id));
+window.processPurchase = (id) => {
+    const v = parseInt(document.getElementById(`buy_${id}`).value);
+    if (v > 0) updateDoc(doc(db, "families", familyId, "inventory", id), { qty: increment(v) });
 };
-
-window.shareCode = function() {
-    const code = document.getElementById('family-code-display').textContent;
-    const text = currentLang === 'es'
-        ? `Únete a nuestro inventario familiar Velastegui Pantry PRO con este código: ${code}`
-        : `Join our Velastegui Pantry PRO family inventory with this code: ${code}`;
-    if (navigator.share) {
-        navigator.share({ title: 'Pantry PRO Family Code', text });
-    } else {
-        navigator.clipboard.writeText(text);
-        Swal.fire({ title: currentLang === 'es' ? 'Texto copiado' : 'Text copied', icon: 'success', timer: 900, showConfirmButton: false });
-    }
+window.toggleView = (v) => {
+    currentView = v;
+    document.getElementById('nav-inv').className = v === 'inventory' ? 'active' : '';
+    document.getElementById('nav-shop').className = v === 'shopping' ? 'active' : '';
+    renderList();
 };
-
-// ════════════════════════════════════════════════
-//  UPC LOOKUP
-// ════════════════════════════════════════════════
-window.handleUPCChange = async function(code) {
-    if (!code || !familyId) return;
-    const docRef = doc(db, "families", familyId, "inventory", code);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-        fillForm(docSnap.data(), code);
-        Swal.fire({ title: currentLang === 'es' ? 'Localizado' : 'Found', text: currentLang === 'es' ? 'Datos cargados del inventario' : 'Data loaded from inventory', icon: 'success', timer: 900, showConfirmButton: false });
-    } else {
-        Swal.fire({ title: currentLang === 'es' ? 'Buscando online...' : 'Searching online...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-        try {
-            const res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${code}.json`);
-            const data = await res.json();
-            Swal.close();
-            if (data.status === 1) {
-                document.getElementById("product").value = data.product.product_name || data.product.generic_name || "";
-                Swal.fire({ title: currentLang === 'es' ? 'Encontrado Online' : 'Found Online', text: currentLang === 'es' ? 'Completa los detalles y guarda' : 'Fill details and save', icon: 'info', timer: 2000 });
-            } else {
-                Swal.fire(currentLang === 'es' ? 'No encontrado' : 'Not found', currentLang === 'es' ? 'Ingresa el nombre manualmente' : 'Enter name manually', 'warning');
-            }
-        } catch(e) { Swal.close(); }
-    }
-};
-
-// ════════════════════════════════════════════════
-//  SCANNER
-// ════════════════════════════════════════════════
-window.startScan = async function() {
-    const container = document.getElementById("video-container");
-    container.style.display = "block";
-    const { BrowserMultiFormatReader } = await import("https://cdn.jsdelivr.net/npm/@zxing/browser@latest/+esm");
-    const reader = new BrowserMultiFormatReader();
-    const video = document.createElement("video");
-    container.innerHTML = ""; container.appendChild(video);
-    const controls = await reader.decodeFromVideoDevice(undefined, video, (result) => {
-        if (result) {
-            document.getElementById("upc").value = result.text;
-            handleUPCChange(result.text);
-            controls.stop();
-            container.style.display = "none";
-        }
-    });
-};
-
-// ════════════════════════════════════════════════
-//  CRUD
-// ════════════════════════════════════════════════
-window.saveItem = async function() {
+window.saveItem = async () => {
     const upc = document.getElementById("upc").value;
-    const name = document.getElementById("product").value;
-    if (!upc || !name) return Swal.fire(currentLang === 'es' ? 'Error' : 'Error', currentLang === 'es' ? 'UPC y Nombre son obligatorios' : 'UPC and Name are required', 'error');
-
     await setDoc(doc(db, "families", familyId, "inventory", upc), {
-        name,
+        name: document.getElementById("product").value,
         category: document.getElementById("category").value,
         expiry: document.getElementById("expiry").value,
         qty: +document.getElementById("qty").value,
         min: +document.getElementById("min").value,
-        max: +document.getElementById("max").value,
-        updatedBy: currentUser.displayName || currentUser.email,
-        updatedAt: Date.now()
+        max: +document.getElementById("max").value
     }, { merge: true });
-
-    Swal.fire({ title: currentLang === 'es' ? 'Guardado ✓' : 'Saved ✓', icon: 'success', timer: 900, showConfirmButton: false });
-    resetForm();
 };
-
-function fillForm(data, upc) {
-    document.getElementById("upc").value      = upc;
-    document.getElementById("product").value  = data.name;
-    document.getElementById("category").value = data.category;
-    document.getElementById("expiry").value   = data.expiry || "";
-    document.getElementById("qty").value      = data.qty;
-    document.getElementById("min").value      = data.min;
-    document.getElementById("max").value      = data.max;
-}
-
-function resetForm() {
-    ['upc','product','qty','expiry'].forEach(id => document.getElementById(id).value = "");
-}
-
-// ════════════════════════════════════════════════
-//  RENDER
-// ════════════════════════════════════════════════
-function renderList() {
-    const listDiv = document.getElementById("inventory-list");
-    listDiv.innerHTML = "";
-    const today    = new Date();
-    const nextWeek = new Date(); nextWeek.setDate(today.getDate() + 7);
-
-    if (currentView === 'inventory') renderInventoryView(inventoryData, today, nextWeek);
-    else renderShoppingView(inventoryData, today, nextWeek);
-}
-
-function statusClass(item, today, nextWeek) {
-    const isExpired = item.expiry && new Date(item.expiry) <= today;
-    const isNear    = item.expiry && new Date(item.expiry) <= nextWeek;
-    if (isExpired || isNear) return "status-expired";
-    if (item.qty === 0)      return "status-critical";
-    if (item.qty <= item.min) return "status-low";
-    return "status-ok";
-}
-
-function renderInventoryView(data, today, nextWeek) {
-    const listDiv = document.getElementById("inventory-list");
-    const sorted = [...data].sort((a,b) => (a.expiry||'9999').localeCompare(b.expiry||'9999'));
-
-    if (sorted.length === 0) {
-        listDiv.innerHTML = `<div style="text-align:center; color:var(--muted); padding:40px 0; font-size:14px;">${currentLang === 'es' ? 'Inventario vacío. Agrega tu primer producto.' : 'Empty inventory. Add your first item.'}</div>`;
-        return;
-    }
-
-    sorted.forEach(item => {
-        const cls = statusClass(item, today, nextWeek);
-        const card = document.createElement("div");
-        card.className = `card item-card ${cls}`;
-        card.innerHTML = `
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                <b style="font-size:15px;">${item.name}</b>
-                <span class="qty-badge">${item.qty} <span style="color:var(--muted); font-weight:400;">/ ${item.max}</span></span>
-            </div>
-            <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px;">
-                <span style="font-size:11px; background:#f1f5f9; padding:3px 8px; border-radius:5px; color:var(--muted); font-weight:600;">${item.category}</span>
-                <span style="font-size:11px; color:var(--muted);">📅 ${item.expiry || (currentLang==='es'?'Sin fecha':'No date')}</span>
-                ${item.updatedBy ? `<span style="font-size:10px; color:var(--muted);">✏️ ${item.updatedBy}</span>` : ''}
-            </div>
-            <div class="grid-3">
-                <button class="btn btn-success" onclick="updateQty('${item.id}', 1)" style="padding:9px;">+1</button>
-                <button class="btn btn-warning" onclick="updateQty('${item.id}', -1)" style="padding:9px;">-1</button>
-                <button class="btn btn-danger"  onclick="deleteItem('${item.id}')" style="padding:9px;">✕</button>
-            </div>
-        `;
-        listDiv.appendChild(card);
-    });
-}
-
-function renderShoppingView(data, today, nextWeek) {
-    const listDiv = document.getElementById("inventory-list");
-
-    const prioritarios = data.filter(item => item.expiry && new Date(item.expiry) <= nextWeek);
-    const bajoStock    = data.filter(item => item.qty <= item.min && !(item.expiry && new Date(item.expiry) <= nextWeek));
-    const opcionales   = data.filter(item => item.qty > item.min && item.qty < item.max && !(item.expiry && new Date(item.expiry) <= nextWeek));
-
-    const sections = [
-        { title: currentLang==='es' ? "🚨 PRIORIDAD: CADUCIDAD" : "🚨 PRIORITY: EXPIRING", items: prioritarios, color: "#8b5cf6" },
-        { title: currentLang==='es' ? "⚠️ BAJO STOCK"           : "⚠️ LOW STOCK",            items: bajoStock,    color: "#f59e0b" },
-        { title: currentLang==='es' ? "🔵 COMPLETAR MÁXIMOS"    : "🔵 RESTOCK TO MAX",        items: opcionales,   color: "#3b82f6" }
-    ];
-
-    let hasAny = false;
-    sections.forEach(sec => {
-        if (sec.items.length === 0) return;
-        hasAny = true;
-        const h = document.createElement("div");
-        h.className = "section-title";
-        h.style.color = sec.color; h.style.borderColor = sec.color;
-        h.innerText = sec.title;
-        listDiv.appendChild(h);
-
-        sec.items.forEach(item => {
-            const card = document.createElement("div");
-            card.className = "card";
-            card.style.borderLeftColor = sec.color;
-            card.innerHTML = `
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                    <b>${item.name}</b>
-                    <small style="color:var(--muted);">${currentLang==='es'?'Faltan':'Need'}: <b style="color:${sec.color}">${item.max - item.qty}</b></small>
-                </div>
-                <div style="display:flex; gap:8px;">
-                    <input type="number" id="buy_${item.id}" placeholder="${currentLang==='es'?'Cantidad':'Qty'}" style="flex:1;">
-                    <button class="btn" onclick="processPurchase('${item.id}', ${item.qty}, ${item.max})" style="background:${sec.color}; color:white; flex:1; margin:0; padding:11px;">${currentLang==='es'?'INGRESAR':'ADD'}</button>
-                </div>
-            `;
-            listDiv.appendChild(card);
-        });
-    });
-
-    if (!hasAny) {
-        listDiv.innerHTML = `<div style="text-align:center; color:var(--muted); padding:40px 0; font-size:14px;">🎉 ${currentLang==='es'?'¡Todo en orden! No hay compras pendientes.':'Everything is stocked! No purchases needed.'}</div>`;
-    }
-}
-
-// ════════════════════════════════════════════════
-//  ACTIONS
-// ════════════════════════════════════════════════
-window.updateQty = async function(id, val) {
-    const docRef = doc(db, "families", familyId, "inventory", id);
-    const snap = await getDoc(docRef);
-    if (snap.exists() && snap.data().qty + val < 0) return;
-    await updateDoc(docRef, { qty: increment(val), updatedBy: currentUser.displayName || currentUser.email, updatedAt: Date.now() });
-};
-
-window.deleteItem = async function(id) {
-    const res = await Swal.fire({ title: currentLang==='es'?'¿Borrar?':'Delete?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444' });
-    if (res.isConfirmed) await deleteDoc(doc(db, "families", familyId, "inventory", id));
-};
-
-window.processPurchase = async function(id, current, max) {
-    const val = parseInt(document.getElementById(`buy_${id}`).value);
-    if (isNaN(val) || val <= 0) return;
-
-    if (current + val > max) {
-        const res = await Swal.fire({
-            title: currentLang==='es'?'Exceso de Stock':'Over Stock',
-            text: `${currentLang==='es'?'Stock final':'Final stock'} (${current + val}) ${currentLang==='es'?'supera el máximo':'exceeds maximum'} (${max}). ${currentLang==='es'?'¿Continuar?':'Continue?'}`,
-            icon: 'warning', showCancelButton: true
-        });
-        if (!res.isConfirmed) return;
-    }
-
-    await updateDoc(doc(db, "families", familyId, "inventory", id), { qty: increment(val), updatedBy: currentUser.displayName || currentUser.email, updatedAt: Date.now() });
-    Swal.fire({ title: currentLang==='es'?'Actualizado ✓':'Updated ✓', icon: 'success', timer: 800, showConfirmButton: false });
-};
-
-window.toggleView = (view) => {
-    currentView = view;
-    document.getElementById('nav-inv').className  = view === 'inventory' ? 'active' : '';
-    document.getElementById('nav-shop').className = view === 'shopping'  ? 'active' : '';
-    document.getElementById('list-title').dataset.es = view === 'inventory' ? '📦 Inventario en Mano' : '🛒 Lista de Compras';
-    document.getElementById('list-title').dataset.en = view === 'inventory' ? '📦 Current Inventory'  : '🛒 Shopping List';
-    document.getElementById('list-title').textContent = view === 'inventory'
-        ? (currentLang==='es'?'📦 Inventario en Mano':'📦 Current Inventory')
-        : (currentLang==='es'?'🛒 Lista de Compras':'🛒 Shopping List');
-    renderList();
-};
-
-// Apply lang on load
-applyLang();
 </script>
 </body>
 </html>
