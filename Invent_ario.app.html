@@ -3,85 +3,106 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-    <title>Family Pantry Gold PRO</title>
+    <title>Velastegui Pantry Gold PRO</title>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-        :root { --primary: #2c3e50; --accent: #3498db; --danger: #e74c3c; --success: #27ae60; --bg: #f4f7f6; }
-        body { margin:0; font-family: sans-serif; background: var(--bg); padding-bottom: 80px; }
-        header { background: var(--primary); color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
-        .container { padding: 15px; max-width: 800px; margin: auto; }
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        .grid-form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        :root { 
+            --primary: #2c3e50; --accent: #3498db; --danger: #e74c3c; 
+            --warning: #f39c12; --success: #27ae60; --expired: #9b59b6;
+            --bg: #f4f7f6; --text: #333; 
+        }
+        body { margin:0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding-bottom: 90px; }
+        header { 
+            background: var(--primary); color: white; padding: 15px; 
+            text-align: center; font-weight: bold; position: sticky; top: 0; z-index: 1000;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .container { padding: 15px; max-width: 700px; margin: auto; }
+        .card { background: white; padding: 18px; margin-bottom: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border-left: 6px solid #ddd; }
+        
+        #auth-screen { position: fixed; inset: 0; background: var(--primary); z-index: 5000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .auth-card { background: white; padding: 25px; border-radius: 12px; width: 100%; max-width: 350px; }
+        .auth-card input { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px; }
+        .google-btn { background: #db4437; color: white; margin-top: 10px; }
+
+        .status-ok { border-left-color: var(--success); }
+        .status-low { border-left-color: var(--warning); }
+        
         input, select, button { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; font-size: 16px; box-sizing: border-box; }
-        button { cursor: pointer; font-weight: bold; color: white; border: none; }
-        .btn-chef { background: #6c5ce7; }
-        .btn-scan { background: #8e44ad; margin-bottom: 15px; }
-        .btn-save { background: var(--success); margin-top: 15px; }
-        .btn-nav { flex: 1; padding: 20px; background: white; color: #95a5a6; border-top: 3px solid transparent; }
-        .btn-nav.active { color: var(--accent); border-top: 3px solid var(--accent); }
-        nav { position: fixed; bottom: 0; width: 100%; display: flex; background: white; border-top: 1px solid #ddd; }
-        #video-container { width: 100%; display: none; background: #000; border-radius: 12px; overflow: hidden; margin-bottom: 10px; }
-        video { width: 100%; }
-        .item-row { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; }
+        button { background: var(--accent); color: white; border: none; font-weight: bold; cursor: pointer; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+        
+        nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; border-top: 1px solid #ddd; z-index: 2000; }
+        nav div { flex: 1; text-align: center; padding: 18px; font-weight: bold; color: #95a5a6; cursor: pointer; }
+        nav div.active { color: var(--accent); border-top: 4px solid var(--accent); }
+        .aisle-header { background: #eee; padding: 5px 10px; border-radius: 5px; font-size: 12px; font-weight: bold; margin: 15px 0 5px 0; color: var(--primary); }
+        .hidden { display: none !important; }
+
+        /* Estilo para el botón de Chef IA */
+        .btn-chef { background: #6c5ce7; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; gap: 10px; }
     </style>
 </head>
 <body>
 
-<header>
-    <div><strong>VELASTEGUI PANTRY</strong><br><small id="user-email">...</small></div>
-    <button onclick="doLogout()" style="width:auto; background:rgba(255,255,255,0.2); padding:5px 15px;">SALIR</button>
-</header>
-
-<div class="container">
-    <!-- Botones Superiores -->
-    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px;">
-        <button class="btn-chef" onclick="sugerenciaChefIA()">👨‍🍳 CHEF IA</button>
-        <button style="background: #00b894;">🔍 RECETAS</button>
-        <button style="background: #f39c12;">📊 ANALISIS</button>
-    </div>
-
-    <!-- Formulario Principal -->
-    <div id="view-add" class="card">
-        <button class="btn-scan" onclick="startScan()">📷 ESCANEAR CÓDIGO</button>
-        <div id="video-container"></div>
-
-        <label><small>UPC / PRODUCTO</small></label>
-        <input id="upc" type="text" placeholder="Código de barras" onchange="handleUPCChange(this.value)" style="margin-bottom:10px;">
-        <input id="product" type="text" placeholder="Nombre del producto">
-
-        <div class="grid-form">
-            <select id="category">
-                <option>PANTRY</option>
-                <option>MEAT</option>
-                <option>DAIRY</option>
-                <option>FROZEN</option>
-                <option>CLEANING</option>
-            </select>
-            <input id="expiry" type="date">
+<div id="auth-screen">
+    <div class="auth-card">
+        <h3 style="text-align:center">PANTRY LOGIN</h3>
+        <div id="auth-fields">
+            <input id="user-name" type="text" placeholder="Tu Nombre">
+            <input id="email" type="email" placeholder="Email">
+            <input id="pass" type="password" placeholder="Password">
+            <input id="family-code" type="text" placeholder="Código Familiar">
+            <button onclick="handleAuth('login')">ENTRAR</button>
+            <button onclick="handleAuth('register')" style="background:none; color:var(--accent); margin-top:5px;">REGISTRARSE</button>
+            <hr>
+            <button class="google-btn" onclick="loginGoogle()">CONTINUAR CON GOOGLE</button>
         </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 10px;">
-            <div><label><small>CANT</small></label><input id="qty" type="number" value="0"></div>
-            <div><label><small>MIN</small></label><input id="min" type="number" value="1"></div>
-            <div><label><small>MAX</small></label><input id="max" type="number" value="10"></div>
-        </div>
-
-        <button class="btn-save" onclick="saveItem()">GUARDAR</button>
     </div>
-
-    <h3 id="list-title">Inventario</h3>
-    <div id="inventory-list"></div>
 </div>
 
-<nav>
-    <button id="nav-inv" class="btn-nav active" onclick="toggleView('inventory')">📦 STOCK</button>
-    <button id="nav-shop" class="btn-nav" onclick="toggleView('shopping')">🛒 COMPRAS</button>
-</nav>
+<div id="main-app" class="hidden">
+    <header>
+        <button onclick="logout()" style="width:auto; padding:5px; background:transparent; font-size:18px">⎋</button>
+        <div id="family-display">CARGANDO...</div>
+        <div style="width:30px"></div>
+    </header>
+
+    <div class="container">
+        <!-- BOTÓN CHEF IA INTEGRADO -->
+        <button class="btn-chef" onclick="sugerenciaChefIA()">👨‍🍳 PREGUNTAR AL CHEF IA</button>
+
+        <div id="view-add" class="card">
+            <button onclick="startScan()" style="background:#8e44ad; margin-bottom:15px;">📷 ESCANEAR</button>
+            <div id="video-container"></div>
+            <input id="upc" type="text" placeholder="UPC" onchange="handleUPCChange(this.value)" style="margin-bottom:10px">
+            <input id="product" type="text" placeholder="Nombre Producto" style="margin-bottom:10px">
+            <div class="grid-3">
+                <select id="category">
+                    <option>PANTRY</option><option>FRIDGE</option><option>FREEZER</option>
+                    <option>CLEANING</option><option>BREAD</option><option>DRINKS</option>
+                </select>
+                <input id="expiry" type="date">
+                <input id="qty" type="number" placeholder="Cant.">
+            </div>
+            <div class="grid-3" style="margin-top:10px">
+                <input id="min" type="number" placeholder="Min">
+                <input id="max" type="number" placeholder="Max">
+                <button onclick="saveItem()" style="background:var(--success)">GUARDAR</button>
+            </div>
+        </div>
+        <div id="inventory-list"></div>
+    </div>
+
+    <nav>
+        <div onclick="toggleView('inventory')" id="nav-inv" class="active">📦 STOCK</div>
+        <div onclick="toggleView('shopping')" id="nav-shop">🛒 COMPRAS</div>
+    </nav>
+</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
-import { getFirestore, collection, doc, setDoc, updateDoc, deleteDoc, onSnapshot, getDoc, increment } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
-import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+import { getFirestore, collection, doc, setDoc, updateDoc, deleteDoc, increment, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
 import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
 
 const firebaseConfig = {
@@ -96,123 +117,147 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
+
+// Configuración de Gemini IA
 const genAI = new GoogleGenerativeAI("AIzaSyCxMRqavNSSeRNfVk7UayR-llE_71R4NNI");
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-let inventoryData = [];
 let familyId = null;
 let currentView = 'inventory';
+let inventoryData = [];
+
+// ================= AUTH (INTEGRO) =================
+window.handleAuth = async (type) => {
+    const email = document.getElementById('email').value;
+    const pass = document.getElementById('pass').value;
+    const name = document.getElementById('user-name').value;
+    const fCode = document.getElementById('family-code').value.trim().toUpperCase();
+    try {
+        if (type === 'login') { await signInWithEmailAndPassword(auth, email, pass); } 
+        else {
+            const res = await createUserWithEmailAndPassword(auth, email, pass);
+            await updateProfile(res.user, { displayName: name });
+            const finalFid = fCode || Math.random().toString(36).substring(7).toUpperCase();
+            await setDoc(doc(db, "users", res.user.uid), { familyId: finalFid });
+        }
+    } catch (e) { Swal.fire('Error', e.message, 'error'); }
+};
+
+window.loginGoogle = async () => {
+    try {
+        const res = await signInWithPopup(auth, provider);
+        const uDoc = await getDoc(doc(db, "users", res.user.uid));
+        if (!uDoc.exists()) {
+            const finalFid = Math.random().toString(36).substring(7).toUpperCase();
+            await setDoc(doc(db, "users", res.user.uid), { familyId: finalFid });
+        }
+    } catch (e) { console.error(e); }
+};
+
+window.logout = () => signOut(auth);
 
 onAuthStateChanged(auth, async (user) => {
     if (user) {
-        document.getElementById('user-email').innerText = user.email;
-        // Obtenemos el familyId del perfil del usuario
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-        familyId = userDoc.exists() ? userDoc.data().familyId : "DEFAULT";
-        
+        const uDoc = await getDoc(doc(db, "users", user.uid));
+        familyId = uDoc.data()?.familyId;
+        document.getElementById('auth-screen').classList.add('hidden');
+        document.getElementById('main-app').classList.remove('hidden');
+        document.getElementById('family-display').innerText = `FAMILIA: ${familyId}`;
         onSnapshot(collection(db, "families", familyId, "inventory"), (snap) => {
             inventoryData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
             renderList();
         });
     } else {
-        window.location.href = "login.html"; // Redirigir si no hay sesión
+        document.getElementById('auth-screen').classList.remove('hidden');
+        document.getElementById('main-app').classList.add('hidden');
     }
 });
 
-window.saveItem = async () => {
-    const upc = document.getElementById("upc").value;
-    const name = document.getElementById("product").value;
-    if (!upc || !name) return Swal.fire("Error", "Faltan datos", "error");
+// ================= LÓGICA CHEF IA =================
+window.sugerenciaChefIA = async () => {
+    const disponibles = inventoryData.filter(i => i.qty > 0).map(i => i.name).join(", ");
+    if (!disponibles) return Swal.fire("Inventario Vacío", "No tienes productos suficientes para cocinar.", "info");
 
-    await setDoc(doc(db, "families", familyId, "inventory", upc), {
-        name,
-        category: document.getElementById("category").value,
-        expiry: document.getElementById("expiry").value,
-        qty: Number(document.getElementById("qty").value),
-        min: Number(document.getElementById("min").value),
-        max: Number(document.getElementById("max").value),
-        updatedAt: Date.now()
-    }, { merge: true });
-    
-    Swal.fire("Guardado", "", "success");
-    resetForm();
+    Swal.fire({ title: 'Pensando receta...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+    try {
+        const prompt = `Tengo estos ingredientes en mi despensa: ${disponibles}. Sugiere una receta rápida y bilingüe (Nombre en español e inglés). Solo responde la receta de forma concisa.`;
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        Swal.fire({
+            title: '👨‍🍳 Sugerencia del Chef',
+            html: `<div style="text-align:left; font-size:14px;">${response.text().replace(/\n/g, '<br>')}</div>`,
+            confirmButtonText: '¡Gracias!'
+        });
+    } catch (error) {
+        Swal.fire("Error", "No pude conectar con el Chef IA.", "error");
+    }
 };
 
-window.toggleView = (view) => {
-    currentView = view;
-    document.getElementById('nav-inv').classList.toggle('active', view === 'inventory');
-    document.getElementById('nav-shop').classList.toggle('active', view === 'shopping');
-    document.getElementById('list-title').innerText = view === 'inventory' ? "Inventario" : "Lista de Compras";
-    renderList();
-};
-
+// ================= RENDER & ACCIONES (INTEGRO) =================
 function renderList() {
-    const list = document.getElementById("inventory-list");
-    list.innerHTML = "";
+    const listDiv = document.getElementById("inventory-list");
+    listDiv.innerHTML = "";
     
     if (currentView === 'inventory') {
         inventoryData.forEach(item => {
-            const div = document.createElement("div");
-            div.className = "card item-row";
-            div.innerHTML = `
-                <div><strong>${item.name}</strong><br><small>${item.qty} de ${item.max}</small></div>
-                <div style="display:flex; gap:5px;">
-                    <button onclick="updateQty('${item.id}', 1)" style="background:var(--success); width:40px;">+</button>
-                    <button onclick="updateQty('${item.id}', -1)" style="background:var(--danger); width:40px;">-</button>
-                </div>
-            `;
-            list.appendChild(div);
+            const card = document.createElement("div");
+            card.className = `card ${item.qty <= item.min ? 'status-low' : 'status-ok'}`;
+            card.innerHTML = `<b>${item.name}</b> [${item.qty}/${item.max}]<br><small>${item.category}</small>
+                <div class="grid-3" style="margin-top:10px">
+                    <button onclick="updateQty('${item.id}', 1)" style="background:var(--success)">+1</button>
+                    <button onclick="updateQty('${item.id}', -1)" style="background:var(--warning)">-1</button>
+                    <button onclick="deleteItem('${item.id}')" style="background:var(--danger)">X</button>
+                </div>`;
+            listDiv.appendChild(card);
         });
     } else {
-        const faltantes = inventoryData.filter(i => i.qty <= i.min);
-        faltantes.forEach(item => {
-            const div = document.createElement("div");
-            div.className = "card item-row";
-            div.style.borderLeft = "5px solid var(--danger)";
-            div.innerHTML = `
-                <div><strong>${item.name}</strong><br><small>Faltan: ${item.max - item.qty}</small></div>
-                <button onclick="updateQty('${item.id}', ${item.max - item.qty})" style="background:var(--accent); width:auto;">COMPRADO</button>
-            `;
-            list.appendChild(div);
+        const categories = [...new Set(inventoryData.filter(i => i.qty < i.max).map(i => i.category))];
+        categories.forEach(cat => {
+            const h = document.createElement("div");
+            h.className = "aisle-header"; h.innerText = `PASILLO: ${cat}`;
+            listDiv.appendChild(h);
+            inventoryData.filter(i => i.category === cat && i.qty < i.max).forEach(item => {
+                const card = document.createElement("div");
+                card.className = "card";
+                card.innerHTML = `<b>${item.name}</b> (Faltan: ${item.max - item.qty})
+                    <div style="margin-top:10px; display:flex; gap:10px;">
+                        <input type="number" id="buy_${item.id}" placeholder="Cant.">
+                        <button onclick="processPurchase('${item.id}')">OK</button>
+                    </div>`;
+                listDiv.appendChild(card);
+            });
         });
     }
 }
 
-window.updateQty = async (id, val) => {
-    await updateDoc(doc(db, "families", familyId, "inventory", id), { qty: increment(val) });
+window.updateQty = (id, v) => updateDoc(doc(db, "families", familyId, "inventory", id), { qty: increment(v) });
+window.deleteItem = (id) => deleteDoc(doc(db, "families", familyId, "inventory", id));
+window.processPurchase = (id) => {
+    const el = document.getElementById(`buy_${id}`);
+    const v = parseInt(el.value);
+    if (v > 0) updateDoc(doc(db, "families", familyId, "inventory", id), { qty: increment(v) });
 };
-
-window.sugerenciaChefIA = async () => {
-    const ingredientes = inventoryData.filter(i => i.qty > 0).map(i => i.name).join(", ");
-    if (!ingredientes) return Swal.fire("Vacio", "No hay ingredientes", "info");
-    
-    Swal.fire({ title: "Cocinando...", didOpen: () => Swal.showLoading() });
-    const result = await model.generateContent("Dame una receta rápida con: " + ingredientes);
-    Swal.fire("Sugerencia del Chef", result.response.text(), "info");
+window.toggleView = (v) => {
+    currentView = v;
+    document.getElementById('nav-inv').className = v === 'inventory' ? 'active' : '';
+    document.getElementById('nav-shop').className = v === 'shopping' ? 'active' : '';
+    renderList();
 };
-
-window.startScan = async () => {
-    const container = document.getElementById("video-container");
-    container.style.display = "block";
-    const { BrowserMultiFormatReader } = await import("https://cdn.jsdelivr.net/npm/@zxing/browser@latest/+esm");
-    const reader = new BrowserMultiFormatReader();
-    const video = document.createElement("video");
-    container.innerHTML = ""; container.appendChild(video);
-    
-    const controls = await reader.decodeFromVideoDevice(undefined, video, (res) => {
-        if (res) {
-            document.getElementById("upc").value = res.text;
-            controls.stop(); container.style.display = "none";
-            handleUPCChange(res.text);
-        }
-    });
+window.saveItem = async () => {
+    const upc = document.getElementById("upc").value;
+    if(!upc) return Swal.fire("Error", "Falta UPC", "error");
+    await setDoc(doc(db, "families", familyId, "inventory", upc), {
+        name: document.getElementById("product").value,
+        category: document.getElementById("category").value,
+        expiry: document.getElementById("expiry").value,
+        qty: +document.getElementById("qty").value || 0,
+        min: +document.getElementById("min").value || 0,
+        max: +document.getElementById("max").value || 0
+    }, { merge: true });
+    Swal.fire("Guardado", "", "success");
 };
-
-function resetForm() {
-    ["upc", "product", "qty", "expiry"].forEach(id => document.getElementById(id).value = "");
-}
-
-window.doLogout = () => signOut(auth);
 </script>
 </body>
 </html>
