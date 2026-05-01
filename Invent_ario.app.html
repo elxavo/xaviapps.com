@@ -172,6 +172,26 @@
     });
 
     window.doLogin = () => signInWithEmailAndPassword(auth, document.getElementById('auth-email').value, document.getElementById('auth-pass').value);
+
+window.doGoogleLogin = async () => {
+    const provider = new GoogleAuthProvider();
+    showLoading("Conectando con Google...");
+    try {
+        const result = await signInWithPopup(auth, provider);
+        const user = result.user;
+        const userRef = doc(db, "users", user.uid);
+        const uDoc = await getDoc(userRef);
+        
+        if (!uDoc.exists()) {
+            const familyId = "FAM-" + Math.random().toString(36).substr(2,5).toUpperCase();
+            await setDoc(userRef, { name: user.displayName, email: user.email, familyId: familyId });
+        }
+        // El onAuthStateChanged se encargará de mostrar la app automáticamente
+    } catch (e) {
+        hideLoading();
+        Swal.fire("Error", "No se pudo iniciar sesión con Google", "error");
+    }
+};
     window.doLogout = () => signOut(auth);
 
     // --- IA FUNCTIONS ---
