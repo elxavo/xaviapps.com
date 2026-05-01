@@ -1,1 +1,753 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+    <title>Velastegui Pantry Gold PRO</title>
+    
+    <!-- Librerías Externas -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <style>
+        :root { 
+            --primary: #2c3e50; 
+            --accent: #3498db; 
+            --danger: #e74c3c; 
+            --warning: #f39c12; 
+            --success: #27ae60; 
+            --expired: #9b59b6;
+            --bg: #f4f7f6; 
+            --text: #333; 
+        }
 
+        body { 
+            margin:0; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: var(--bg); 
+            color: var(--text); 
+            padding-bottom: 90px; 
+        }
+        
+        header { 
+            background: var(--primary); 
+            color: white; 
+            padding: 15px; 
+            text-align: center; 
+            font-weight: bold; 
+            font-size: 1.2em; 
+            position: sticky; 
+            top: 0; 
+            z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* ── ADDED: lang toggle + share btn in header ── */
+        .header-center { flex: 1; text-align: center; }
+        .header-btn {
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.25);
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            padding: 5px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .header-btn:active { transform: scale(0.95); }
+        
+        .container { padding: 15px; max-width: 700px; margin: auto; }
+        
+        /* Cards */
+        .card { 
+            background: white; 
+            padding: 18px; 
+            margin-bottom: 15px; 
+            border-radius: 12px; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06); 
+            border-left: 6px solid #ddd;
+        }
+
+        /* Estados Visuales */
+        .status-ok { border-left-color: var(--success); }
+        .status-low { border-left-color: var(--warning); }
+        .status-critical { border-left-color: var(--danger); }
+        .status-expired { border-left-color: var(--expired); animation: blink 1.5s infinite; }
+
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
+
+        /* Formulario */
+        .form-group { margin-bottom: 12px; }
+        label { display: block; font-size: 11px; font-weight: bold; color: #777; margin-bottom: 4px; text-transform: uppercase; }
+        input, select, button { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; font-size: 16px; }
+        input:focus { border-color: var(--accent); outline: none; }
+        
+        button { background: var(--accent); color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        button:active { transform: scale(0.96); }
+        
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+        
+        /* Navegación */
+        nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; border-top: 1px solid #ddd; z-index: 2000; }
+        nav div { flex: 1; text-align: center; padding: 18px; font-weight: bold; color: #95a5a6; cursor: pointer; }
+        nav div.active { color: var(--accent); border-top: 4px solid var(--accent); background: #f9f9f9; }
+
+        #video-container { width: 100%; display: none; background: #000; border-radius: 12px; margin-bottom: 15px; overflow: hidden; }
+        video { width: 100%; height: auto; }
+
+        /* Secciones de Compra */
+        .section-title { margin-top: 25px; padding-bottom: 5px; font-size: 14px; font-weight: bold; border-bottom: 2px solid; }
+
+        /* ── ADDED: Auth screen ── */
+        #auth-screen {
+            position: fixed; inset: 0;
+            background: var(--primary);
+            z-index: 9000;
+            display: flex; align-items: center; justify-content: center;
+            padding: 20px;
+        }
+        .auth-box {
+            background: white; border-radius: 14px; padding: 28px 22px;
+            width: 100%; max-width: 360px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+        }
+        .auth-box h2 { text-align:center; margin:0 0 20px; color: var(--primary); font-size:18px; }
+        .auth-box input {
+            width:100%; padding:12px; border-radius:8px; border:1px solid #ddd;
+            box-sizing:border-box; font-size:15px; margin-bottom:10px;
+        }
+        .auth-box button { margin-bottom: 8px; }
+        .auth-google {
+            background: #db4437 !important;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .auth-error { color: #e74c3c; font-size: 12px; text-align:center; min-height:16px; margin-top:4px; }
+        .auth-link { background: none !important; color: var(--accent) !important; border: 1px solid var(--accent) !important; margin-top:4px; }
+
+        /* ── ADDED: Share panel ── */
+        #share-panel {
+            background: var(--primary); color: white;
+            border-radius: 12px; padding: 18px; margin-bottom: 15px;
+            display: none;
+        }
+        #share-panel h3 { margin: 0 0 6px; font-size: 15px; }
+        #share-panel p  { margin: 0 0 14px; font-size: 12px; opacity: 0.6; }
+        .family-code-box {
+            font-size: 26px; font-weight: bold; letter-spacing: 6px;
+            text-align: center; background: rgba(255,255,255,0.1);
+            border-radius: 8px; padding: 12px; margin-bottom: 12px;
+            color: #3498db;
+        }
+        .share-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .share-btns button { font-size: 13px; padding: 10px; }
+
+        /* ── ADDED: Footer ── */
+        footer {
+            text-align: center;
+            padding: 16px 10px 100px;
+            font-size: 12px;
+            color: #999;
+        }
+        footer a { color: var(--accent); text-decoration: none; font-weight: bold; }
+
+        /* ── ADDED: Loading dots ── */
+        #loading-screen {
+            position: fixed; inset: 0;
+            background: var(--primary); z-index: 9999;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            color: white; gap: 16px;
+            transition: opacity 0.35s;
+        }
+        #loading-screen.fade { opacity: 0; pointer-events: none; }
+        .ld { display:flex; gap:8px; }
+        .ld span {
+            width:10px; height:10px; border-radius:50%;
+            background: rgba(52,152,219,0.4);
+            animation: lda 1.2s ease-in-out infinite;
+        }
+        .ld span:nth-child(2){animation-delay:.2s} .ld span:nth-child(3){animation-delay:.4s}
+        @keyframes lda {
+            0%,80%,100%{ transform:scale(0.7); background:rgba(52,152,219,0.3); }
+            40%{ transform:scale(1.3); background:#3498db; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ── LOADING ── -->
+<div id="loading-screen">
+    <div style="font-size:20px; font-weight:bold;">VELASTEGUI PANTRY PRO</div>
+    <div style="font-size:13px; opacity:0.5;" id="loading-msg">Verificando sesión...</div>
+    <div class="ld"><span></span><span></span><span></span></div>
+</div>
+
+<!-- ── AUTH ── -->
+<div id="auth-screen" style="display:none;">
+    <div class="auth-box">
+        <h2>PANTRY PRO</h2>
+        <input id="auth-name"  type="text"     placeholder="Tu nombre (solo registro)" />
+        <input id="auth-email" type="email"    placeholder="Email" />
+        <input id="auth-pass"  type="password" placeholder="Contraseña" />
+        <input id="auth-code"  type="text"     placeholder="Código familiar (opcional)" style="text-transform:uppercase; letter-spacing:3px;" />
+        <button onclick="doLogin()">ENTRAR</button>
+        <button class="auth-link" onclick="doRegister()">REGISTRARSE</button>
+        <hr style="margin:10px 0;">
+        <button class="auth-google" onclick="doGoogle()">
+            <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#fff" d="M44.5 20H24v8h11.7C34.2 33.6 29.6 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 6 1.1 8.2 3l5.7-5.7C34.6 5.1 29.6 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21c10.9 0 20-7.9 20-21 0-1.3-.2-2.7-.5-4z"/></svg>
+            CONTINUAR CON GOOGLE
+        </button>
+        <div class="auth-error" id="auth-err"></div>
+    </div>
+</div>
+
+<!-- ── MAIN APP (unchanged structure) ── -->
+<div id="main-app" style="display:none;">
+
+    <header>
+        <button class="header-btn" onclick="toggleLang()" id="lang-btn"><script>document.write(localStorage.getItem("vp-lang")==="en"?"ES":"EN")</script></button>
+        <div class="header-center">VELASTEGUI PANTRY PRO</div>
+        <button class="header-btn" onclick="doLogout()" title="Logout" style="background:rgba(231,76,60,0.5);">⎋ OUT</button>
+    </header>
+
+    <div class="container">
+
+        <!-- ── ADDED: Share panel ── -->
+        <div id="share-panel">
+            <h3 id="t-share-title">👨‍👩‍👧‍👦 Compartir con Familia</h3>
+            <p id="t-share-sub">Comparte este código para que tu familia acceda al mismo inventario</p>
+            <div class="family-code-box" id="family-code-display">------</div>
+            <div class="share-btns">
+                <button onclick="copyFamilyCode()" style="background:var(--accent);" id="t-copy-btn">📋 COPIAR</button>
+                <button onclick="shareFamilyCode()" style="background:var(--success);" id="t-share-btn">📤 ENVIAR</button>
+            </div>
+        </div>
+
+        <!-- SECCIÓN DE ENTRADA — UNCHANGED -->
+        <div id="view-add" class="card">
+            <button onclick="startScan()" style="background:#8e44ad; margin-bottom:15px;" id="t-scan-btn">📷 ESCANEAR CÓDIGO</button>
+            <div id="video-container"></div>
+
+            <div class="form-group">
+                <label id="t-upc-label">Código UPC / Barcode</label>
+                <input id="upc" type="text" placeholder="Escriba o escanee..." onchange="handleUPCChange(this.value)" />
+            </div>
+
+            <div class="form-group">
+                <label id="t-name-label">Nombre del Producto</label>
+                <input id="product" type="text" placeholder="Ej. Arroz Integral 1kg" />
+            </div>
+
+            <div class="grid-3">
+                <div class="form-group">
+                    <label id="t-cat-label">Categoría</label>
+                    <select id="category">
+                        <option>01_PRODUCE</option>
+                        <option>02_BAKERY</option>
+                        <option>03_MEAT_DELI</option>
+                        <option>04_PANTRY_DRY</option>
+                        <option>05_FROZEN</option>
+                        <option>06_DAIRY</option>
+                        <option>07_CLEANING_OTHERS</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label id="t-exp-label">Vencimiento</label>
+                    <input id="expiry" type="date" />
+                </div>
+                <div class="form-group">
+                    <label id="t-qty-label">Stock Actual</label>
+                    <input id="qty" type="number" value="0" />
+                </div>
+            </div>
+
+            <div class="grid-3">
+                <div class="form-group">
+                    <label id="t-min-label">Mínimo</label>
+                    <input id="min" type="number" value="1" />
+                </div>
+                <div class="form-group">
+                    <label id="t-max-label">Máximo</label>
+                    <input id="max" type="number" value="10" />
+                </div>
+                <div class="form-group" style="display:flex; align-items:flex-end;">
+                    <button onclick="saveItem()" style="background:var(--success); height:45px; margin:0;" id="t-save-btn">GUARDAR</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- LISTADO DINÁMICO — UNCHANGED -->
+        <h3 id="list-title" style="margin-bottom:10px;">Inventario en Mano</h3>
+        <div id="inventory-list"></div>
+    </div>
+
+    <!-- ── ADDED: Footer ── -->
+    <footer>
+        &copy; <span id="footer-yr"></span> <strong>Xavier Velastegui</strong> &mdash;
+        <a href="https://xaviapps.com" target="_blank">xaviapps.com</a>
+    </footer>
+
+</div><!-- end #main-app -->
+
+<!-- NAV — UNCHANGED -->
+<nav>
+    <div onclick="toggleView('inventory')" id="nav-inv" class="active" id="t-nav-inv">📦 INVENTARIO</div>
+    <div onclick="toggleView('shopping')" id="nav-shop" id="t-nav-shop">🛒 COMPRAS</div>
+</nav>
+
+<script type="module">
+// ================= FIREBASE CONFIG =================
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+import { getFirestore, collection, doc, setDoc, updateDoc, deleteDoc, increment, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyD8dsAejvIEFDxu_Z2YZCtMnAkXhZr1H3E",
+    authDomain: "velastegui-pantry.firebaseapp.com",
+    projectId: "velastegui-pantry",
+    storageBucket: "velastegui-pantry.firebasestorage.app",
+    messagingSenderId: "927651602097",
+    appId: "1:927651602097:web:b243cfa8aff28886900c90"
+};
+
+const app  = initializeApp(firebaseConfig);
+const db   = getFirestore(app);
+const auth = getAuth(app);
+const gProvider = new GoogleAuthProvider();
+
+let currentView   = 'inventory';
+let inventoryData = [];
+let familyId      = null;
+let currentUser   = null;
+let unsubSnap     = null;
+let lang          = localStorage.getItem('vp-lang') || 'es';
+
+// ================= TRANSLATIONS =================
+const T = {
+    es: {
+        scanBtn:'📷 ESCANEAR CÓDIGO', upcLabel:'Código UPC / Barcode', nameLabel:'Nombre del Producto',
+        catLabel:'Categoría', expLabel:'Vencimiento', qtyLabel:'Stock Actual',
+        minLabel:'Mínimo', maxLabel:'Máximo', saveBtn:'GUARDAR',
+        navInv:'📦 INVENTARIO', navShop:'🛒 COMPRAS',
+        listInv:'Inventario en Mano', listShop:'Lista de Compras',
+        shareTitle:'👨‍👩‍👧‍👦 Compartir con Familia',
+        shareSub:'Comparte este código para que tu familia acceda al mismo inventario',
+        copyBtn:'📋 COPIAR', shareBtn:'📤 ENVIAR',
+        secExpiry:'🚨 PRIORIDAD: CADUCIDAD', secLow:'⚠️ BAJO STOCK', secFill:'🔵 COMPLETAR MAXIMOS',
+        faltan:'Faltan', ingresar:'INGRESAR', vence:'Vence', na:'N/A',
+        logoutTip:'Salir',
+    },
+    en: {
+        scanBtn:'📷 SCAN BARCODE', upcLabel:'UPC Code / Barcode', nameLabel:'Product Name',
+        catLabel:'Category', expLabel:'Expiry', qtyLabel:'Current Stock',
+        minLabel:'Minimum', maxLabel:'Maximum', saveBtn:'SAVE',
+        navInv:'📦 INVENTORY', navShop:'🛒 SHOPPING',
+        listInv:'Current Inventory', listShop:'Shopping List',
+        shareTitle:'👨‍👩‍👧‍👦 Share with Family',
+        shareSub:'Share this code so your family can access the same inventory',
+        copyBtn:'📋 COPY', shareBtn:'📤 SHARE',
+        secExpiry:'🚨 PRIORITY: EXPIRING', secLow:'⚠️ LOW STOCK', secFill:'🔵 RESTOCK TO MAX',
+        faltan:'Need', ingresar:'ADD', vence:'Expires', na:'N/A',
+        logoutTip:'Sign out',
+    }
+};
+
+function applyLang() {
+    const t = T[lang];
+    document.getElementById('lang-btn').textContent        = lang === 'es' ? 'EN' : 'ES';
+    document.getElementById('t-scan-btn').textContent      = t.scanBtn;
+    document.getElementById('t-upc-label').textContent     = t.upcLabel;
+    document.getElementById('t-name-label').textContent    = t.nameLabel;
+    document.getElementById('t-cat-label').textContent     = t.catLabel;
+    document.getElementById('t-exp-label').textContent     = t.expLabel;
+    document.getElementById('t-qty-label').textContent     = t.qtyLabel;
+    document.getElementById('t-min-label').textContent     = t.minLabel;
+    document.getElementById('t-max-label').textContent     = t.maxLabel;
+    document.getElementById('t-save-btn').textContent      = t.saveBtn;
+    document.getElementById('nav-inv').textContent         = t.navInv;
+    document.getElementById('nav-shop').textContent        = t.navShop;
+    document.getElementById('t-share-title').textContent   = t.shareTitle;
+    document.getElementById('t-share-sub').textContent     = t.shareSub;
+    document.getElementById('t-copy-btn').textContent      = t.copyBtn;
+    document.getElementById('t-share-btn').textContent     = t.shareBtn;
+    const lt = document.getElementById('list-title');
+    if (lt) lt.innerText = currentView === 'inventory' ? t.listInv : t.listShop;
+    renderList();
+}
+
+window.toggleLang = function() {
+    lang = lang === 'es' ? 'en' : 'es';
+    localStorage.setItem('vp-lang', lang);
+    applyLang();
+};
+
+// ================= LOADING ================
+function showLoading(msg) {
+    const s = document.getElementById('loading-screen');
+    s.style.display = 'flex'; s.classList.remove('fade');
+    document.getElementById('loading-msg').textContent = msg || '...';
+}
+function hideLoading() {
+    const s = document.getElementById('loading-screen');
+    s.classList.add('fade');
+    setTimeout(() => s.style.display = 'none', 380);
+}
+
+// ================= FAMILY SETUP =================
+async function ensureFamily(user, inviteCode) {
+    const userRef = doc(db, "users", user.uid);
+    const uDoc    = await getDoc(userRef);
+    if (uDoc.exists() && uDoc.data().familyId) return uDoc.data().familyId;
+
+    const fid = (inviteCode && inviteCode.trim().length > 0)
+        ? inviteCode.trim().toUpperCase()
+        : Math.random().toString(36).substring(2, 8).toUpperCase();
+
+    await setDoc(userRef, { familyId: fid, email: user.email, name: user.displayName || '' }, { merge: true });
+    return fid;
+}
+
+// ================= AUTH =================
+function showAuthErr(msg) { document.getElementById('auth-err').textContent = msg; }
+
+window.doLogin = async function() {
+    const email = document.getElementById('auth-email').value.trim();
+    const pass  = document.getElementById('auth-pass').value;
+    showAuthErr('');
+    try { await signInWithEmailAndPassword(auth, email, pass); }
+    catch(e) { showAuthErr(friendlyErr(e.code)); }
+};
+
+window.doRegister = async function() {
+    const name  = document.getElementById('auth-name').value.trim();
+    const email = document.getElementById('auth-email').value.trim();
+    const pass  = document.getElementById('auth-pass').value;
+    const code  = document.getElementById('auth-code').value.trim();
+    showAuthErr('');
+    if (!name) return showAuthErr('Ingresa tu nombre / Enter your name');
+    try {
+        const cred = await createUserWithEmailAndPassword(auth, email, pass);
+        await updateProfile(cred.user, { displayName: name });
+        window._pendingCode = code;
+    } catch(e) { showAuthErr(friendlyErr(e.code)); }
+};
+
+window.doGoogle = async function() {
+    showAuthErr('');
+    try { await signInWithPopup(auth, gProvider); }
+    catch(e) { if (e.code !== 'auth/popup-closed-by-user') showAuthErr(friendlyErr(e.code)); }
+};
+
+function friendlyErr(code) {
+    return ({
+        'auth/wrong-password':'Contraseña incorrecta / Wrong password',
+        'auth/user-not-found':'Usuario no encontrado / User not found',
+        'auth/email-already-in-use':'Email ya registrado / Email already in use',
+        'auth/weak-password':'Contraseña muy corta (mín. 6) / Password too short',
+        'auth/invalid-email':'Email inválido / Invalid email',
+    })[code] || code;
+}
+
+// ================= AUTH STATE =================
+onAuthStateChanged(auth, async (user) => {
+    if (user) {
+        showLoading('Cargando inventario...');
+        currentUser = user;
+        const code  = window._pendingCode || null;
+        window._pendingCode = null;
+        familyId = await ensureFamily(user, code);
+
+        document.getElementById('family-code-display').textContent = familyId;
+        document.getElementById('auth-screen').style.display  = 'none';
+        document.getElementById('main-app').style.display     = '';
+        document.getElementById('footer-yr').textContent      = new Date().getFullYear();
+
+        if (unsubSnap) unsubSnap();
+        unsubSnap = onSnapshot(collection(db, "families", familyId, "inventory"), (snap) => {
+            inventoryData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            renderList();
+        });
+
+        applyLang();
+        hideLoading();
+    } else {
+        currentUser = null; familyId = null;
+        document.getElementById('auth-screen').style.display  = '';
+        document.getElementById('main-app').style.display     = 'none';
+        hideLoading();
+    }
+});
+
+// ================= SHARE =================
+window.toggleShare = function() {
+    const p = document.getElementById('share-panel');
+    p.style.display = p.style.display === 'none' ? '' : 'none';
+};
+window.doLogout = async function() {
+    const res = await Swal.fire({
+        title: lang === 'es' ? '¿Cerrar sesión?' : 'Sign out?',
+        icon: 'question', showCancelButton: true, confirmButtonColor: '#e74c3c',
+        confirmButtonText: lang === 'es' ? 'Salir' : 'Sign out',
+        cancelButtonText: lang === 'es' ? 'Cancelar' : 'Cancel'
+    });
+    if (res.isConfirmed) {
+        if (unsubSnap) unsubSnap();
+        await signOut(auth);
+    }
+};
+window.copyFamilyCode = function() {
+    navigator.clipboard.writeText(familyId);
+    Swal.fire({ title: lang==='es'?'¡Copiado!':'Copied!', icon:'success', timer:900, showConfirmButton:false });
+};
+window.shareFamilyCode = function() {
+    const msg = lang==='es'
+        ? `Únete a nuestro inventario familiar con el código: ${familyId} en Velastegui Pantry PRO`
+        : `Join our family inventory with code: ${familyId} at Velastegui Pantry PRO`;
+    if (navigator.share) navigator.share({ title:'Pantry PRO', text: msg });
+    else { navigator.clipboard.writeText(msg); Swal.fire({ title:'Copiado', icon:'success', timer:900, showConfirmButton:false }); }
+};
+
+// ================= MOTOR HÍBRIDO (LOCAL + API) =================
+window.handleUPCChange = async function(code) {
+    if (!code || !familyId) return;
+
+    // 1. Buscar en colección familiar
+    const familyRef = doc(db, "families", familyId, "inventory", code);
+    const familySnap = await getDoc(familyRef);
+    if (familySnap.exists()) {
+        fillForm(familySnap.data(), code);
+        Swal.fire({ title: 'Localizado', text: 'Datos cargados del inventario', icon: 'success', timer: 1000, showConfirmButton: false });
+        return;
+    }
+
+    // 2. Fallback: buscar en colección raíz legacy y migrar
+    const legacySnap = await getDoc(doc(db, "inventory", code));
+    if (legacySnap.exists()) {
+        const d = legacySnap.data();
+        fillForm(d, code);
+        await setDoc(familyRef, d, { merge: true });
+        Swal.fire({ title: '✅ Migrado', text: 'Producto encontrado y migrado a tu familia', icon: 'success', timer: 1500, showConfirmButton: false });
+        return;
+    }
+
+    // 3. Buscar en Open Food Facts
+    Swal.fire({ title: 'Buscando online...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    try {
+        const res  = await fetch(`https://world.openfoodfacts.org/api/v0/product/${code}.json`);
+        const data = await res.json();
+        Swal.close();
+        if (data.status === 1) {
+            document.getElementById("product").value = data.product.product_name || data.product.generic_name || "";
+            Swal.fire({ title: 'Encontrado Online', text: 'Completa los detalles y guarda', icon: 'info', timer: 2000 });
+        } else {
+            Swal.fire('No encontrado', 'Ingresa el nombre manualmente', 'warning');
+        }
+    } catch (e) { Swal.close(); }
+};
+
+// ================= ESCÁNER =================
+window.startScan = async function () {
+    const container = document.getElementById("video-container");
+    container.style.display = "block";
+    const { BrowserMultiFormatReader } = await import("https://cdn.jsdelivr.net/npm/@zxing/browser@latest/+esm");
+    const reader = new BrowserMultiFormatReader();
+    const video  = document.createElement("video");
+    container.innerHTML = ""; container.appendChild(video);
+
+    const controls = await reader.decodeFromVideoDevice(undefined, video, (result) => {
+        if (result) {
+            document.getElementById("upc").value = result.text;
+            handleUPCChange(result.text);
+            controls.stop();
+            container.style.display = "none";
+        }
+    });
+};
+
+// ================= CRUD =================
+window.saveItem = async function() {
+    const upc  = document.getElementById("upc").value;
+    const name = document.getElementById("product").value;
+    if (!upc || !name) return Swal.fire('Error', 'UPC y Nombre son obligatorios', 'error');
+
+    await setDoc(doc(db, "families", familyId, "inventory", upc), {
+        name,
+        category: document.getElementById("category").value,
+        expiry:   document.getElementById("expiry").value,
+        qty:      +document.getElementById("qty").value,
+        min:      +document.getElementById("min").value,
+        max:      +document.getElementById("max").value,
+        updatedAt: Date.now()
+    }, { merge: true });
+
+    Swal.fire({ title: 'Guardado', icon: 'success', timer: 1000, showConfirmButton: false });
+    resetForm();
+};
+
+function fillForm(data, upc) {
+    document.getElementById("upc").value      = upc;
+    document.getElementById("product").value  = data.name;
+    document.getElementById("category").value = data.category;
+    document.getElementById("expiry").value   = data.expiry || "";
+    document.getElementById("qty").value      = data.qty;
+    document.getElementById("min").value      = data.min;
+    document.getElementById("max").value      = data.max;
+}
+
+function resetForm() {
+    ['upc','product','qty','expiry'].forEach(id => document.getElementById(id).value = "");
+}
+
+// ================= RENDERIZADO =================
+function renderList() {
+    const listDiv = document.getElementById("inventory-list");
+    listDiv.innerHTML = "";
+    const today    = new Date();
+    const nextWeek = new Date(); nextWeek.setDate(today.getDate() + 7);
+
+    if (currentView === 'inventory') {
+        renderInventoryView(inventoryData, today, nextWeek);
+    } else {
+        renderShoppingView(inventoryData, today, nextWeek);
+    }
+}
+
+function renderInventoryView(data, today, nextWeek) {
+    const listDiv = document.getElementById("inventory-list");
+    const sorted  = [...data].sort((a,b) => (a.expiry || '9999').localeCompare(b.expiry || '9999'));
+    const t       = T[lang];
+
+    sorted.forEach(item => {
+        const isExpired = item.expiry && new Date(item.expiry) <= today;
+        const isNear    = item.expiry && new Date(item.expiry) <= nextWeek;
+        let cls = item.qty <= item.min ? "status-low" : "status-ok";
+        if (item.qty === 0) cls = "status-critical";
+        if (isNear || isExpired) cls = "status-expired";
+
+        const card = document.createElement("div");
+        card.className = `card item-card ${cls}`;
+        card.innerHTML = `
+            <div style="display:flex; justify-content:space-between;">
+                <b>${item.name}</b>
+                <span><b>${item.qty}</b> / ${item.max}</span>
+            </div>
+            <small style="color:#777;">${item.category} | ${t.vence}: ${item.expiry || t.na}</small>
+            <div class="grid-3" style="margin-top:10px">
+                <button onclick="updateQty('${item.id}', 1)" style="background:var(--success)">+1</button>
+                <button onclick="updateQty('${item.id}', -1)" style="background:var(--warning)">-1</button>
+                <button onclick="deleteItem('${item.id}')" style="background:var(--danger)">X</button>
+            </div>
+        `;
+        listDiv.appendChild(card);
+    });
+}
+
+function renderShoppingView(data, today, nextWeek) {
+    const listDiv = document.getElementById("inventory-list");
+    const t       = T[lang];
+
+    // ── AISLES ORDER ──
+    const AISLES = ['01_PRODUCE','02_BAKERY','03_MEAT_DELI','04_PANTRY_DRY','05_FROZEN','06_DAIRY','07_CLEANING_OTHERS'];
+
+    const prioritarios = data.filter(item => item.expiry && new Date(item.expiry) <= nextWeek);
+    const bajoStock    = data.filter(item => (item.qty <= item.min) && !(item.expiry && new Date(item.expiry) <= nextWeek));
+    const opcionales   = data.filter(item => (item.qty > item.min && item.qty < item.max) && !(item.expiry && new Date(item.expiry) <= nextWeek));
+
+    const sections = [
+        { title: t.secExpiry, items: prioritarios, color: "#9b59b6" },
+        { title: t.secLow,    items: bajoStock,    color: "#e67e22" },
+        { title: t.secFill,   items: opcionales,   color: "#3498db" }
+    ];
+
+    sections.forEach(sec => {
+        if (sec.items.length === 0) return;
+
+        const h = document.createElement("div");
+        h.className = "section-title";
+        h.style.color = sec.color; h.style.borderColor = sec.color;
+        h.innerText = sec.title;
+        listDiv.appendChild(h);
+
+        // Sort items within section by aisle order
+        const sorted = [...sec.items].sort((a, b) => {
+            const ai = AISLES.indexOf(a.category);
+            const bi = AISLES.indexOf(b.category);
+            return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+        });
+
+        // Group by aisle within section
+        const seen = new Set();
+        sorted.forEach(item => {
+            if (!seen.has(item.category)) {
+                seen.add(item.category);
+                const ah = document.createElement("div");
+                ah.style.cssText = `font-size:11px; font-weight:bold; color:${sec.color}; margin:10px 0 4px; letter-spacing:1px;`;
+                ah.textContent = '🛒 ' + item.category;
+                listDiv.appendChild(ah);
+            }
+
+            const card = document.createElement("div");
+            card.className = "card";
+            card.style.borderLeftColor = sec.color;
+            card.innerHTML = `
+                <div style="display:flex; justify-content:space-between;">
+                    <b>${item.name}</b>
+                    <small>${t.faltan}: ${item.max - item.qty}</small>
+                </div>
+                <div style="margin-top:10px; display:flex; gap:10px;">
+                    <input type="number" id="buy_${item.id}" placeholder="Cantidad comprada" style="flex:1;">
+                    <button onclick="processPurchase('${item.id}', ${item.qty}, ${item.max})" style="background:${sec.color}; flex:1; margin:0;">${t.ingresar}</button>
+                </div>
+            `;
+            listDiv.appendChild(card);
+        });
+    });
+}
+
+// ================= ACCIONES =================
+window.updateQty = async function(id, val) {
+    const docRef = doc(db, "families", familyId, "inventory", id);
+    const snap   = await getDoc(docRef);
+    if (snap.exists() && snap.data().qty + val < 0) return;
+    await updateDoc(docRef, { qty: increment(val), updatedAt: Date.now() });
+};
+
+window.deleteItem = async function(id) {
+    const res = await Swal.fire({ title: '¿Borrar?', icon: 'warning', showCancelButton: true });
+    if (res.isConfirmed) await deleteDoc(doc(db, "families", familyId, "inventory", id));
+};
+
+window.processPurchase = async function(id, current, max) {
+    const val = parseInt(document.getElementById(`buy_${id}`).value);
+    if (isNaN(val) || val <= 0) return;
+
+    if (current + val > max) {
+        const res = await Swal.fire({
+            title: 'Exceso de Stock',
+            text: `Stock final (${current + val}) supera el máximo (${max}). ¿Continuar?`,
+            icon: 'warning', showCancelButton: true
+        });
+        if (!res.isConfirmed) return;
+    }
+
+    await updateDoc(doc(db, "families", familyId, "inventory", id), { qty: increment(val), updatedAt: Date.now() });
+    Swal.fire({ title: 'Actualizado', icon: 'success', timer: 800, showConfirmButton: false });
+};
+
+window.toggleView = (view) => {
+    currentView = view;
+    document.getElementById('nav-inv').className  = view === 'inventory' ? 'active' : '';
+    document.getElementById('nav-shop').className = view === 'shopping'  ? 'active' : '';
+    document.getElementById('list-title').innerText = view === 'inventory' ? T[lang].listInv : T[lang].listShop;
+    // In shopping mode: show list first, form below
+    const container = document.querySelector('.container');
+    container.style.display = 'flex';
+    container.style.flexDirection = view === 'shopping' ? 'column-reverse' : 'column';
+    renderList();
+};
+</script>
+</body>
+</html>
