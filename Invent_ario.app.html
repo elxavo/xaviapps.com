@@ -566,7 +566,15 @@ window.startScan = async function () {
 
     container.innerHTML = ""; 
     container.appendChild(video);
-    // ... resto del código
+    const controls = await reader.decodeFromVideoDevice(undefined, video, (result) => {
+        if (result) {
+            document.getElementById("upc").value = result.text;
+            handleUPCChange(result.text);
+            controls.stop(); // Detiene la cámara tras leer
+            container.style.display = "none";
+        }
+    });
+};
 
 // ================= CRUD =================
 window.saveItem = async function() {
