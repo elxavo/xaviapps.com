@@ -5,9 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
     <title>Family Pantry Gold PRO</title>
     
-    <!-- Evita el error 404 del favicon -->
+    <!-- Solución para el error de favicon y carga de SweetAlert -->
     <link rel="icon" href="data:,">
-    
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     <style>
@@ -35,10 +34,7 @@
         
         .status-ok { border-left-color: var(--success); }
         .status-low { border-left-color: var(--warning); }
-        .status-critical { border-left-color: var(--danger); }
-        .status-expired { border-left-color: var(--expired); animation: blink 1.5s infinite; }
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
-
+        
         .form-group { margin-bottom: 12px; }
         label { display: block; font-size: 11px; font-weight: bold; color: #777; margin-bottom: 4px; text-transform: uppercase; }
         input, select, button { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; font-size: 16px; }
@@ -62,236 +58,220 @@
 <body>
 
 <div id="loading-screen">
-    <div style="font-size:20px; font-weight:bold;">FAMILY PANTRY PRO</div>
-    <div id="loading-msg" style="font-size:13px; opacity:0.6;">Verificando sesión...</div>
+    <div style="font-size:20px; font-weight:bold;">VELASTEGUI PANTRY</div>
+    <div id="loading-msg" style="font-size:13px; opacity:0.6;">Cargando...</div>
 </div>
 
 <div id="auth-screen" style="display:none;">
     <div class="auth-box">
-        <h2 style="text-align:center;">PANTRY PRO</h2>
-        <input id="auth-name" type="text" placeholder="Tu nombre" style="margin-bottom:10px;">
-        <input id="auth-email" type="email" placeholder="Email" style="margin-bottom:10px;">
+        <h2 style="text-align:center;">BIENVENIDO</h2>
+        <input id="auth-email" type="email" placeholder="Tu Email" style="margin-bottom:10px;">
         <input id="auth-pass" type="password" placeholder="Contraseña" style="margin-bottom:10px;">
-        <input id="auth-code" type="text" placeholder="Código familiar (Opcional)" style="text-transform:uppercase; margin-bottom:15px;">
-        <button onclick="doLogin()">ENTRAR</button>
-        <button onclick="doGoogleLogin()" style="background:#4285F4; margin-top:8px;">
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
-                 style="width:18px; margin-right:8px; vertical-align:middle; filter:brightness(0) invert(1);"> 
-            ENTRAR CON GOOGLE
-        </button>
-        <button onclick="doRegister()" style="background:none; color:var(--accent); border:1px solid var(--accent); margin-top:8px;">REGISTRARSE</button>
+        <button onclick="doLogin()">INICIAR SESIÓN</button>
+        <button onclick="doGoogleLogin()" style="background:#4285F4; margin-top:10px;">ENTRAR CON GOOGLE</button>
     </div>
 </div>
 
 <div id="main-app" style="display:none;">
     <header>
-        <button class="header-btn" onclick="toggleLang()">🌐 <span id="lang-label">EN/ES</span></button>
-        <div class="header-center">FAMILY<br>PANTRY PRO</div>
-        <button class="header-btn" onclick="toggleShare()">👨‍👩‍👧 <span id="share-label">FAMILIA</span></button>
-        <button class="header-btn" onclick="doLogout()" style="background:rgba(231,76,60,0.3);">⎋ <span id="logout-label">SALIR</span></button>
+        <div class="header-center">VELASTEGUI PANTRY<br><small id="user-display">---</small></div>
+        <button class="header-btn" onclick="doLogout()" style="background:rgba(231,76,60,0.3);">SALIR</button>
     </header>
 
     <div class="container">
+        <!-- BOTONES DE IA -->
         <div class="grid-3" style="margin-bottom: 15px;">
             <button onclick="sugerenciaChefIA()" style="background: #6c5ce7; font-size:12px;">👨‍🍳 CHEF IA</button>
-            <button onclick="analizarRecetaIA()" style="background: #00b894; font-size:12px;">🔍 ANALIZAR</button>
+            <button style="background: #00b894; font-size:12px;">🔍 RECETAS</button>
+            <button style="background: #f39c12; font-size:12px;">📊 ANALISIS</button>
         </div>
 
+        <!-- FORMULARIO DE AGREGAR -->
         <div id="view-add" class="card">
             <button onclick="startScan()" style="background:#8e44ad; margin-bottom:15px;">📷 ESCANEAR CÓDIGO</button>
             <div id="video-container"></div>
+            
             <label>Producto</label>
-            <input id="upc" type="text" placeholder="UPC / Barcode" style="margin-bottom:10px;">
-            <input id="product" type="text" placeholder="Nombre del producto" style="margin-bottom:10px;">
+            <input id="upc" type="text" placeholder="Barcode" style="margin-bottom:10px;">
+            <input id="product" type="text" placeholder="Nombre" style="margin-bottom:10px;">
             
             <div class="grid-3">
                 <select id="category">
-                    <option>PRODUCE</option><option>BAKERY</option><option>MEAT_DELI</option>
-                    <option>PANTRY_DRY</option><option>FROZEN</option><option>DAIRY</option>
-                    <option>CLEANING</option><option>OTHERS</option>
+                    <option>PANTRY</option><option>DAIRY</option><option>FROZEN</option>
+                    <option>MEAT</option><option>PRODUCE</option><option>CLEANING</option>
                 </select>
                 <input id="expiry" type="date">
                 <input id="qty" type="number" placeholder="Cant">
             </div>
-            <button onclick="saveItem()" style="background:var(--success); margin-top:15px;">GUARDAR PRODUCTO</button>
+            <button onclick="saveItem()" style="background:var(--success); margin-top:15px;">GUARDAR</button>
         </div>
 
-        <h3 id="list-title">Inventario</h3>
+        <h3>Inventario</h3>
         <div id="inventory-list"></div>
     </div>
 </div>
 
 <nav>
-    <div onclick="toggleView('inventory')" id="nav-inv" class="active">📦 INVENTARIO</div>
+    <div onclick="toggleView('inventory')" id="nav-inv" class="active">📦 STOCK</div>
     <div onclick="toggleView('shopping')" id="nav-shop">🛒 COMPRAS</div>
 </nav>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
-import { getFirestore, collection, doc, setDoc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
-import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+    import { getFirestore, collection, doc, setDoc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+    import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
 
-const firebaseConfig = {
-    apiKey: "AIzaSyD8dsAejvIEFDxu_Z2YZCtMnAkXhZr1H3E",
-    authDomain: "velastegui-pantry.firebaseapp.com",
-    projectId: "velastegui-pantry",
-    storageBucket: "velastegui-pantry.firebasestorage.app",
-    messagingSenderId: "927651602097",
-    appId: "1:927651602097:web:b243cfa8aff28886900c90"
-};
+    const firebaseConfig = {
+        apiKey: "AIzaSyD8dsAejvIEFDxu_Z2YZCtMnAkXhZr1H3E",
+        authDomain: "velastegui-pantry.firebaseapp.com",
+        projectId: "velastegui-pantry",
+        storageBucket: "velastegui-pantry.firebasestorage.app",
+        messagingSenderId: "927651602097",
+        appId: "1:927651602097:web:b243cfa8aff28886900c90"
+    };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
-const genAI = new GoogleGenerativeAI("AIzaSyCxMRqavNSSeRNfVk7UayR-llE_71R4NNI");
-const aiModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+    const genAI = new GoogleGenerativeAI("AIzaSyCxMRqavNSSeRNfVk7UayR-llE_71R4NNI");
+    const aiModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-let inventoryData = [], familyId = null;
+    let inventoryData = [], familyId = "DEFAULT";
 
-// --- ASIGNACIÓN GLOBAL (Para que los botones funcionen) ---
-window.doLogin = async () => {
-    const email = document.getElementById('auth-email').value;
-    const pass = document.getElementById('auth-pass').value;
-    try {
-        await signInWithEmailAndPassword(auth, email, pass);
-    } catch (e) {
-        Swal.fire("Error", "Credenciales incorrectas", "error");
-    }
-};
-
-window.doGoogleLogin = async () => {
-    const provider = new GoogleAuthProvider();
-    try {
-        const result = await signInWithPopup(auth, provider);
-        const user = result.user;
-        const userRef = doc(db, "users", user.uid);
-        const uDoc = await getDoc(userRef);
-        if (!uDoc.exists()) {
-            const newFamilyId = "FAM-" + Math.random().toString(36).substr(2,5).toUpperCase();
-            await setDoc(userRef, { name: user.displayName, email: user.email, familyId: newFamilyId });
+    // --- FUNCIONES GLOBALES (Asignadas a window para que los onclick funcionen) ---
+    
+    window.doLogin = async () => {
+        const email = document.getElementById('auth-email').value;
+        const pass = document.getElementById('auth-pass').value;
+        try {
+            await signInWithEmailAndPassword(auth, email, pass);
+        } catch (e) {
+            Swal.fire("Error", "No se pudo iniciar sesión", "error");
         }
-    } catch (e) {
-        Swal.fire("Error", "No se pudo conectar con Google", "error");
-    }
-};
+    };
 
-window.doLogout = () => signOut(auth);
+    window.doGoogleLogin = async () => {
+        const provider = new GoogleAuthProvider();
+        try {
+            await signInWithPopup(auth, provider);
+        } catch (e) {
+            Swal.fire("Error", "Error con Google Login", "error");
+        }
+    };
 
-window.toggleView = (v) => {
-    document.getElementById('nav-inv').className = v === 'inventory' ? 'active' : '';
-    renderList();
-};
+    window.doLogout = () => signOut(auth);
 
-window.saveItem = async () => {
-    const upc = document.getElementById("upc").value;
-    if(!upc) return Swal.fire("Aviso", "Falta el código UPC", "warning");
-    
-    showLoading("Guardando...");
-    try {
-        await setDoc(doc(db, "families", familyId, "inventory", upc), {
-            name: document.getElementById("product").value,
-            qty: parseInt(document.getElementById("qty").value) || 0,
-            category: document.getElementById("category").value,
-            expiry: document.getElementById("expiry").value,
-            updatedAt: Date.now()
-        }, { merge: true });
-        Swal.fire("Listo", "Producto guardado", "success");
-    } catch (e) {
-        Swal.fire("Error", "No se pudo guardar", "error");
-    } finally {
+    window.saveItem = async () => {
+        const upc = document.getElementById("upc").value;
+        if(!upc) return Swal.fire("Atención", "Pon el código de barras", "warning");
+        
+        showLoading("Guardando...");
+        try {
+            await setDoc(doc(db, "families", familyId, "inventory", upc), {
+                name: document.getElementById("product").value,
+                qty: parseInt(document.getElementById("qty").value) || 0,
+                category: document.getElementById("category").value,
+                expiry: document.getElementById("expiry").value,
+                updatedAt: Date.now()
+            }, { merge: true });
+            Swal.fire("Éxito", "Producto guardado", "success");
+        } catch (e) {
+            Swal.fire("Error", "Error al guardar", "error");
+        } finally {
+            hideLoading();
+        }
+    };
+
+    window.startScan = async function () {
+        const container = document.getElementById("video-container");
+        container.style.display = "block";
+        try {
+            const { BrowserMultiFormatReader } = await import("https://cdn.jsdelivr.net/npm/@zxing/browser@latest/+esm");
+            const reader = new BrowserMultiFormatReader();
+            const video = document.createElement("video");
+            video.setAttribute('playsinline', true);
+            video.autoplay = true;
+            container.innerHTML = ""; 
+            container.appendChild(video);
+            
+            const controls = await reader.decodeFromVideoDevice(undefined, video, (result) => {
+                if (result) {
+                    document.getElementById("upc").value = result.text;
+                    controls.stop(); 
+                    container.style.display = "none";
+                }
+            });
+        } catch (e) {
+            Swal.fire("Cámara", "No se pudo activar la cámara", "error");
+        }
+    };
+
+    window.sugerenciaChefIA = async () => {
+        const stock = inventoryData.filter(i => i.qty > 0).map(i => i.name).join(", ");
+        if(!stock) return Swal.fire("Info", "No tienes productos en stock", "info");
+        
+        showLoading("Generando receta...");
+        try {
+            const result = await aiModel.generateContent(`Tengo estos productos: ${stock}. Dame una receta latina creativa.`);
+            const text = await result.response.text();
+            Swal.fire({ title: 'Sugerencia Chef IA', html: `<div style="text-align:left;">${text.replace(/\n/g, '<br>')}</div>` });
+        } catch(e) {
+            Swal.fire("IA", "Hubo un problema con la IA", "error");
+        } finally {
+            hideLoading();
+        }
+    };
+
+    window.toggleView = (v) => {
+        document.getElementById('nav-inv').className = v === 'inventory' ? 'active' : '';
+        renderList();
+    };
+
+    // --- MANEJO DE ESTADO DE AUTENTICACIÓN ---
+    onAuthStateChanged(auth, async (user) => {
+        const authScreen = document.getElementById('auth-screen');
+        const mainApp = document.getElementById('main-app');
+        if (user) {
+            document.getElementById('user-display').innerText = user.email;
+            authScreen.style.display = 'none';
+            mainApp.style.display = 'block';
+            
+            onSnapshot(collection(db, "families", familyId, "inventory"), (snap) => {
+                inventoryData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                renderList();
+            });
+        } else {
+            authScreen.style.display = 'flex';
+            mainApp.style.display = 'none';
+        }
         hideLoading();
-    }
-};
-
-window.startScan = async function () {
-    const container = document.getElementById("video-container");
-    container.style.display = "block";
-    try {
-        const { BrowserMultiFormatReader } = await import("https://cdn.jsdelivr.net/npm/@zxing/browser@latest/+esm");
-        const reader = new BrowserMultiFormatReader();
-        const video = document.createElement("video");
-        video.setAttribute('playsinline', true); 
-        video.autoplay = true;
-        container.innerHTML = ""; 
-        container.appendChild(video);
-        
-        const controls = await reader.decodeFromVideoDevice(undefined, video, (result) => {
-            if (result) {
-                document.getElementById("upc").value = result.text;
-                controls.stop(); 
-                container.style.display = "none";
-            }
-        });
-    } catch (e) {
-        Swal.fire("Error", "No se pudo acceder a la cámara", "error");
-    }
-};
-
-window.sugerenciaChefIA = async () => {
-    const stock = inventoryData.filter(i => i.qty > 0).map(i => i.name).join(", ");
-    if(!stock) return Swal.fire("Aviso", "Inventario vacío", "info");
-    
-    showLoading("Cocinando ideas...");
-    try {
-        const result = await aiModel.generateContent(`Tengo: ${stock}. Receta latina rápida.`);
-        const text = await result.response.text();
-        Swal.fire({ title: 'Chef IA', html: `<div style="text-align:left;">${text.replace(/\n/g, '<br>')}</div>` });
-    } catch(e) { 
-        Swal.fire("Error", "IA no disponible", "error"); 
-    } finally {
-        hideLoading();
-    }
-};
-
-// --- LÓGICA INTERNA ---
-onAuthStateChanged(auth, async (user) => {
-    const authScreen = document.getElementById('auth-screen');
-    const mainApp = document.getElementById('main-app');
-    if (user) {
-        const userRef = doc(db, "users", user.uid);
-        const uDoc = await getDoc(userRef);
-        familyId = uDoc.exists() ? uDoc.data().familyId : "FAM-NEW";
-        
-        authScreen.style.display = 'none';
-        mainApp.style.display = 'block';
-        
-        onSnapshot(collection(db, "families", familyId, "inventory"), (snap) => {
-            inventoryData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-            renderList();
-        });
-    } else {
-        authScreen.style.display = 'flex';
-        mainApp.style.display = 'none';
-    }
-    hideLoading();
-});
-
-function renderList() {
-    const list = document.getElementById("inventory-list");
-    list.innerHTML = "";
-    inventoryData.forEach(item => {
-        const div = document.createElement("div");
-        div.className = `card ${item.qty <= 1 ? 'status-low' : 'status-ok'}`;
-        div.innerHTML = `<b>${item.name}</b> - Stock: ${item.qty}<br><small>${item.category}</small>`;
-        list.appendChild(div);
     });
-}
 
-function showLoading(m) { 
-    const ls = document.getElementById('loading-screen');
-    ls.style.display='flex'; 
-    ls.classList.remove('fade');
-    document.getElementById('loading-msg').innerText=m; 
-}
-
-function hideLoading() { 
-    const ls = document.getElementById('loading-screen');
-    if(ls) { 
-        ls.classList.add('fade'); 
-        setTimeout(()=>ls.style.display='none', 300); 
+    function renderList() {
+        const list = document.getElementById("inventory-list");
+        list.innerHTML = "";
+        inventoryData.forEach(item => {
+            const div = document.createElement("div");
+            div.className = `card ${item.qty <= 1 ? 'status-low' : 'status-ok'}`;
+            div.innerHTML = `<b>${item.name}</b> - Stock: ${item.qty}<br><small>${item.category} | Exp: ${item.expiry || 'N/A'}</small>`;
+            list.appendChild(div);
+        });
     }
-}
+
+    function showLoading(m) { 
+        const ls = document.getElementById('loading-screen');
+        ls.style.display='flex'; 
+        ls.classList.remove('fade');
+        document.getElementById('loading-msg').innerText=m; 
+    }
+    function hideLoading() { 
+        const ls = document.getElementById('loading-screen');
+        if(ls) { 
+            ls.classList.add('fade'); 
+            setTimeout(()=>ls.style.display='none', 300); 
+        }
+    }
 </script>
 </body>
 </html>
