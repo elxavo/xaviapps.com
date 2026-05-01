@@ -169,74 +169,67 @@
     window.doLogout = () => signOut(auth);
 
     // --- IA FUNCTIONS ---
-// --- FUNCIONES DE IA CORREGIDAS ---
+// --- CONFIGURACIÓN IA ROBUSTA ---
+const genAI = new GoogleGenerativeAI("AIzaSyCxMRqavNSSeRNfVk7UayR-llE_71R4NNI");
+// Añadimos ajustes de seguridad para evitar bloqueos por error
+const model = genAI.getGenerativeModel({ 
+    model: "gemini-1.5-flash",
+    safetySettings: [
+        { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+        { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+        { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+        { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
+    ]
+});
+
 window.sugerenciaChefIA = async () => {
-    // 1. Filtrar productos que realmente tienen stock
-    const stock = inventoryData
-        .filter(i => i.qty > 0)
-        .map(i => `${i.name} (${i.qty})`)
-        .join(", ");
+    const stock = inventoryData.filter(i => i.qty > 0).map(i => i.name).join(", ");
+    if(!stock) return Swal.fire("Inventario Vacío", "Añade productos con stock primero.", "info");
 
-    if(!stock) return Swal.fire("Inventario Vacío", "No tienes ingredientes con stock para sugerir algo.", "warning");
-
-    showLoading("El Chef IA está creando una receta...");
+    showLoading("Chef IA preparando menú...");
 
     try {
-        // 2. Llamada a la IA con await
-        const prompt = `Tengo estos ingredientes: ${stock}. Sugiere una receta latina rápida. Dame el nombre del plato, ingredientes y pasos breves.`;
+        const prompt = `Actúa como un chef creativo. Con estos ingredientes: ${stock}, sugiere una receta latina. Formato: Nombre, Ingredientes y Preparación breve.`;
         const result = await model.generateContent(prompt);
-        
-        // 3. CRÍTICO: Esperar la respuesta de texto con await
-        const responseText = await result.response.text();
-        
+        const response = await result.response;
+        const text = response.text(); // El await aquí es clave
+
         hideLoading();
         Swal.fire({
             title: 'Sugerencia del Chef',
-            html: `<div style="text-align:left; font-size:14px; max-height:300px; overflow-y:auto;">${responseText.replace(/\n/g, '<br>')}</div>`,
-            confirmButtonText: '¡A cocinar!'
+            html: `<div style="text-align:left; font-size:13px; max-height:300px; overflow-y:auto;">${text.replace(/\n/g, '<br>')}</div>`,
+            confirmButtonText: '¡Gracias!'
         });
     } catch(e) { 
-        console.error("Error IA:", e);
         hideLoading();
-        Swal.fire("Error", "La IA no pudo responder. Verifica tu conexión o API Key.", "error"); 
+        console.error("Detalle del error:", e);
+        // Esto te dirá si el error es de la API KEY o de cuota
+        Swal.fire("Error de IA", `Detalle: ${e.message.substring(0, 50)}...`, "error"); 
     }
 };
 
 window.analizarRecetaIA = async () => {
-    const { value: plato } = await Swal.fire({ 
-        title: '¿Qué quieres cocinar?', 
-        input: 'text',
-        inputPlaceholder: 'Ej: Lomo saltado',
-        showCancelButton: true 
-    });
-
+    const { value: plato } = await Swal.fire({ title: '¿Qué quieres cocinar?', input: 'text', showCancelButton: true });
     if (!plato) return;
 
-    showLoading("Analizando tu despensa...");
-    
-    // Lista de nombres de TODO el inventario para comparar
-    const miInventario = inventoryData.map(i => i.name).join(", ");
+    showLoading("Analizando despensa...");
+    const stockActual = inventoryData.map(i => i.name).join(", ");
 
     try {
-        const prompt = `Para cocinar "${plato}", ¿qué ingredientes básicos se necesitan? 
-        Cruza esa información con mi inventario: [${miInventario}]. 
-        Dime qué ingredientes me faltan comprar.`;
-
+        const prompt = `Para cocinar "${plato}", ¿qué ingredientes me faltan si solo tengo esto: [${stockActual}]? Sé breve.`;
         const result = await model.generateContent(prompt);
-        
-        // Esperar la respuesta de texto
-        const textoIA = await result.response.text();
+        const response = await result.response;
+        const text = response.text();
 
         hideLoading();
         Swal.fire({
-            title: `Análisis para ${plato}`,
-            html: `<div style="text-align:left; font-size:14px; max-height:300px; overflow-y:auto;">${textoIA.replace(/\n/g, '<br>')}</div>`,
+            title: `Checklist para ${plato}`,
+            html: `<div style="text-align:left; font-size:13px;">${text.replace(/\n/g, '<br>')}</div>`,
             confirmButtonText: 'Entendido'
         });
     } catch(e) { 
-        console.error("Error Analizador:", e);
         hideLoading();
-        Swal.fire("Error", "No se pudo completar el análisis del plato.", "error"); 
+        Swal.fire("Error", "No se pudo analizar el plato. Revisa la consola (F12).", "error"); 
     }
 };
 
