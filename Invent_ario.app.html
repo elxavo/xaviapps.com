@@ -5,65 +5,100 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Velastegui Pantry Gold PRO</title>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
   <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore-compat.js"></script>
+
   <script src="https://cdn.jsdelivr.net/npm/@google/generative-ai@0.21.0/dist/index.min.js"></script>
+
   <style>
     :root {
-      --primary: #2c3e50;
-      --accent: #3498db;
-      --danger: #e74c3c;
-      --warning: #f39c12;
-      --success: #27ae60;
-      --expired: #9b59b6;
-      --bg: #f4f7f6;
-      --text: #333;
+      --primary:#2c3e50;
+      --accent:#3498db;
+      --danger:#e74c3c;
+      --warning:#f39c12;
+      --success:#27ae60;
+      --expired:#9b59b6;
+      --bg:#f4f7f6;
+      --text:#333;
     }
-    body { margin:0; font-family:Segoe UI, sans-serif; background:var(--bg); color:var(--text); padding-bottom:110px; }
-    header { background:var(--primary); color:white; padding:12px 15px; position:sticky; top:0; z-index:1000; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
-    .header-left, .header-right { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-    .brand { font-weight:700; }
-    .container { padding:15px; max-width:760px; margin:auto; }
-    .card { background:white; padding:18px; margin-bottom:15px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.06); border-left:6px solid #ddd; }
-    .status-ok { border-left-color: var(--success); }
-    .status-low { border-left-color: var(--warning); }
-    .status-critical { border-left-color: var(--danger); }
-    .status-expired { border-left-color: var(--expired); }
-    .hidden { display:none !important; }
-    input, select, button, textarea { width:100%; padding:12px; border-radius:8px; border:1px solid #ddd; font-size:16px; box-sizing:border-box; }
-    button { background:var(--accent); color:white; border:none; font-weight:bold; cursor:pointer; }
-    button.small { width:auto; padding:8px 12px; font-size:14px; }
-    button.ghost { background:transparent; border:1px solid rgba(255,255,255,0.35); color:white; }
-    button.secondary { background:#8e44ad; }
-    button.danger { background:var(--danger); }
-    button.success { background:var(--success); }
-    .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-    .grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
-    .top-actions { display:flex; gap:8px; flex-wrap:wrap; }
-    nav { position:fixed; bottom:0; width:100%; background:white; display:flex; border-top:1px solid #ddd; z-index:2000; }
-    nav div { flex:1; text-align:center; padding:16px 8px; font-weight:bold; color:#95a5a6; cursor:pointer; }
-    nav div.active { color:var(--accent); border-top:4px solid var(--accent); }
-    .aisle-header { background:#eee; padding:6px 10px; border-radius:5px; font-size:12px; font-weight:bold; margin:15px 0 8px 0; color:var(--primary); }
-    .footer-note { text-align:center; color:#7f8c8d; font-size:13px; padding:12px 16px 24px; }
-    .lang-toggle { min-width:84px; }
-    textarea { min-height:110px; resize:vertical; }
-    .muted { color:#7f8c8d; font-size:13px; }
-    .pill { display:inline-block; padding:4px 8px; border-radius:999px; background:#ecf0f1; font-size:12px; margin-left:8px; }
-    .recipe-box { white-space:pre-wrap; text-align:left; font-size:14px; line-height:1.45; }
+    body{
+      margin:0;font-family:Segoe UI,sans-serif;background:var(--bg);color:var(--text);padding-bottom:110px;
+    }
+    header{
+      background:var(--primary);color:#fff;padding:12px 15px;position:sticky;top:0;z-index:1000;
+      display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+    }
+    .header-left,.header-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+    .brand{font-weight:700}
+    .container{padding:15px;max-width:760px;margin:auto}
+    .card{
+      background:#fff;padding:18px;margin-bottom:15px;border-radius:12px;
+      box-shadow:0 2px 8px rgba(0,0,0,.06);border-left:6px solid #ddd;
+    }
+    .status-ok{border-left-color:var(--success)}
+    .status-low{border-left-color:var(--warning)}
+    .status-critical{border-left-color:var(--danger)}
+    .status-expired{border-left-color:var(--expired)}
+    .hidden{display:none !important}
+    input,select,button,textarea{
+      width:100%;padding:12px;border-radius:8px;border:1px solid #ddd;font-size:16px;box-sizing:border-box;
+    }
+    button{background:var(--accent);color:#fff;border:none;font-weight:bold;cursor:pointer}
+    button.small{width:auto;padding:8px 12px;font-size:14px}
+    button.ghost{background:transparent;border:1px solid rgba(255,255,255,.35);color:#fff}
+    button.secondary{background:#8e44ad}
+    button.danger{background:var(--danger)}
+    button.success{background:var(--success)}
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+    .top-actions{display:flex;gap:8px;flex-wrap:wrap}
+    nav{
+      position:fixed;bottom:0;width:100%;background:#fff;display:flex;border-top:1px solid #ddd;z-index:2000;
+    }
+    nav div{
+      flex:1;text-align:center;padding:16px 8px;font-weight:bold;color:#95a5a6;cursor:pointer;
+    }
+    nav div.active{color:var(--accent);border-top:4px solid var(--accent)}
+    .aisle-header{
+      background:#eee;padding:6px 10px;border-radius:5px;font-size:12px;font-weight:bold;margin:15px 0 8px 0;color:var(--primary);
+    }
+    .footer-note{text-align:center;color:#7f8c8d;font-size:13px;padding:12px 16px 24px}
+    .lang-toggle{min-width:84px}
+    textarea{min-height:110px;resize:vertical}
+    .muted{color:#7f8c8d;font-size:13px}
+    .pill{display:inline-block;padding:4px 8px;border-radius:999px;background:#ecf0f1;font-size:12px;margin-left:8px;color:#2c3e50}
+    .recipe-box{white-space:pre-wrap;text-align:left;font-size:14px;line-height:1.45}
+    .family-panel{
+      position:absolute;top:64px;right:15px;z-index:1500;background:#fff;border:1px solid #ddd;border-radius:12px;
+      box-shadow:0 10px 30px rgba(0,0,0,.12);padding:12px;width:min(320px, calc(100vw - 30px));
+    }
+    .family-panel.hidden{display:none !important}
+    .family-panel .code{
+      font-weight:700;letter-spacing:1px;background:#f8f9fa;padding:10px;border-radius:8px;margin-bottom:10px;text-align:center;
+    }
   </style>
 </head>
 <body>
   <header>
     <div class="header-left">
       <div class="brand">Velastegui Pantry Gold PRO</div>
+      <button id="family-btn" class="small ghost" onclick="toggleFamilyPanel()">FAMILY</button>
       <div id="family-display" class="pill">CARGANDO...</div>
     </div>
     <div class="header-right top-actions">
-      <button id="lang-toggle" class="small ghost lang-toggle" onclick="toggleLanguage()">ES</button>
+      <button id="lang-toggle" class="small ghost lang-toggle" onclick="toggleLanguage()">EN</button>
       <button class="small ghost" onclick="logout()" id="logout-btn">Logout</button>
     </div>
   </header>
+
+  <div id="family-panel" class="family-panel hidden">
+    <div class="code" id="family-code-text">-----</div>
+    <button class="success" onclick="copyFamilyCode()" id="copy-family-btn">Copiar código</button>
+    <button style="margin-top:8px" onclick="shareFamilyCode()" id="share-family-btn">Compartir</button>
+    <div class="muted" style="margin-top:8px" id="family-panel-help">Comparte este código con tu familia.</div>
+  </div>
 
   <div id="auth-screen" class="container">
     <div class="card">
@@ -86,11 +121,13 @@
       <div id="view-add" class="card">
         <button onclick="startScan()" style="background:#8e44ad;margin-bottom:15px" id="scan-btn">📷 ESCANEAR</button>
         <div id="video-container"></div>
+
         <input id="upc" type="text" placeholder="UPC" onchange="handleUPCChange(this.value)" style="margin-bottom:10px" />
         <div class="grid-2" style="margin-bottom:10px">
           <input id="product" type="text" placeholder="Nombre Producto" />
           <input id="recipe-input" type="text" placeholder="Receta / plato para compras" />
         </div>
+
         <div class="grid-3">
           <select id="category">
             <option>PANTRY</option><option>FRIDGE</option><option>FREEZER</option><option>CLEANING</option><option>BREAD</option><option>DRINKS</option>
@@ -98,11 +135,13 @@
           <input id="expiry" type="date" />
           <input id="qty" type="number" placeholder="Cant." />
         </div>
+
         <div class="grid-3" style="margin-top:10px">
           <input id="min" type="number" placeholder="Min" />
           <input id="max" type="number" placeholder="Max" />
           <button onclick="saveItem()" style="background:var(--success)" id="save-btn">GARDAR</button>
         </div>
+
         <div class="grid-2" style="margin-top:10px">
           <button onclick="sugerenciaChefIA()" class="success" id="chef-btn">CHEFAI RECETA</button>
           <button onclick="sugerenciaComprasIA()" class="secondary" id="buyai-btn">COMPRAS DESDE RECETA</button>
@@ -119,9 +158,7 @@
     <div onclick="toggleView('shopping')" id="nav-shop">COMPRAS</div>
   </nav>
 
-  <script type="module">
-    import { GoogleGenerativeAI } from 'https://esm.run/@google/generative-ai';
-
+  <script>
     const firebaseConfig = {
       apiKey: "AIzaSyD8dsAejvIEFDxu_Z2YZCtMnAkXhZr1H3E",
       authDomain: "velastegui-pantry.firebaseapp.com",
@@ -143,6 +180,7 @@
     let currentView = 'inventory';
     let inventoryData = [];
     let language = 'es';
+    let familyPanelOpen = false;
 
     const i18n = {
       es: {
@@ -158,6 +196,7 @@
         buyai: 'COMPRAS DESDE RECETA',
         logout: 'Logout',
         family: 'FAMILIA',
+        familyBtn: 'FAMILY',
         placeholderName: 'Tu Nombre',
         placeholderEmail: 'Email',
         placeholderPass: 'Password',
@@ -168,7 +207,10 @@
         placeholderQty: 'Cant.',
         placeholderMin: 'Min',
         placeholderMax: 'Max',
-        footer: 'Hecho por TU NOMBRE · xaviapps.com'
+        footer: 'Hecho por TU NOMBRE · xaviapps.com',
+        familyPanelHelp: 'Comparte este código con tu familia.',
+        copyFamily: 'Copiar código',
+        shareFamily: 'Compartir'
       },
       en: {
         loginTitle: 'PANTRY LOGIN',
@@ -183,6 +225,7 @@
         buyai: 'SHOPPING FROM RECIPE',
         logout: 'Logout',
         family: 'FAMILY',
+        familyBtn: 'FAMILY',
         placeholderName: 'Your Name',
         placeholderEmail: 'Email',
         placeholderPass: 'Password',
@@ -193,7 +236,10 @@
         placeholderQty: 'Qty',
         placeholderMin: 'Min',
         placeholderMax: 'Max',
-        footer: 'Made by YOUR NAME · xaviapps.com'
+        footer: 'Made by YOUR NAME · xaviapps.com',
+        familyPanelHelp: 'Share this code with your family.',
+        copyFamily: 'Copy code',
+        shareFamily: 'Share'
       }
     };
 
@@ -211,6 +257,10 @@
       document.getElementById('buyai-btn').innerText = t.buyai;
       document.getElementById('logout-btn').innerText = t.logout;
       document.getElementById('footer-note').innerText = t.footer;
+      document.getElementById('family-btn').innerText = t.familyBtn;
+      document.getElementById('copy-family-btn').innerText = t.copyFamily;
+      document.getElementById('share-family-btn').innerText = t.shareFamily;
+      document.getElementById('family-panel-help').innerText = t.familyPanelHelp;
       document.getElementById('lang-toggle').innerText = language === 'es' ? 'EN' : 'ES';
       document.getElementById('user-name').placeholder = t.placeholderName;
       document.getElementById('email').placeholder = t.placeholderEmail;
@@ -229,6 +279,35 @@
       language = language === 'es' ? 'en' : 'es';
       applyLanguage();
       renderList();
+    };
+
+    window.toggleFamilyPanel = () => {
+      familyPanelOpen = !familyPanelOpen;
+      document.getElementById('family-panel').classList.toggle('hidden', !familyPanelOpen);
+    };
+
+    async function refreshFamilyCodeUI(code) {
+      document.getElementById('family-code-text').innerText = code || '-----';
+      document.getElementById('family-display').innerText = `${i18n[language].family}: ${code || '-----'}`;
+    }
+
+    window.copyFamilyCode = async () => {
+      if (!familyId) return;
+      await navigator.clipboard.writeText(familyId);
+      Swal.fire('OK', 'Código copiado', 'success');
+    };
+
+    window.shareFamilyCode = async () => {
+      if (!familyId) return;
+      const shareData = { title: 'Family Code', text: `Mi código familiar es: ${familyId}` };
+      try {
+        if (navigator.share) {
+          await navigator.share(shareData);
+        } else {
+          await navigator.clipboard.writeText(`Mi código familiar es: ${familyId}`);
+          Swal.fire('OK', 'Compartir no disponible, copiado al portapapeles.', 'info');
+        }
+      } catch (e) {}
     };
 
     window.handleAuth = async (type) => {
@@ -271,7 +350,7 @@
         familyId = (uDoc.data() || {}).familyId;
         document.getElementById('auth-screen').classList.add('hidden');
         document.getElementById('main-app').classList.remove('hidden');
-        document.getElementById('family-display').innerText = `${i18n[language].family}: ${familyId}`;
+        await refreshFamilyCodeUI(familyId);
         db.collection('families').doc(familyId).collection('inventory').onSnapshot((snap) => {
           inventoryData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
           renderList();
@@ -283,8 +362,10 @@
     });
 
     window.handleUPCChange = async (upc) => {
-      if (!upc || !familyId) return;
-      const local = inventoryData.find(i => i.id === upc || i.upc === upc);
+      const code = (upc || '').trim();
+      if (!code || !familyId) return;
+
+      const local = inventoryData.find(i => i.id === code || i.upc === code);
       if (local) {
         document.getElementById('product').value = local.name || '';
         document.getElementById('category').value = local.category || 'PANTRY';
@@ -294,15 +375,15 @@
         document.getElementById('max').value = local.max ?? 0;
         return;
       }
+
       try {
-        const r = await fetch(`https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(upc)}.json`);
+        const r = await fetch(`https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(code)}.json`);
         const data = await r.json();
         if (data && data.status === 1 && data.product) {
           const p = data.product;
           document.getElementById('product').value = p.product_name || p.product_name_es || p.generic_name || '';
           document.getElementById('category').value = 'PANTRY';
-          if (p.image_front_url) Swal.fire('Open Food Facts', 'Producto encontrado online.', 'success');
-          else Swal.fire('Open Food Facts', 'Producto encontrado y cargado.', 'success');
+          Swal.fire('Open Food Facts', 'Producto encontrado online.', 'success');
         } else {
           Swal.fire('No encontrado', 'No existe en inventario ni en Open Food Facts.', 'info');
         }
@@ -319,7 +400,11 @@
         const prompt = `Tengo estos ingredientes en mi despensa: ${disponibles}. Sugiere una receta rápida y bilingüe (Nombre en español e inglés). Solo responde la receta de forma concisa.`;
         const result = await model.generateContent(prompt);
         const response = await result.response;
-        Swal.fire({ title: '👨‍🍳 Sugerencia del Chef', html: `<div class="recipe-box">${response.text().replace(/\n/g, '<br>')}</div>`, confirmButtonText: '¡Gracias!' });
+        Swal.fire({
+          title: '👨‍🍳 Sugerencia del Chef',
+          html: `<div class="recipe-box">${response.text().replace(/\n/g, '<br>')}</div>`,
+          confirmButtonText: '¡Gracias!'
+        });
       } catch (error) {
         Swal.fire('Error', 'No pude conectar con el Chef IA.', 'error');
       }
@@ -333,7 +418,11 @@
         const prompt = `Tengo esta receta o plato: ${recipe}. Devuélveme una lista breve de compras faltantes, con cantidades aproximadas y categorías de supermercado. Responde en español, muy conciso.`;
         const result = await model.generateContent(prompt);
         const response = await result.response;
-        Swal.fire({ title: '🛒 Lista de compras', html: `<div class="recipe-box">${response.text().replace(/\n/g, '<br>')}</div>`, confirmButtonText: 'OK' });
+        Swal.fire({
+          title: '🛒 Lista de compras',
+          html: `<div class="recipe-box">${response.text().replace(/\n/g, '<br>')}</div>`,
+          confirmButtonText: 'OK'
+        });
       } catch (error) {
         Swal.fire('Error', 'No pude generar la lista de compras.', 'error');
       }
@@ -343,6 +432,7 @@
       const listDiv = document.getElementById('inventory-list');
       listDiv.innerHTML = '';
       if (!familyId) return;
+
       if (currentView === 'inventory') {
         inventoryData.forEach(item => {
           const low = (item.qty || 0) <= (item.min || 0);
@@ -363,16 +453,19 @@
           h.className = 'aisle-header';
           h.innerText = `PASILLO: ${cat}`;
           listDiv.appendChild(h);
-          inventoryData.filter(i => (i.category || 'PANTRY') === cat && (i.qty || 0) < (i.max || 0)).forEach(item => {
-            const card = document.createElement('div');
-            card.className = 'card';
-            card.innerHTML = `<b>${item.name || ''}</b> (Faltan: ${(item.max || 0) - (item.qty || 0)})
-              <div style="margin-top:10px; display:flex; gap:10px;">
-                <input type="number" id="buy_${item.id}" placeholder="Cant.">
-                <button onclick="processPurchase('${item.id}')">OK</button>
-              </div>`;
-            listDiv.appendChild(card);
-          });
+
+          inventoryData
+            .filter(i => (i.category || 'PANTRY') === cat && (i.qty || 0) < (i.max || 0))
+            .forEach(item => {
+              const card = document.createElement('div');
+              card.className = 'card';
+              card.innerHTML = `<b>${item.name || ''}</b> (Faltan: ${(item.max || 0) - (item.qty || 0)})
+                <div style="margin-top:10px; display:flex; gap:10px;">
+                  <input type="number" id="buy_${item.id}" placeholder="Cant.">
+                  <button onclick="processPurchase('${item.id}')">OK</button>
+                </div>`;
+              listDiv.appendChild(card);
+            });
         });
       }
     }
