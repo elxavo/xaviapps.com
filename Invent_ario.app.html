@@ -399,16 +399,30 @@ function hideLoading() {
 
 // ================= FAMILY SETUP =================
 async function ensureFamily(user, inviteCode) {
-    const userRef = doc(db, "users", user.uid);
-    const uDoc    = await getDoc(userRef);
-    if (uDoc.exists() && uDoc.data().familyId) return uDoc.data().familyId;
+    try {
+        const userRef = doc(db, "users", user.uid);
+        const uDoc = await getDoc(userRef);
 
-    const fid = (inviteCode && inviteCode.trim().length > 0)
-        ? inviteCode.trim().toUpperCase()
-        : Math.random().toString(36).substring(2, 8).toUpperCase();
+        if (uDoc.exists() && uDoc.data().familyId) {
+            return uDoc.data().familyId;
+        }
 
-    await setDoc(userRef, { familyId: fid, email: user.email, name: user.displayName || '' }, { merge: true });
-    return fid;
+        const fid = (inviteCode && inviteCode.trim())
+            ? inviteCode.trim().toUpperCase()
+            : Math.random().toString(36).substring(2, 8).toUpperCase();
+
+        await setDoc(userRef, {
+            familyId: fid,
+            email: user.email,
+            name: user.displayName || ''
+        }, { merge: true });
+
+        return fid;
+
+    } catch (e) {
+        console.error("ensureFamily failed:", e);
+        throw e;
+    }
 }
 
 // ================= AUTH =================
@@ -454,23 +468,50 @@ function friendlyErr(code) {
 
 // ================= AUTH STATE =================
 onAuthStateChanged(auth, async (user) => {
-    if (user) {
+    try {
+        if (!user) {
+            document.getElementById('auth-screen').style.display = '';
+            document.getElementById('main-app').style.display = 'none';
+            hideLoading();
+            return;
+        }
+
         showLoading('Cargando inventario...');
         currentUser = user;
-        const code  = window._pendingCode || null;
+
+        const code = window._pendingCode || null;
         window._pendingCode = null;
+
         familyId = await ensureFamily(user, code);
 
         document.getElementById('family-code-display').textContent = familyId;
-        document.getElementById('auth-screen').style.display  = 'none';
-        document.getElementById('main-app').style.display     = '';
-        document.getElementById('footer-yr').textContent      = new Date().getFullYear();
+
+        document.getElementById('auth-screen').style.display = 'none';
+        document.getElementById('main-app').style.display = '';
 
         if (unsubSnap) unsubSnap();
-        unsubSnap = onSnapshot(collection(db, "families", familyId, "inventory"), (snap) => {
-            inventoryData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-            renderList();
-        });
+
+        unsubSnap = onSnapshot(
+            collection(db, "families", familyId, "inventory"),
+            (snap) => {
+                inventoryData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                renderList();
+            },
+            (err) => {
+                console.error("Firestore error:", err);
+                Swal.fire("Error", "Firestore permission or network issue", "error");
+            }
+        );
+
+        applyLang();
+
+    } catch (e) {
+        console.error("INIT ERROR:", e);
+        Swal.fire("Error crítico", e.message, "error");
+    } finally {
+        hideLoading();
+    }
+});
 
         applyLang();
         hideLoading();
