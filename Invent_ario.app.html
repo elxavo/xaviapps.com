@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-    <title>Velastegui Pantry Gold PRO</title>
+    <title>Family Pantry Gold PRO</title>
     
     <!-- Librerías Externas -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -28,35 +28,43 @@
             padding-bottom: 90px; 
         }
         
-        header { 
-            background: var(--primary); 
-            color: white; 
-            padding: 15px; 
-            text-align: center; 
-            font-weight: bold; 
-            font-size: 1.2em; 
-            position: sticky; 
-            top: 0; 
-            z-index: 1000;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
+header { 
+    background: var(--primary); 
+    color: white; 
+    padding: 10px 15px; 
+    text-align: center; 
+    font-weight: bold; 
+    position: sticky; 
+    top: 0; 
+    z-index: 1000;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px; /* Espacio entre botones y título */
+}
 
-        /* ── ADDED: lang toggle + share btn in header ── */
-        .header-center { flex: 1; text-align: center; }
-        .header-btn {
-            background: rgba(255,255,255,0.15);
-            border: 1px solid rgba(255,255,255,0.25);
-            color: white;
-            font-size: 12px;
-            font-weight: bold;
-            padding: 5px 10px;
-            border-radius: 6px;
-            cursor: pointer;
-            white-space: nowrap;
-        }
+.header-center { 
+    flex: 2; 
+    font-size: 14px; 
+    line-height: 1.2;
+    text-transform: uppercase;
+}
+
+.header-btn {
+    flex: 1; /* Los botones crecen proporcionalmente */
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: white;
+    font-size: 11px;
+    padding: 8px 5px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column; /* Icono arriba, texto abajo */
+    align-items: center;
+    justify-content: center;
+    min-width: 50px;
+}
         .header-btn:active { transform: scale(0.95); }
         
         .container { padding: 15px; max-width: 700px; margin: auto; }
@@ -180,7 +188,7 @@
 
 <!-- ── LOADING ── -->
 <div id="loading-screen">
-    <div style="font-size:20px; font-weight:bold;">VELASTEGUI PANTRY PRO</div>
+    <div style="font-size:20px; font-weight:bold;">FAMILY PANTRY PRO</div>
     <div style="font-size:13px; opacity:0.5;" id="loading-msg">Verificando sesión...</div>
     <div class="ld"><span></span><span></span><span></span></div>
 </div>
@@ -207,12 +215,33 @@
 <!-- ── MAIN APP (unchanged structure) ── -->
 <div id="main-app" style="display:none;">
 
-    <header>
-        <button class="header-btn" onclick="toggleLang()" id="lang-btn"><script>document.write(localStorage.getItem("vp-lang")==="en"?"ES":"EN")</script></button>
-        <div class="header-center">VELASTEGUI PANTRY PRO</div>
-        <button class="header-btn" onclick="toggleShare()" title="Compartir familia">👨‍👩‍👧‍👦</button>
-        <button class="header-btn" onclick="doLogout()" title="Logout" style="background:rgba(231,76,60,0.5);">⎋</button>
-    </header>
+<header>
+    <!-- Botón Idioma -->
+    <button class="header-btn" onclick="toggleLang()">
+        <span style="font-size: 16px;">🌐</span>
+        <span id="lang-label">EN/ES</span>
+    </button>
+
+    <div class="header-center">
+        FAMILY<br>SHOPPING PRO
+    </div>
+
+    <!-- Botón Compartir -->
+    <button class="header-btn" onclick="toggleShare()">
+        <span style="font-size: 16px;">👨‍👩‍👧</span>
+        <span id="share-label">FAMILIA</span>
+    </button>
+
+    <!-- Botón Salir -->
+    <button class="header-btn" onclick="doLogout()" style="background:rgba(231,76,60,0.3);">
+        <span style="font-size: 16px;">⎋</span>
+        <span id="logout-label">SALIR</span>
+    </button>
+    <div class="grid-3" style="margin-bottom: 20px;">
+    <button onclick="sugerenciaChefIA()" style="background: #6c5ce7;">👨‍🍳 SUGERENCIA IA</button>
+    <button onclick="analizarRecetaIA()" style="background: #00b894;">🔍 ANALIZAR PLATO</button>
+</div>
+</header>
 
     <div class="container">
 
@@ -375,6 +404,8 @@ function applyLang() {
     document.getElementById('t-share-sub').textContent     = t.shareSub;
     document.getElementById('t-copy-btn').textContent      = t.copyBtn;
     document.getElementById('t-share-btn').textContent     = t.shareBtn;
+    document.getElementById('share-label').textContent = lang === 'es' ? 'FAMILIA' : 'FAMILY';
+    document.getElementById('logout-label').textContent = lang === 'es' ? 'SALIR' : 'LOGOUT';
     const lt = document.getElementById('list-title');
     if (lt) lt.innerText = currentView === 'inventory' ? t.listInv : t.listShop;
     renderList();
@@ -507,8 +538,8 @@ window.copyFamilyCode = function() {
 };
 window.shareFamilyCode = function() {
     const msg = lang==='es'
-        ? `Únete a nuestro inventario familiar con el código: ${familyId} en Velastegui Pantry PRO`
-        : `Join our family inventory with code: ${familyId} at Velastegui Pantry PRO`;
+        ? `Únete a nuestro inventario familiar con el código: ${familyId} en Family Pantry PRO`
+        : `Join our family inventory with code: ${familyId} at Family Pantry PRO`;
     if (navigator.share) navigator.share({ title:'Pantry PRO', text: msg });
     else { navigator.clipboard.writeText(msg); Swal.fire({ title:'Copiado', icon:'success', timer:900, showConfirmButton:false }); }
 };
@@ -757,6 +788,41 @@ window.toggleView = (view) => {
     container.style.flexDirection = view === 'shopping' ? 'column-reverse' : 'column';
     renderList();
 };
+    import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
+
+const API_KEY = "AIzaSyCxMRqavNSSeRNfVk7UayR-llE_71R4NNI";
+const genAI = new GoogleGenerativeAI(API_KEY);
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    window.sugerenciaChefIA = async () => {
+    const productosDisponibles = inventoryData
+        .filter(item => item.qty > 0)
+        .map(item => `${item.name} (${item.qty} ${item.category})`)
+        .join(", ");
+
+    if (!productosDisponibles) return Swal.fire("Inventario Vacío", "No tienes ingredientes con stock.", "warning");
+
+    showLoading("El Chef IA está pensando...");
+
+    try {
+        const prompt = `Tengo estos ingredientes en mi despensa: ${productosDisponibles}. 
+        Sugiere una receta deliciosa que use mayormente estos ingredientes. 
+        Formato de respuesta: Nombre del Plato, Ingredientes necesarios y Pasos cortos.`;
+        
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        
+        hideLoading();
+        Swal.fire({
+            title: 'Sugerencia del Chef',
+            html: `<div style="text-align:left; font-size:14px;">${response.text().replace(/\n/g, '<br>')}</div>`,
+            confirmButtonText: '¡A cocinar!'
+        });
+    } catch (error) {
+        hideLoading();
+        Swal.fire("Error", "La IA está descansando ahora mismo.", "error");
+    }
+};
+    
 </script>
 </body>
 </html>
