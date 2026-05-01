@@ -72,6 +72,11 @@
         <input id="auth-pass" type="password" placeholder="Contraseña" style="margin-bottom:10px;">
         <input id="auth-code" type="text" placeholder="Código familiar (Opcional)" style="text-transform:uppercase; margin-bottom:15px;">
         <button onclick="doLogin()">ENTRAR</button>
+        <button onclick="doGoogleLogin()" style="background:#4285F4; margin-top:8px;">
+    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
+         style="width:18px; margin-right:8px; vertical-align:middle; filter:brightness(0) invert(1);"> 
+    ENTRAR CON GOOGLE
+</button>
         <button onclick="doRegister()" style="background:none; color:var(--accent); border:1px solid var(--accent); margin-top:8px;">REGISTRARSE</button>
     </div>
 </div>
@@ -121,9 +126,10 @@
 </nav>
 
 <script type="module">
+    
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
     import { getFirestore, collection, doc, setDoc, updateDoc, deleteDoc, increment, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
-    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, updateProfile, GoogleAuthProvider, signInWithPopup} from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
     import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
 
     const firebaseConfig = {
