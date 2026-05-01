@@ -210,7 +210,7 @@
     <header>
         <button class="header-btn" onclick="toggleLang()" id="lang-btn"><script>document.write(localStorage.getItem("vp-lang")==="en"?"ES":"EN")</script></button>
         <div class="header-center">VELASTEGUI PANTRY PRO</div>
-        <button class="header-btn" onclick="toggleShare()" title="Compartir familia">👨‍👩‍👧‍👦</button>
+        <button class="header-btn" onclick="doLogout()" title="Logout" style="background:rgba(231,76,60,0.5);">⎋ OUT</button>
     </header>
 
     <div class="container">
@@ -486,6 +486,18 @@ window.toggleShare = function() {
     const p = document.getElementById('share-panel');
     p.style.display = p.style.display === 'none' ? '' : 'none';
 };
+window.doLogout = async function() {
+    const res = await Swal.fire({
+        title: lang === 'es' ? '¿Cerrar sesión?' : 'Sign out?',
+        icon: 'question', showCancelButton: true, confirmButtonColor: '#e74c3c',
+        confirmButtonText: lang === 'es' ? 'Salir' : 'Sign out',
+        cancelButtonText: lang === 'es' ? 'Cancelar' : 'Cancel'
+    });
+    if (res.isConfirmed) {
+        if (unsubSnap) unsubSnap();
+        await signOut(auth);
+    }
+};
 window.copyFamilyCode = function() {
     navigator.clipboard.writeText(familyId);
     Swal.fire({ title: lang==='es'?'¡Copiado!':'Copied!', icon:'success', timer:900, showConfirmButton:false });
@@ -730,6 +742,10 @@ window.toggleView = (view) => {
     document.getElementById('nav-inv').className  = view === 'inventory' ? 'active' : '';
     document.getElementById('nav-shop').className = view === 'shopping'  ? 'active' : '';
     document.getElementById('list-title').innerText = view === 'inventory' ? T[lang].listInv : T[lang].listShop;
+    // In shopping mode: show list first, form below
+    const container = document.querySelector('.container');
+    container.style.display = 'flex';
+    container.style.flexDirection = view === 'shopping' ? 'column-reverse' : 'column';
     renderList();
 };
 </script>
