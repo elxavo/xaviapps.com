@@ -5,502 +5,104 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Velastegui Pantry Gold PRO</title>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
   <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore-compat.js"></script>
-
   <script src="https://cdn.jsdelivr.net/npm/@google/generative-ai@0.21.0/dist/index.min.js"></script>
-
   <style>
-    :root {
-      --primary:#2c3e50;
-      --accent:#3498db;
-      --danger:#e74c3c;
-      --warning:#f39c12;
-      --success:#27ae60;
-      --expired:#9b59b6;
-      --bg:#f4f7f6;
-      --text:#333;
-    }
-    body{
-      margin:0;font-family:Segoe UI,sans-serif;background:var(--bg);color:var(--text);padding-bottom:110px;
-    }
-    header{
-      background:var(--primary);color:#fff;padding:12px 15px;position:sticky;top:0;z-index:1000;
-      display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
-    }
-    .header-left,.header-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
-    .brand{font-weight:700}
-    .container{padding:15px;max-width:760px;margin:auto}
-    .card{
-      background:#fff;padding:18px;margin-bottom:15px;border-radius:12px;
-      box-shadow:0 2px 8px rgba(0,0,0,.06);border-left:6px solid #ddd;
-    }
-    .status-ok{border-left-color:var(--success)}
-    .status-low{border-left-color:var(--warning)}
-    .status-critical{border-left-color:var(--danger)}
-    .status-expired{border-left-color:var(--expired)}
-    .hidden{display:none !important}
-    input,select,button,textarea{
-      width:100%;padding:12px;border-radius:8px;border:1px solid #ddd;font-size:16px;box-sizing:border-box;
-    }
-    button{background:var(--accent);color:#fff;border:none;font-weight:bold;cursor:pointer}
-    button.small{width:auto;padding:8px 12px;font-size:14px}
-    button.ghost{background:transparent;border:1px solid rgba(255,255,255,.35);color:#fff}
-    button.secondary{background:#8e44ad}
-    button.danger{background:var(--danger)}
-    button.success{background:var(--success)}
-    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
-    .top-actions{display:flex;gap:8px;flex-wrap:wrap}
-    nav{
-      position:fixed;bottom:0;width:100%;background:#fff;display:flex;border-top:1px solid #ddd;z-index:2000;
-    }
-    nav div{
-      flex:1;text-align:center;padding:16px 8px;font-weight:bold;color:#95a5a6;cursor:pointer;
-    }
-    nav div.active{color:var(--accent);border-top:4px solid var(--accent)}
-    .aisle-header{
-      background:#eee;padding:6px 10px;border-radius:5px;font-size:12px;font-weight:bold;margin:15px 0 8px 0;color:var(--primary);
-    }
-    .footer-note{text-align:center;color:#7f8c8d;font-size:13px;padding:12px 16px 24px}
-    .lang-toggle{min-width:84px}
-    textarea{min-height:110px;resize:vertical}
-    .muted{color:#7f8c8d;font-size:13px}
-    .pill{display:inline-block;padding:4px 8px;border-radius:999px;background:#ecf0f1;font-size:12px;margin-left:8px;color:#2c3e50}
-    .recipe-box{white-space:pre-wrap;text-align:left;font-size:14px;line-height:1.45}
-    .family-panel{
-      position:absolute;top:64px;right:15px;z-index:1500;background:#fff;border:1px solid #ddd;border-radius:12px;
-      box-shadow:0 10px 30px rgba(0,0,0,.12);padding:12px;width:min(320px, calc(100vw - 30px));
-    }
-    .family-panel.hidden{display:none !important}
-    .family-panel .code{
-      font-weight:700;letter-spacing:1px;background:#f8f9fa;padding:10px;border-radius:8px;margin-bottom:10px;text-align:center;
-    }
+    :root { --primary:#2c3e50; --accent:#3498db; --danger:#e74c3c; --warning:#f39c12; --success:#27ae60; --bg:#f4f7f6; --text:#333; }
+    body { margin:0; font-family:Segoe UI, sans-serif; background:var(--bg); color:var(--text); padding-bottom:110px; }
+    header { background:var(--primary); color:#fff; padding:12px 15px; position:sticky; top:0; z-index:1000; display:flex; align-items:center; justify-content:space-between; }
+    .container { padding:15px; max-width:760px; margin:auto; }
+    .card { background:#fff; padding:18px; margin-bottom:15px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,.06); border-left:6px solid #ddd; }
+    .hidden { display:none !important; }
+    input, button, select { width:100%; padding:12px; border-radius:8px; border:1px solid #ddd; font-size:16px; box-sizing:border-box; }
+    button { background:var(--accent); color:#fff; border:none; font-weight:bold; cursor:pointer; }
+    .pill { display:inline-block; padding:4px 8px; border-radius:999px; background:#ecf0f1; font-size:12px; }
+    .family-panel { position:absolute; top:64px; right:15px; z-index:1500; background:#fff; border:1px solid #ddd; border-radius:12px; padding:12px; width:280px; }
   </style>
 </head>
 <body>
   <header>
-    <div class="header-left">
-      <div class="brand">Velastegui Pantry Gold PRO</div>
-      <button id="family-btn" class="small ghost" onclick="toggleFamilyPanel()">FAMILY</button>
+    <div>
+      <b>Velastegui Pantry Gold PRO</b>
+      <button onclick="toggleFamilyPanel()" style="width:auto; padding:5px 10px; font-size:12px; margin-left:10px;">FAMILY</button>
       <div id="family-display" class="pill">CARGANDO...</div>
     </div>
-    <div class="header-right top-actions">
-      <button id="lang-toggle" class="small ghost lang-toggle" onclick="toggleLanguage()">EN</button>
-      <button class="small ghost" onclick="logout()" id="logout-btn">Logout</button>
-    </div>
+    <button onclick="auth.signOut()" style="width:auto; padding:5px 10px; font-size:12px;">Logout</button>
   </header>
 
   <div id="family-panel" class="family-panel hidden">
-    <div class="code" id="family-code-text">-----</div>
-    <button class="success" onclick="copyFamilyCode()" id="copy-family-btn">Copiar código</button>
-    <button style="margin-top:8px" onclick="shareFamilyCode()" id="share-family-btn">Compartir</button>
-    <div class="muted" style="margin-top:8px" id="family-panel-help">Comparte este código con tu familia.</div>
+    <div id="family-code-text" style="font-weight:bold; text-align:center; padding:10px;">-----</div>
+    <button onclick="navigator.clipboard.writeText(familyId).then(()=>Swal.fire('Copiado!'))">Copiar</button>
   </div>
 
   <div id="auth-screen" class="container">
     <div class="card">
-      <h3 style="text-align:center; margin-top:0" id="login-title">PANTRY LOGIN</h3>
-      <div id="auth-fields">
-        <input id="user-name" type="text" placeholder="Tu Nombre" />
-        <input id="email" type="email" placeholder="Email" />
-        <input id="pass" type="password" placeholder="Password" />
-        <input id="family-code" type="text" placeholder="Código Familiar / Unirse" />
-        <button onclick="handleAuth('login')" id="enter-btn">ENTRAR</button>
-        <button onclick="handleAuth('register')" style="background:none;color:var(--accent);margin-top:5px" id="register-btn">REGISTRARSE</button>
-        <hr />
-        <button class="secondary" onclick="loginGoogle()" id="google-btn">CONTINUAR CON GOOGLE</button>
-      </div>
+      <h3>PANTRY LOGIN</h3>
+      <input id="user-name" type="text" placeholder="Tu Nombre">
+      <input id="email" type="email" placeholder="Email">
+      <input id="pass" type="password" placeholder="Password">
+      <input id="family-code" type="text" placeholder="Código Familiar">
+      <button onclick="handleAuth('login')">ENTRAR</button>
+      <button onclick="handleAuth('register')" style="background:none; color:var(--accent);">REGISTRARSE</button>
     </div>
   </div>
 
-  <div id="main-app" class="hidden">
-    <div class="container">
-      <div id="view-add" class="card">
-        <button onclick="startScan()" style="background:#8e44ad;margin-bottom:15px" id="scan-btn">📷 ESCANEAR</button>
-        <div id="video-container"></div>
-
-        <input id="upc" type="text" placeholder="UPC" onchange="handleUPCChange(this.value)" style="margin-bottom:10px" />
-        <div class="grid-2" style="margin-bottom:10px">
-          <input id="product" type="text" placeholder="Nombre Producto" />
-          <input id="recipe-input" type="text" placeholder="Receta / plato para compras" />
-        </div>
-
-        <div class="grid-3">
-          <select id="category">
-            <option>PANTRY</option><option>FRIDGE</option><option>FREEZER</option><option>CLEANING</option><option>BREAD</option><option>DRINKS</option>
-          </select>
-          <input id="expiry" type="date" />
-          <input id="qty" type="number" placeholder="Cant." />
-        </div>
-
-        <div class="grid-3" style="margin-top:10px">
-          <input id="min" type="number" placeholder="Min" />
-          <input id="max" type="number" placeholder="Max" />
-          <button onclick="saveItem()" style="background:var(--success)" id="save-btn">GARDAR</button>
-        </div>
-
-        <div class="grid-2" style="margin-top:10px">
-          <button onclick="sugerenciaChefIA()" class="success" id="chef-btn">CHEFAI RECETA</button>
-          <button onclick="sugerenciaComprasIA()" class="secondary" id="buyai-btn">COMPRAS DESDE RECETA</button>
-        </div>
-      </div>
-
-      <div id="inventory-list"></div>
-      <div class="footer-note" id="footer-note">Hecho por TU NOMBRE · xaviapps.com</div>
-    </div>
+  <div id="main-app" class="container hidden">
+    <input id="upc" type="text" placeholder="UPC" onchange="handleUPCChange(this.value)">
+    <input id="product" type="text" placeholder="Nombre Producto">
+    <button onclick="saveItem()">GARDAR</button>
+    <button onclick="sugerenciaChefIA()">CHEFAI RECETA</button>
+    <div id="inventory-list"></div>
   </div>
-
-  <nav>
-    <div onclick="toggleView('inventory')" id="nav-inv" class="active">STOCK</div>
-    <div onclick="toggleView('shopping')" id="nav-shop">COMPRAS</div>
-  </nav>
 
   <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyD8dsAejvIEFDxu_Z2YZCtMnAkXhZr1H3E",
-      authDomain: "velastegui-pantry.firebaseapp.com",
-      projectId: "velastegui-pantry",
-      storageBucket: "velastegui-pantry.firebasestorage.app",
-      messagingSenderId: "927651602097",
-      appId: "1:927651602097:web:b243cfa8aff28886900c90"
-    };
-
+    const firebaseConfig = { /* TU CONFIG */ };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const auth = firebase.auth();
-    const provider = new firebase.auth.GoogleAuthProvider();
-
     const genAI = new GoogleGenerativeAI("AIzaSyCxMRqavNSSeRNfVk7UayR-llE_71R4NNI");
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     let familyId = null;
-    let currentView = 'inventory';
     let inventoryData = [];
-    let language = 'es';
-    let familyPanelOpen = false;
-
-    const i18n = {
-      es: {
-        loginTitle: 'PANTRY LOGIN',
-        enter: 'ENTRAR',
-        register: 'REGISTRARSE',
-        google: 'CONTINUAR CON GOOGLE',
-        scan: '📷 ESCANEAR',
-        save: 'GARDAR',
-        stock: 'STOCK',
-        shopping: 'COMPRAS',
-        chef: 'CHEFAI RECETA',
-        buyai: 'COMPRAS DESDE RECETA',
-        logout: 'Logout',
-        family: 'FAMILIA',
-        familyBtn: 'FAMILY',
-        placeholderName: 'Tu Nombre',
-        placeholderEmail: 'Email',
-        placeholderPass: 'Password',
-        placeholderFamily: 'Código Familiar / Unirse',
-        placeholderUpc: 'UPC',
-        placeholderProduct: 'Nombre Producto',
-        placeholderRecipe: 'Receta / plato para compras',
-        placeholderQty: 'Cant.',
-        placeholderMin: 'Min',
-        placeholderMax: 'Max',
-        footer: 'Hecho por TU NOMBRE · xaviapps.com',
-        familyPanelHelp: 'Comparte este código con tu familia.',
-        copyFamily: 'Copiar código',
-        shareFamily: 'Compartir'
-      },
-      en: {
-        loginTitle: 'PANTRY LOGIN',
-        enter: 'SIGN IN',
-        register: 'REGISTER',
-        google: 'CONTINUE WITH GOOGLE',
-        scan: '📷 SCAN',
-        save: 'SAVE',
-        stock: 'STOCK',
-        shopping: 'SHOPPING',
-        chef: 'CHEF AI RECIPE',
-        buyai: 'SHOPPING FROM RECIPE',
-        logout: 'Logout',
-        family: 'FAMILY',
-        familyBtn: 'FAMILY',
-        placeholderName: 'Your Name',
-        placeholderEmail: 'Email',
-        placeholderPass: 'Password',
-        placeholderFamily: 'Family Code / Join',
-        placeholderUpc: 'UPC',
-        placeholderProduct: 'Product Name',
-        placeholderRecipe: 'Recipe / dish for shopping',
-        placeholderQty: 'Qty',
-        placeholderMin: 'Min',
-        placeholderMax: 'Max',
-        footer: 'Made by YOUR NAME · xaviapps.com',
-        familyPanelHelp: 'Share this code with your family.',
-        copyFamily: 'Copy code',
-        shareFamily: 'Share'
-      }
-    };
-
-    function applyLanguage() {
-      const t = i18n[language];
-      document.getElementById('login-title').innerText = t.loginTitle;
-      document.getElementById('enter-btn').innerText = t.enter;
-      document.getElementById('register-btn').innerText = t.register;
-      document.getElementById('google-btn').innerText = t.google;
-      document.getElementById('scan-btn').innerText = t.scan;
-      document.getElementById('save-btn').innerText = t.save;
-      document.getElementById('nav-inv').innerText = t.stock;
-      document.getElementById('nav-shop').innerText = t.shopping;
-      document.getElementById('chef-btn').innerText = t.chef;
-      document.getElementById('buyai-btn').innerText = t.buyai;
-      document.getElementById('logout-btn').innerText = t.logout;
-      document.getElementById('footer-note').innerText = t.footer;
-      document.getElementById('family-btn').innerText = t.familyBtn;
-      document.getElementById('copy-family-btn').innerText = t.copyFamily;
-      document.getElementById('share-family-btn').innerText = t.shareFamily;
-      document.getElementById('family-panel-help').innerText = t.familyPanelHelp;
-      document.getElementById('lang-toggle').innerText = language === 'es' ? 'EN' : 'ES';
-      document.getElementById('user-name').placeholder = t.placeholderName;
-      document.getElementById('email').placeholder = t.placeholderEmail;
-      document.getElementById('pass').placeholder = t.placeholderPass;
-      document.getElementById('family-code').placeholder = t.placeholderFamily;
-      document.getElementById('upc').placeholder = t.placeholderUpc;
-      document.getElementById('product').placeholder = t.placeholderProduct;
-      document.getElementById('recipe-input').placeholder = t.placeholderRecipe;
-      document.getElementById('qty').placeholder = t.placeholderQty;
-      document.getElementById('min').placeholder = t.placeholderMin;
-      document.getElementById('max').placeholder = t.placeholderMax;
-      if (familyId) document.getElementById('family-display').innerText = `${t.family}: ${familyId}`;
-    }
-
-    window.toggleLanguage = () => {
-      language = language === 'es' ? 'en' : 'es';
-      applyLanguage();
-      renderList();
-    };
-
-    window.toggleFamilyPanel = () => {
-      familyPanelOpen = !familyPanelOpen;
-      document.getElementById('family-panel').classList.toggle('hidden', !familyPanelOpen);
-    };
-
-    async function refreshFamilyCodeUI(code) {
-      document.getElementById('family-code-text').innerText = code || '-----';
-      document.getElementById('family-display').innerText = `${i18n[language].family}: ${code || '-----'}`;
-    }
-
-    window.copyFamilyCode = async () => {
-      if (!familyId) return;
-      await navigator.clipboard.writeText(familyId);
-      Swal.fire('OK', 'Código copiado', 'success');
-    };
-
-    window.shareFamilyCode = async () => {
-      if (!familyId) return;
-      const shareData = { title: 'Family Code', text: `Mi código familiar es: ${familyId}` };
-      try {
-        if (navigator.share) {
-          await navigator.share(shareData);
-        } else {
-          await navigator.clipboard.writeText(`Mi código familiar es: ${familyId}`);
-          Swal.fire('OK', 'Compartir no disponible, copiado al portapapeles.', 'info');
-        }
-      } catch (e) {}
-    };
-
-    window.handleAuth = async (type) => {
-      const email = document.getElementById('email').value;
-      const pass = document.getElementById('pass').value;
-      const name = document.getElementById('user-name').value;
-      const fCode = document.getElementById('family-code').value.trim().toUpperCase();
-      try {
-        if (type === 'login') {
-          await auth.signInWithEmailAndPassword(email, pass);
-        } else {
-          const res = await auth.createUserWithEmailAndPassword(email, pass);
-          await res.user.updateProfile({ displayName: name });
-          const finalFid = fCode || Math.random().toString(36).substring(2, 8).toUpperCase();
-          await db.collection('users').doc(res.user.uid).set({ familyId: finalFid });
-        }
-      } catch (e) {
-        Swal.fire('Error', e.message, 'error');
-      }
-    };
-
-    window.loginGoogle = async () => {
-      try {
-        const res = await auth.signInWithPopup(provider);
-        const uDoc = await db.collection('users').doc(res.user.uid).get();
-        if (!uDoc.exists) {
-          const finalFid = Math.random().toString(36).substring(2, 8).toUpperCase();
-          await db.collection('users').doc(res.user.uid).set({ familyId: finalFid });
-        }
-      } catch (e) {
-        console.error(e);
-      }
-    };
-
-    window.logout = () => auth.signOut();
 
     auth.onAuthStateChanged(async (user) => {
-      if (user) {
-        const uDoc = await db.collection('users').doc(user.uid).get();
-        familyId = (uDoc.data() || {}).familyId;
-        document.getElementById('auth-screen').classList.add('hidden');
-        document.getElementById('main-app').classList.remove('hidden');
-        await refreshFamilyCodeUI(familyId);
-        db.collection('families').doc(familyId).collection('inventory').onSnapshot((snap) => {
-          inventoryData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-          renderList();
-        });
-      } else {
+      if (!user) {
         document.getElementById('auth-screen').classList.remove('hidden');
         document.getElementById('main-app').classList.add('hidden');
+        return;
       }
+      const ref = db.collection('users').doc(user.uid);
+      const uDoc = await ref.get();
+      familyId = uDoc.exists ? uDoc.data().familyId : Math.random().toString(36).substring(2,8).toUpperCase();
+      if (!uDoc.exists) await ref.set({ familyId });
+      
+      document.getElementById('auth-screen').classList.add('hidden');
+      document.getElementById('main-app').classList.remove('hidden');
+      document.getElementById('family-display').innerText = `FAMILIA: ${familyId}`;
+      document.getElementById('family-code-text').innerText = familyId;
+      
+      db.collection('families').doc(familyId).collection('inventory').onSnapshot(snap => {
+        inventoryData = snap.docs.map(d => ({id: d.id, ...d.data()}));
+        renderList();
+      });
     });
 
     window.handleUPCChange = async (upc) => {
-      const code = (upc || '').trim();
-      if (!code || !familyId) return;
-
-      const local = inventoryData.find(i => i.id === code || i.upc === code);
-      if (local) {
-        document.getElementById('product').value = local.name || '';
-        document.getElementById('category').value = local.category || 'PANTRY';
-        document.getElementById('expiry').value = local.expiry || '';
-        document.getElementById('qty').value = local.qty ?? 0;
-        document.getElementById('min').value = local.min ?? 0;
-        document.getElementById('max').value = local.max ?? 0;
-        return;
-      }
-
-      try {
-        const r = await fetch(`https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(code)}.json`);
-        const data = await r.json();
-        if (data && data.status === 1 && data.product) {
-          const p = data.product;
-          document.getElementById('product').value = p.product_name || p.product_name_es || p.generic_name || '';
-          document.getElementById('category').value = 'PANTRY';
-          Swal.fire('Open Food Facts', 'Producto encontrado online.', 'success');
-        } else {
-          Swal.fire('No encontrado', 'No existe en inventario ni en Open Food Facts.', 'info');
-        }
-      } catch (e) {
-        Swal.fire('Error', 'No se pudo consultar Open Food Facts.', 'error');
-      }
+      const local = inventoryData.find(i => i.id === upc);
+      if (local) { /* ... autocompletar ... */ return; }
+      const r = await fetch(`https://world.openfoodfacts.org/api/v2/product/${upc}.json`);
+      const data = await r.json();
+      if(data.status === 1) document.getElementById('product').value = data.product.product_name;
     };
 
-    window.sugerenciaChefIA = async () => {
-      const disponibles = inventoryData.filter(i => (i.qty || 0) > 0).map(i => i.name).join(', ');
-      if (!disponibles) return Swal.fire('Inventario vacío', 'No tienes productos suficientes para cocinar.', 'info');
-      Swal.fire({ title: 'Pensando receta...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-      try {
-        const prompt = `Tengo estos ingredientes en mi despensa: ${disponibles}. Sugiere una receta rápida y bilingüe (Nombre en español e inglés). Solo responde la receta de forma concisa.`;
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        Swal.fire({
-          title: '👨‍🍳 Sugerencia del Chef',
-          html: `<div class="recipe-box">${response.text().replace(/\n/g, '<br>')}</div>`,
-          confirmButtonText: '¡Gracias!'
-        });
-      } catch (error) {
-        Swal.fire('Error', 'No pude conectar con el Chef IA.', 'error');
-      }
-    };
-
-    window.sugerenciaComprasIA = async () => {
-      const recipe = document.getElementById('recipe-input').value.trim();
-      if (!recipe) return Swal.fire('Falta receta', 'Escribe una receta o plato para generar compras.', 'info');
-      Swal.fire({ title: 'Generando compras...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-      try {
-        const prompt = `Tengo esta receta o plato: ${recipe}. Devuélveme una lista breve de compras faltantes, con cantidades aproximadas y categorías de supermercado. Responde en español, muy conciso.`;
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        Swal.fire({
-          title: '🛒 Lista de compras',
-          html: `<div class="recipe-box">${response.text().replace(/\n/g, '<br>')}</div>`,
-          confirmButtonText: 'OK'
-        });
-      } catch (error) {
-        Swal.fire('Error', 'No pude generar la lista de compras.', 'error');
-      }
-    };
-
-    function renderList() {
-      const listDiv = document.getElementById('inventory-list');
-      listDiv.innerHTML = '';
-      if (!familyId) return;
-
-      if (currentView === 'inventory') {
-        inventoryData.forEach(item => {
-          const low = (item.qty || 0) <= (item.min || 0);
-          const card = document.createElement('div');
-          card.className = `card ${low ? 'status-low' : 'status-ok'}`;
-          card.innerHTML = `<b>${item.name || ''}</b> [${item.qty || 0}/${item.max || 0}]<br><small>${item.category || ''}</small>
-            <div class="grid-3" style="margin-top:10px">
-              <button onclick="updateQty('${item.id}', 1)" style="background:var(--success)">+1</button>
-              <button onclick="updateQty('${item.id}', -1)" style="background:var(--warning)">-1</button>
-              <button onclick="deleteItem('${item.id}')" style="background:var(--danger)">X</button>
-            </div>`;
-          listDiv.appendChild(card);
-        });
-      } else {
-        const categories = [...new Set(inventoryData.filter(i => (i.qty || 0) < (i.max || 0)).map(i => i.category || 'PANTRY'))];
-        categories.forEach(cat => {
-          const h = document.createElement('div');
-          h.className = 'aisle-header';
-          h.innerText = `PASILLO: ${cat}`;
-          listDiv.appendChild(h);
-
-          inventoryData
-            .filter(i => (i.category || 'PANTRY') === cat && (i.qty || 0) < (i.max || 0))
-            .forEach(item => {
-              const card = document.createElement('div');
-              card.className = 'card';
-              card.innerHTML = `<b>${item.name || ''}</b> (Faltan: ${(item.max || 0) - (item.qty || 0)})
-                <div style="margin-top:10px; display:flex; gap:10px;">
-                  <input type="number" id="buy_${item.id}" placeholder="Cant.">
-                  <button onclick="processPurchase('${item.id}')">OK</button>
-                </div>`;
-              listDiv.appendChild(card);
-            });
-        });
-      }
-    }
-
-    window.updateQty = (id, v) => db.collection('families').doc(familyId).collection('inventory').doc(id).update({ qty: firebase.firestore.FieldValue.increment(v) });
-    window.deleteItem = (id) => db.collection('families').doc(familyId).collection('inventory').doc(id).delete();
-    window.processPurchase = (id) => {
-      const el = document.getElementById(`buy_${id}`);
-      const v = parseInt(el.value);
-      if (v > 0) db.collection('families').doc(familyId).collection('inventory').doc(id).update({ qty: firebase.firestore.FieldValue.increment(v) });
-    };
-    window.toggleView = (v) => {
-      currentView = v;
-      document.getElementById('nav-inv').className = v === 'inventory' ? 'active' : '';
-      document.getElementById('nav-shop').className = v === 'shopping' ? 'active' : '';
-      renderList();
-    };
-    window.saveItem = async () => {
-      const upc = document.getElementById('upc').value.trim();
-      if (!upc) return Swal.fire('Error', 'Falta UPC', 'error');
-      await db.collection('families').doc(familyId).collection('inventory').doc(upc).set({
-        upc,
-        name: document.getElementById('product').value,
-        category: document.getElementById('category').value,
-        expiry: document.getElementById('expiry').value,
-        qty: +document.getElementById('qty').value || 0,
-        min: +document.getElementById('min').value || 0,
-        max: +document.getElementById('max').value || 0
-      }, { merge: true });
-      Swal.fire('Guardado', '', 'success');
-    };
-
-    window.startScan = () => Swal.fire('Escáner', 'Integra aquí tu lector de códigos. Por ahora usa el campo UPC.', 'info');
-
-    applyLanguage();
+    window.toggleFamilyPanel = () => document.getElementById('family-panel').classList.toggle('hidden');
+    window.handleAuth = async (type) => { /* ... login/register ... */ };
+    window.saveItem = async () => { /* ... guardar ... */ };
+    window.sugerenciaChefIA = async () => { /* ... IA ... */ };
+    function renderList() { /* ... render ... */ }
   </script>
 </body>
 </html>
