@@ -208,7 +208,7 @@
 <div id="main-app" style="display:none;">
 
     <header>
-        <button class="header-btn" onclick="toggleLang()" id="lang-btn">EN</button>
+        <button class="header-btn" onclick="toggleLang()" id="lang-btn"><script>document.write(localStorage.getItem("vp-lang")==="en"?"ES":"EN")</script></button>
         <div class="header-center">VELASTEGUI PANTRY PRO</div>
         <button class="header-btn" onclick="toggleShare()" title="Compartir familia">👨‍👩‍👧‍👦</button>
     </header>
@@ -501,27 +501,39 @@ window.shareFamilyCode = function() {
 // ================= MOTOR HÍBRIDO (LOCAL + API) =================
 window.handleUPCChange = async function(code) {
     if (!code || !familyId) return;
-    
-    const docRef  = doc(db, "families", familyId, "inventory", code);
-    const docSnap = await getDoc(docRef);
 
-    if (docSnap.exists()) {
-        fillForm(docSnap.data(), code);
+    // 1. Buscar en colección familiar
+    const familyRef = doc(db, "families", familyId, "inventory", code);
+    const familySnap = await getDoc(familyRef);
+    if (familySnap.exists()) {
+        fillForm(familySnap.data(), code);
         Swal.fire({ title: 'Localizado', text: 'Datos cargados del inventario', icon: 'success', timer: 1000, showConfirmButton: false });
-    } else {
-        Swal.fire({ title: 'Buscando online...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-        try {
-            const res  = await fetch(`https://world.openfoodfacts.org/api/v0/product/${code}.json`);
-            const data = await res.json();
-            Swal.close();
-            if (data.status === 1) {
-                document.getElementById("product").value = data.product.product_name || data.product.generic_name || "";
-                Swal.fire({ title: 'Encontrado Online', text: 'Completa los detalles y guarda', icon: 'info', timer: 2000 });
-            } else {
-                Swal.fire('No encontrado', 'Ingresa el nombre manualmente', 'warning');
-            }
-        } catch (e) { Swal.close(); }
+        return;
     }
+
+    // 2. Fallback: buscar en colección raíz legacy y migrar
+    const legacySnap = await getDoc(doc(db, "inventory", code));
+    if (legacySnap.exists()) {
+        const d = legacySnap.data();
+        fillForm(d, code);
+        await setDoc(familyRef, d, { merge: true });
+        Swal.fire({ title: '✅ Migrado', text: 'Producto encontrado y migrado a tu familia', icon: 'success', timer: 1500, showConfirmButton: false });
+        return;
+    }
+
+    // 3. Buscar en Open Food Facts
+    Swal.fire({ title: 'Buscando online...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    try {
+        const res  = await fetch(`https://world.openfoodfacts.org/api/v0/product/${code}.json`);
+        const data = await res.json();
+        Swal.close();
+        if (data.status === 1) {
+            document.getElementById("product").value = data.product.product_name || data.product.generic_name || "";
+            Swal.fire({ title: 'Encontrado Online', text: 'Completa los detalles y guarda', icon: 'info', timer: 2000 });
+        } else {
+            Swal.fire('No encontrado', 'Ingresa el nombre manualmente', 'warning');
+        }
+    } catch (e) { Swal.close(); }
 };
 
 // ================= ESCÁNER =================
