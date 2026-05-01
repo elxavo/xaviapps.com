@@ -209,7 +209,7 @@
 
     <header>
         <button class="header-btn" onclick="toggleLang()" id="lang-btn"><script>document.write(localStorage.getItem("vp-lang")==="en"?"ES":"EN")</script></button>
-        <div class="header-center">VELASTEGUI SHOPPING PRO</div>
+        <div class="header-center">VELASTEGUI PANTRY PRO</div>
         <button class="header-btn" onclick="doLogout()" title="Logout" style="background:rgba(231,76,60,0.5);">⎋ OUT</button>
     </header>
 
@@ -399,30 +399,16 @@ function hideLoading() {
 
 // ================= FAMILY SETUP =================
 async function ensureFamily(user, inviteCode) {
-    try {
-        const userRef = doc(db, "users", user.uid);
-        const uDoc = await getDoc(userRef);
+    const userRef = doc(db, "users", user.uid);
+    const uDoc    = await getDoc(userRef);
+    if (uDoc.exists() && uDoc.data().familyId) return uDoc.data().familyId;
 
-        if (uDoc.exists() && uDoc.data().familyId) {
-            return uDoc.data().familyId;
-        }
+    const fid = (inviteCode && inviteCode.trim().length > 0)
+        ? inviteCode.trim().toUpperCase()
+        : Math.random().toString(36).substring(2, 8).toUpperCase();
 
-        const fid = (inviteCode && inviteCode.trim())
-            ? inviteCode.trim().toUpperCase()
-            : Math.random().toString(36).substring(2, 8).toUpperCase();
-
-        await setDoc(userRef, {
-            familyId: fid,
-            email: user.email,
-            name: user.displayName || ''
-        }, { merge: true });
-
-        return fid;
-
-    } catch (e) {
-        console.error("ensureFamily failed:", e);
-        throw e;
-    }
+    await setDoc(userRef, { familyId: fid, email: user.email, name: user.displayName || '' }, { merge: true });
+    return fid;
 }
 
 // ================= AUTH =================
@@ -468,50 +454,23 @@ function friendlyErr(code) {
 
 // ================= AUTH STATE =================
 onAuthStateChanged(auth, async (user) => {
-    try {
-        if (!user) {
-            document.getElementById('auth-screen').style.display = '';
-            document.getElementById('main-app').style.display = 'none';
-            hideLoading();
-            return;
-        }
-
+    if (user) {
         showLoading('Cargando inventario...');
         currentUser = user;
-
-        const code = window._pendingCode || null;
+        const code  = window._pendingCode || null;
         window._pendingCode = null;
-
         familyId = await ensureFamily(user, code);
 
         document.getElementById('family-code-display').textContent = familyId;
-
-        document.getElementById('auth-screen').style.display = 'none';
-        document.getElementById('main-app').style.display = '';
+        document.getElementById('auth-screen').style.display  = 'none';
+        document.getElementById('main-app').style.display     = '';
+        document.getElementById('footer-yr').textContent      = new Date().getFullYear();
 
         if (unsubSnap) unsubSnap();
-
-        unsubSnap = onSnapshot(
-            collection(db, "families", familyId, "inventory"),
-            (snap) => {
-                inventoryData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                renderList();
-            },
-            (err) => {
-                console.error("Firestore error:", err);
-                Swal.fire("Error", "Firestore permission or network issue", "error");
-            }
-        );
-
-        applyLang();
-
-    } catch (e) {
-        console.error("INIT ERROR:", e);
-        Swal.fire("Error crítico", e.message, "error");
-    } finally {
-        hideLoading();
-    }
-});
+        unsubSnap = onSnapshot(collection(db, "families", familyId, "inventory"), (snap) => {
+            inventoryData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            renderList();
+        });
 
         applyLang();
         hideLoading();
@@ -692,7 +651,7 @@ function renderShoppingView(data, today, nextWeek) {
     const t       = T[lang];
 
     // ── AISLES ORDER ──
-    const AISLES = ['PRODUCE','BAKERY','MEAT_DELI','PANTRY_DRY','FROZEN','DAIRY','CLEANING', 'OTHERS'];
+    const AISLES = ['PRODUCE','BAKERY','MEAT_DELI','PANTRY_DRY','FROZEN','DAIRY','CLEANING', OTHERS'];
 
     const prioritarios = data.filter(item => item.expiry && new Date(item.expiry) <= nextWeek);
     const bajoStock    = data.filter(item => (item.qty <= item.min) && !(item.expiry && new Date(item.expiry) <= nextWeek));
