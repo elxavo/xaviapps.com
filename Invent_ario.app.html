@@ -169,70 +169,75 @@
     window.doLogout = () => signOut(auth);
 
     // --- IA FUNCTIONS ---
-// --- CONFIGURACIÓN IA ROBUSTA ---
-const genAI = new GoogleGenerativeAI("AIzaSyCxMRqavNSSeRNfVk7UayR-llE_71R4NNI");
-// Añadimos ajustes de seguridad para evitar bloqueos por error
-const model = genAI.getGenerativeModel({ 
-    model: "gemini-1.5-flash",
-    safetySettings: [
+// --- IA FUNCTIONS (OPTIMIZADO Y CORREGIDO) ---
+    // Nota: Eliminamos las declaraciones duplicadas de genAI y model que estaban arriba
+
+    const safetySettings = [
         { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
         { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
         { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
         { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
-    ]
-});
+    ];
 
-window.sugerenciaChefIA = async () => {
-    const stock = inventoryData.filter(i => i.qty > 0).map(i => i.name).join(", ");
-    if(!stock) return Swal.fire("Inventario Vacío", "Añade productos con stock primero.", "info");
+    // Re-configuramos el modelo con los ajustes de seguridad
+    const aiModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash", safetySettings });
 
-    showLoading("Chef IA preparando menú...");
+    window.sugerenciaChefIA = async () => {
+        const stock = inventoryData.filter(i => i.qty > 0).map(i => i.name).join(", ");
+        if(!stock) return Swal.fire("Inventario Vacío", "Añade productos con stock primero.", "info");
 
-    try {
-        const prompt = `Actúa como un chef creativo. Con estos ingredientes: ${stock}, sugiere una receta latina. Formato: Nombre, Ingredientes y Preparación breve.`;
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        const text = response.text(); // El await aquí es clave
+        showLoading("Chef IA preparando menú...");
 
-        hideLoading();
-        Swal.fire({
-            title: 'Sugerencia del Chef',
-            html: `<div style="text-align:left; font-size:13px; max-height:300px; overflow-y:auto;">${text.replace(/\n/g, '<br>')}</div>`,
-            confirmButtonText: '¡Gracias!'
+        try {
+            const prompt = `Actúa como un chef creativo. Con estos ingredientes: ${stock}, sugiere una receta latina. Formato: Nombre, Ingredientes y Preparación breve.`;
+            const result = await aiModel.generateContent(prompt);
+            const response = await result.response;
+            const text = await response.text(); // CORREGIDO: Se añadió await
+
+            hideLoading();
+            Swal.fire({
+                title: 'Sugerencia del Chef',
+                html: `<div style="text-align:left; font-size:13px; max-height:300px; overflow-y:auto;">${text.replace(/\n/g, '<br>')}</div>`,
+                confirmButtonText: '¡Gracias!'
+            });
+        } catch(e) { 
+            hideLoading();
+            console.error("Detalle del error:", e);
+            Swal.fire("Error de IA", `No se pudo conectar: ${e.message.substring(0, 50)}...`, "error"); 
+        }
+    };
+
+    window.analizarRecetaIA = async () => {
+        const { value: plato } = await Swal.fire({ 
+            title: '¿Qué quieres cocinar?', 
+            input: 'text', 
+            inputPlaceholder: 'Ej: Arroz con pollo',
+            showCancelButton: true 
         });
-    } catch(e) { 
-        hideLoading();
-        console.error("Detalle del error:", e);
-        // Esto te dirá si el error es de la API KEY o de cuota
-        Swal.fire("Error de IA", `Detalle: ${e.message.substring(0, 50)}...`, "error"); 
-    }
-};
+        
+        if (!plato) return;
 
-window.analizarRecetaIA = async () => {
-    const { value: plato } = await Swal.fire({ title: '¿Qué quieres cocinar?', input: 'text', showCancelButton: true });
-    if (!plato) return;
+        showLoading("Analizando despensa...");
+        const stockActual = inventoryData.map(i => i.name).join(", ");
 
-    showLoading("Analizando despensa...");
-    const stockActual = inventoryData.map(i => i.name).join(", ");
+        try {
+            const prompt = `Para cocinar "${plato}", ¿qué ingredientes me faltan si solo tengo esto: [${stockActual}]? Sé breve.`;
+            const result = await aiModel.generateContent(prompt);
+            const response = await result.response;
+            const text = await response.text(); // CORREGIDO: Se añadió await
 
-    try {
-        const prompt = `Para cocinar "${plato}", ¿qué ingredientes me faltan si solo tengo esto: [${stockActual}]? Sé breve.`;
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        const text = response.text();
-
-        hideLoading();
-        Swal.fire({
-            title: `Checklist para ${plato}`,
-            html: `<div style="text-align:left; font-size:13px;">${text.replace(/\n/g, '<br>')}</div>`,
-            confirmButtonText: 'Entendido'
-        });
-    } catch(e) { 
-        hideLoading();
-        Swal.fire("Error", "No se pudo analizar el plato. Revisa la consola (F12).", "error"); 
-    }
-};
-
+            hideLoading();
+            Swal.fire({
+                title: `Checklist para ${plato}`,
+                html: `<div style="text-align:left; font-size:13px; max-height:300px; overflow-y:auto;">${text.replace(/\n/g, '<br>')}</div>`,
+                confirmButtonText: 'Entendido'
+            });
+        } catch(e) { 
+            hideLoading();
+            console.error("Error Analizador:", e);
+            Swal.fire("Error", "No se pudo analizar el plato.", "error"); 
+        }
+    };
     // --- ESCÁNER ---
     window.startScan = async function () {
         const container = document.getElementById("video-container");
