@@ -127,11 +127,16 @@
 
 <script type="module">
     
+<script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
-    import { getFirestore, collection, doc, setDoc, updateDoc, deleteDoc, increment, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
-    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, updateProfile, GoogleAuthProvider, signInWithPopup} from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+    import { getFirestore, collection, doc, setDoc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+    import { 
+        getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, 
+        GoogleAuthProvider, signInWithPopup 
+    } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
     import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
 
+    // Configuración de Firebase (Tu proyecto actual)
     const firebaseConfig = {
         apiKey: "AIzaSyD8dsAejvIEFDxu_Z2YZCtMnAkXhZr1H3E",
         authDomain: "velastegui-pantry.firebaseapp.com",
@@ -144,17 +149,41 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
+    
+    // Configuración de IA - Gemini 1.5 Flash
     const genAI = new GoogleGenerativeAI("AIzaSyCxMRqavNSSeRNfVk7UayR-llE_71R4NNI");
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const aiModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-    let inventoryData = [], familyId = null, lang = 'es';
+    let inventoryData = [], familyId = null;
 
-    // --- AUTH & SESSION ---
+    // --- LÓGICA DE GOOGLE ---
+    window.doGoogleLogin = async () => {
+        const provider = new GoogleAuthProvider();
+        showLoading("Conectando con Google...");
+        try {
+            const result = await signInWithPopup(auth, provider);
+            const user = result.user;
+            const userRef = doc(db, "users", user.uid);
+            const uDoc = await getDoc(userRef);
+            
+            if (!uDoc.exists()) {
+                const newFamilyId = "FAM-" + Math.random().toString(36).substr(2,5).toUpperCase();
+                await setDoc(userRef, { name: user.displayName, email: user.email, familyId: newFamilyId });
+            }
+        } catch (e) {
+            hideLoading();
+            console.error(e);
+            Swal.fire("Error", "No se pudo iniciar con Google. Verifica que esté habilitado en Firebase.", "error");
+        }
+    };
+
+    // --- CONTROL DE SESIÓN ---
     onAuthStateChanged(auth, async (user) => {
         if (user) {
             const userRef = doc(db, "users", user.uid);
             const uDoc = await getDoc(userRef);
             familyId = uDoc.exists() ? uDoc.data().familyId : "FAM-" + Math.random().toString(36).substr(2,5).toUpperCase();
+            
             if(!uDoc.exists()) await setDoc(userRef, { familyId, email: user.email });
             
             document.getElementById('auth-screen').style.display = 'none';
@@ -171,99 +200,39 @@
         }
     });
 
-    window.doLogin = () => signInWithEmailAndPassword(auth, document.getElementById('auth-email').value, document.getElementById('auth-pass').value);
-
-window.doGoogleLogin = async () => {
-    const provider = new GoogleAuthProvider();
-    showLoading("Conectando con Google...");
-    try {
-        const result = await signInWithPopup(auth, provider);
-        const user = result.user;
-        const userRef = doc(db, "users", user.uid);
-        const uDoc = await getDoc(userRef);
-        
-        if (!uDoc.exists()) {
-            const familyId = "FAM-" + Math.random().toString(36).substr(2,5).toUpperCase();
-            await setDoc(userRef, { name: user.displayName, email: user.email, familyId: familyId });
-        }
-        // El onAuthStateChanged se encargará de mostrar la app automáticamente
-    } catch (e) {
-        hideLoading();
-        Swal.fire("Error", "No se pudo iniciar sesión con Google", "error");
-    }
-};
-    window.doLogout = () => signOut(auth);
-
-    // --- IA FUNCTIONS ---
-// --- IA FUNCTIONS (OPTIMIZADO Y CORREGIDO) ---
-    // Nota: Eliminamos las declaraciones duplicadas de genAI y model que estaban arriba
-
-    const safetySettings = [
-        { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
-        { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-        { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
-        { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
-    ];
-
-    // Re-configuramos el modelo con los ajustes de seguridad
-    const aiModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash", safetySettings });
-
+    // --- FUNCIONES IA (ARREGLADAS) ---
     window.sugerenciaChefIA = async () => {
         const stock = inventoryData.filter(i => i.qty > 0).map(i => i.name).join(", ");
-        if(!stock) return Swal.fire("Inventario Vacío", "Añade productos con stock primero.", "info");
+        if(!stock) return Swal.fire("Sin stock", "No hay ingredientes para sugerir nada.", "info");
 
-        showLoading("Chef IA preparando menú...");
-
+        showLoading("Chef IA pensando...");
         try {
-            const prompt = `Actúa como un chef creativo. Con estos ingredientes: ${stock}, sugiere una receta latina. Formato: Nombre, Ingredientes y Preparación breve.`;
-            const result = await aiModel.generateContent(prompt);
-            const response = await result.response;
-            const text = await response.text(); // CORREGIDO: Se añadió await
-
+            const result = await aiModel.generateContent(`Tengo: ${stock}. Sugiere una receta breve.`);
+            const text = await result.response.text(); // El await corregido
             hideLoading();
-            Swal.fire({
-                title: 'Sugerencia del Chef',
-                html: `<div style="text-align:left; font-size:13px; max-height:300px; overflow-y:auto;">${text.replace(/\n/g, '<br>')}</div>`,
-                confirmButtonText: '¡Gracias!'
-            });
+            Swal.fire({ title: 'Sugerencia', html: `<div style="text-align:left;">${text.replace(/\n/g, '<br>')}</div>` });
         } catch(e) { 
             hideLoading();
-            console.error("Detalle del error:", e);
-            Swal.fire("Error de IA", `No se pudo conectar: ${e.message.substring(0, 50)}...`, "error"); 
+            Swal.fire("Error IA", "Revisa la cuota de tu API Key.", "error"); 
         }
     };
 
-    window.analizarRecetaIA = async () => {
-        const { value: plato } = await Swal.fire({ 
-            title: '¿Qué quieres cocinar?', 
-            input: 'text', 
-            inputPlaceholder: 'Ej: Arroz con pollo',
-            showCancelButton: true 
+    // --- AUXILIARES ---
+    window.doLogout = () => signOut(auth);
+    function showLoading(m) { document.getElementById('loading-screen').style.display='flex'; document.getElementById('loading-msg').innerText=m; }
+    function hideLoading() { document.getElementById('loading-screen').classList.add('fade'); setTimeout(()=>document.getElementById('loading-screen').style.display='none', 300); }
+    
+    function renderList() {
+        const list = document.getElementById("inventory-list");
+        list.innerHTML = "";
+        inventoryData.forEach(item => {
+            const div = document.createElement("div");
+            div.className = `card ${item.qty <= 1 ? 'status-low' : 'status-ok'}`;
+            div.innerHTML = `<b>${item.name}</b> - Stock: ${item.qty}`;
+            list.appendChild(div);
         });
-        
-        if (!plato) return;
-
-        showLoading("Analizando despensa...");
-        const stockActual = inventoryData.map(i => i.name).join(", ");
-
-        try {
-            const prompt = `Para cocinar "${plato}", ¿qué ingredientes me faltan si solo tengo esto: [${stockActual}]? Sé breve.`;
-            const result = await aiModel.generateContent(prompt);
-            const response = await result.response;
-            const text = await response.text(); // CORREGIDO: Se añadió await
-
-            hideLoading();
-            Swal.fire({
-                title: `Checklist para ${plato}`,
-                html: `<div style="text-align:left; font-size:13px; max-height:300px; overflow-y:auto;">${text.replace(/\n/g, '<br>')}</div>`,
-                confirmButtonText: 'Entendido'
-            });
-        } catch(e) { 
-            hideLoading();
-            console.error("Error Analizador:", e);
-            Swal.fire("Error", "No se pudo analizar el plato.", "error"); 
-        }
-    };
+    }
+</script>
     // --- ESCÁNER ---
     window.startScan = async function () {
         const container = document.getElementById("video-container");
