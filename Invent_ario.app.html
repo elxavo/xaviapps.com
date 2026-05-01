@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
     <title>Family Pantry Gold PRO</title>
     
+    <!-- Evita el error 404 del favicon -->
+    <link rel="icon" href="data:,">
+    
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     <style>
@@ -30,7 +33,6 @@
         .container { padding: 15px; max-width: 700px; margin: auto; }
         .card { background: white; padding: 18px; margin-bottom: 15px; border-radius: 12px; border-left: 6px solid #ddd; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
         
-        /* Estados */
         .status-ok { border-left-color: var(--success); }
         .status-low { border-left-color: var(--warning); }
         .status-critical { border-left-color: var(--danger); }
@@ -73,10 +75,10 @@
         <input id="auth-code" type="text" placeholder="Código familiar (Opcional)" style="text-transform:uppercase; margin-bottom:15px;">
         <button onclick="doLogin()">ENTRAR</button>
         <button onclick="doGoogleLogin()" style="background:#4285F4; margin-top:8px;">
-    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
-         style="width:18px; margin-right:8px; vertical-align:middle; filter:brightness(0) invert(1);"> 
-    ENTRAR CON GOOGLE
-</button>
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
+                 style="width:18px; margin-right:8px; vertical-align:middle; filter:brightness(0) invert(1);"> 
+            ENTRAR CON GOOGLE
+        </button>
         <button onclick="doRegister()" style="background:none; color:var(--accent); border:1px solid var(--accent); margin-top:8px;">REGISTRARSE</button>
     </div>
 </div>
@@ -90,7 +92,6 @@
     </header>
 
     <div class="container">
-        <!-- BOTONES IA -->
         <div class="grid-3" style="margin-bottom: 15px;">
             <button onclick="sugerenciaChefIA()" style="background: #6c5ce7; font-size:12px;">👨‍🍳 CHEF IA</button>
             <button onclick="analizarRecetaIA()" style="background: #00b894; font-size:12px;">🔍 ANALIZAR</button>
@@ -100,7 +101,7 @@
             <button onclick="startScan()" style="background:#8e44ad; margin-bottom:15px;">📷 ESCANEAR CÓDIGO</button>
             <div id="video-container"></div>
             <label>Producto</label>
-            <input id="upc" type="text" placeholder="UPC / Barcode" onchange="handleUPCChange(this.value)" style="margin-bottom:10px;">
+            <input id="upc" type="text" placeholder="UPC / Barcode" style="margin-bottom:10px;">
             <input id="product" type="text" placeholder="Nombre del producto" style="margin-bottom:10px;">
             
             <div class="grid-3">
@@ -126,17 +127,11 @@
 </nav>
 
 <script type="module">
-    
-<script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
     import { getFirestore, collection, doc, setDoc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
-    import { 
-        getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, 
-        GoogleAuthProvider, signInWithPopup 
-    } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
     import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
 
-    // Configuración de Firebase (Tu proyecto actual)
     const firebaseConfig = {
         apiKey: "AIzaSyD8dsAejvIEFDxu_Z2YZCtMnAkXhZr1H3E",
         authDomain: "velastegui-pantry.firebaseapp.com",
@@ -149,90 +144,65 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
-    
-    // Configuración de IA - Gemini 1.5 Flash
     const genAI = new GoogleGenerativeAI("AIzaSyCxMRqavNSSeRNfVk7UayR-llE_71R4NNI");
     const aiModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     let inventoryData = [], familyId = null;
 
-    // --- LÓGICA DE GOOGLE ---
+    // --- LOGIN GOOGLE ---
     window.doGoogleLogin = async () => {
         const provider = new GoogleAuthProvider();
-        showLoading("Conectando con Google...");
         try {
             const result = await signInWithPopup(auth, provider);
             const user = result.user;
             const userRef = doc(db, "users", user.uid);
             const uDoc = await getDoc(userRef);
-            
             if (!uDoc.exists()) {
                 const newFamilyId = "FAM-" + Math.random().toString(36).substr(2,5).toUpperCase();
                 await setDoc(userRef, { name: user.displayName, email: user.email, familyId: newFamilyId });
             }
         } catch (e) {
-            hideLoading();
             console.error(e);
-            Swal.fire("Error", "No se pudo iniciar con Google. Verifica que esté habilitado en Firebase.", "error");
+            Swal.fire("Error", "No se pudo conectar con Google", "error");
         }
     };
 
-    // --- CONTROL DE SESIÓN ---
+    // --- ESTADO DE SESIÓN ---
     onAuthStateChanged(auth, async (user) => {
+        const authScreen = document.getElementById('auth-screen');
+        const mainApp = document.getElementById('main-app');
         if (user) {
             const userRef = doc(db, "users", user.uid);
             const uDoc = await getDoc(userRef);
-            familyId = uDoc.exists() ? uDoc.data().familyId : "FAM-" + Math.random().toString(36).substr(2,5).toUpperCase();
+            familyId = uDoc.exists() ? uDoc.data().familyId : "FAM-NEW";
             
-            if(!uDoc.exists()) await setDoc(userRef, { familyId, email: user.email });
-            
-            document.getElementById('auth-screen').style.display = 'none';
-            document.getElementById('main-app').style.display = 'block';
+            authScreen.style.display = 'none';
+            mainApp.style.display = 'block';
             
             onSnapshot(collection(db, "families", familyId, "inventory"), (snap) => {
                 inventoryData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                 renderList();
             });
-            hideLoading();
         } else {
-            document.getElementById('auth-screen').style.display = 'flex';
-            hideLoading();
+            authScreen.style.display = 'flex';
+            mainApp.style.display = 'none';
         }
+        hideLoading();
     });
 
-    // --- FUNCIONES IA (ARREGLADAS) ---
+    // --- IA ---
     window.sugerenciaChefIA = async () => {
         const stock = inventoryData.filter(i => i.qty > 0).map(i => i.name).join(", ");
-        if(!stock) return Swal.fire("Sin stock", "No hay ingredientes para sugerir nada.", "info");
-
-        showLoading("Chef IA pensando...");
+        if(!stock) return Swal.fire("Aviso", "Inventario vacío", "info");
+        showLoading("Cocinando ideas...");
         try {
-            const result = await aiModel.generateContent(`Tengo: ${stock}. Sugiere una receta breve.`);
-            const text = await result.response.text(); // El await corregido
+            const result = await aiModel.generateContent(`Tengo: ${stock}. Receta latina rápida.`);
+            const text = await result.response.text();
             hideLoading();
-            Swal.fire({ title: 'Sugerencia', html: `<div style="text-align:left;">${text.replace(/\n/g, '<br>')}</div>` });
-        } catch(e) { 
-            hideLoading();
-            Swal.fire("Error IA", "Revisa la cuota de tu API Key.", "error"); 
-        }
+            Swal.fire({ title: 'Chef IA', html: `<div style="text-align:left;">${text.replace(/\n/g, '<br>')}</div>` });
+        } catch(e) { hideLoading(); Swal.fire("Error", "IA no disponible", "error"); }
     };
 
-    // --- AUXILIARES ---
-    window.doLogout = () => signOut(auth);
-    function showLoading(m) { document.getElementById('loading-screen').style.display='flex'; document.getElementById('loading-msg').innerText=m; }
-    function hideLoading() { document.getElementById('loading-screen').classList.add('fade'); setTimeout(()=>document.getElementById('loading-screen').style.display='none', 300); }
-    
-    function renderList() {
-        const list = document.getElementById("inventory-list");
-        list.innerHTML = "";
-        inventoryData.forEach(item => {
-            const div = document.createElement("div");
-            div.className = `card ${item.qty <= 1 ? 'status-low' : 'status-ok'}`;
-            div.innerHTML = `<b>${item.name}</b> - Stock: ${item.qty}`;
-            list.appendChild(div);
-        });
-    }
-</script>
     // --- ESCÁNER ---
     window.startScan = async function () {
         const container = document.getElementById("video-container");
@@ -265,6 +235,10 @@
     };
 
     // --- UTILS ---
+    window.doLogout = () => signOut(auth);
+    window.doLogin = () => signInWithEmailAndPassword(auth, document.getElementById('auth-email').value, document.getElementById('auth-pass').value);
+    window.toggleView = (v) => { document.getElementById('nav-inv').className = v==='inventory'?'active':''; renderList(); };
+
     function renderList() {
         const list = document.getElementById("inventory-list");
         list.innerHTML = "";
@@ -276,10 +250,14 @@
         });
     }
 
-    function showLoading(m) { document.getElementById('loading-screen').style.display='flex'; document.getElementById('loading-msg').innerText=m; }
-    function hideLoading() { document.getElementById('loading-screen').classList.add('fade'); setTimeout(()=>document.getElementById('loading-screen').style.display='none', 300); }
-    window.toggleView = (v) => { document.getElementById('nav-inv').className = v==='inventory'?'active':''; renderList(); };
-
+    function showLoading(m) { 
+        const ls = document.getElementById('loading-screen');
+        if(ls) { ls.style.display='flex'; document.getElementById('loading-msg').innerText=m; }
+    }
+    function hideLoading() { 
+        const ls = document.getElementById('loading-screen');
+        if(ls) { ls.classList.add('fade'); setTimeout(()=>ls.style.display='none', 300); }
+    }
 </script>
 </body>
 </html>
