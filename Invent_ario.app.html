@@ -557,18 +557,16 @@ window.startScan = async function () {
     container.style.display = "block";
     const { BrowserMultiFormatReader } = await import("https://cdn.jsdelivr.net/npm/@zxing/browser@latest/+esm");
     const reader = new BrowserMultiFormatReader();
+    
     const video  = document.createElement("video");
-    container.innerHTML = ""; container.appendChild(video);
+    // ESTO ES LO QUE FALTA PARA MÓVILES:
+    video.setAttribute('playsinline', true); 
+    video.setAttribute('muted', 'true');
+    video.autoplay = true;
 
-    const controls = await reader.decodeFromVideoDevice(undefined, video, (result) => {
-        if (result) {
-            document.getElementById("upc").value = result.text;
-            handleUPCChange(result.text);
-            controls.stop();
-            container.style.display = "none";
-        }
-    });
-};
+    container.innerHTML = ""; 
+    container.appendChild(video);
+    // ... resto del código
 
 // ================= CRUD =================
 window.saveItem = async function() {
