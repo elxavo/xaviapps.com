@@ -373,7 +373,7 @@ document.addEventListener('DOMContentLoaded', () => {
     cat.innerHTML = dictionary[currentLang].categories.map(c => `<option>${c}</option>`).join('');
     
     window.resetForm();
-
+});
 
 window.shareApp = () => {
     if (navigator.share) {
@@ -392,11 +392,12 @@ window.shareApp = () => {
     <div onclick="toggleView('inventory')" id="nav-inv" class="active" data-es="📦 INVENTARIO" data-en="📦 INVENTORY">📦 INVENTARIO</div>
     <div onclick="toggleView('shopping')" id="nav-shop" data-es="🛒 COMPRAS" data-en="🛒 SHOPPING">🛒 COMPRAS</div>
 </nav>
+
 <footer>
-    <button onclick="shareApp()" style="width: auto; background: #2ecc71; padding: 8px 15px;" data-es="🔗 COMPARTIR CON FAMILIA" data-en="🔗 SHARE WITH FAMILY">🔗 COMPARTIR CON FAMILIA</button>    <br><br>
+    <button onclick="shareApp()" style="width: auto; background: #2ecc71; padding: 8px 15px;" data-es="🔗 COMPARTIR CON FAMILIA" data-en="🔗 SHARE WITH FAMILY">🔗 COMPARTIR CON FAMILIA</button>
+    <br><br>
     XAVIER VELASTEGUI | <a href="https://xaviapps.com" target="_blank" style="color: var(--accent); text-decoration: none;">XAVIAPPS.COM</a>
-
-
 </footer>
+
 </body>
 </html>
