@@ -1,3 +1,318 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+    <title>Velastegui Pantry Gold PRO</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root { --primary: #2c3e50; --accent: #3498db; --danger: #e74c3c; --warning: #f39c12; --success: #27ae60; --expired: #9b59b6; --bg: #f4f7f6; --text: #333; }
+        body { margin:0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); padding-bottom: 90px; }
+        header { background: var(--primary); color: white; padding: 15px; font-weight: bold; font-size: 1.2em; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; }
+        .container { padding: 15px; max-width: 700px; margin: 0 auto; box-sizing: border-box; display: flex; flex-direction: column; width: 100%; }
+        .card { background: white; padding: 18px; margin-bottom: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border-left: 6px solid #ddd; }
+        .status-ok { border-left-color: var(--success); }
+        .status-low { border-left-color: var(--warning); }
+        .status-critical { border-left-color: var(--danger); }
+        .status-expired { border-left-color: var(--expired); animation: blink 1.5s infinite; }
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
+        .form-group { margin-bottom: 12px; }
+        label { display: block; font-size: 11px; font-weight: bold; color: #777; margin-bottom: 4px; text-transform: uppercase; }
+        input, select, button { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; font-size: 16px; }
+        button { background: var(--accent); color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        button:active { transform: scale(0.96); }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+        nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; border-top: 1px solid #ddd; z-index: 2000; }
+        nav div { flex: 1; text-align: center; padding: 18px; font-weight: bold; color: #95a5a6; cursor: pointer; }
+        nav div.active { color: var(--accent); border-top: 4px solid var(--accent); background: #f9f9f9; }
+        #video-container { width: 100%; display: none; background: #000; border-radius: 12px; margin-bottom: 15px; overflow: hidden; }
+        video { width: 100%; height: auto; }
+        .section-title { margin-top: 25px; padding-bottom: 5px; font-size: 14px; font-weight: bold; border-bottom: 2px solid; }
+        footer { text-align: center; padding: 20px; font-size: 12px; color: #777; margin-bottom: 80px; }
+	<link rel="icon" href="data:,">
+    </style>
+</head>
+<body>
+
+<header>
+    <span data-es="ASISTENTE DE COMPRAS" data-en="SHOPPER ASSISTANT">ASISTENTE DE COMPRAS</span>
+    <button onclick="toggleLanguage()" style="width: auto; padding: 5px 10px; font-size: 12px; background: var(--accent);">EN/ES</button>
+</header>
+<div id="stats-bar" class="card" style="display:flex; justify-content: space-around; background: var(--primary); color: white; padding: 10px; margin-bottom: 10px;">
+    <div style="text-align:center;">
+        <small data-es="BAJO STOCK" data-en="LOW STOCK">BAJO STOCK</small>
+        <div id="total-low" style="font-size: 20px; font-weight: bold; color: var(--warning);">0</div>
+    </div>
+</div>
+<div class="container" id="main-container">
+    <div id="view-add" class="card">
+        <button onclick="startScan()" style="background:#8e44ad; margin-bottom:15px;" data-es="📷 ESCANEAR CÓDIGO" data-en="📷 SCAN BARCODE">📷 ESCANEAR CÓDIGO</button>
+        <div id="video-container"></div>
+        <div class="form-group">
+            <label data-es="Código UPC / Barcode" data-en="UPC Code / Barcode">Código UPC / Barcode</label>
+            <input id="upc" type="text" placeholder="..." onchange="handleUPCChange(this.value)" />
+        </div>
+        <div class="form-group">
+            <label data-es="Nombre del Producto" data-en="Product Name">Nombre del Producto</label>
+            <input id="product" type="text" />
+        </div>
+        <div class="grid-3">
+            <div class="form-group">
+                <label data-es="Categoría" data-en="Category">Categoría</label>
+                <select id="category"></select>
+            </div>
+            <div class="form-group">
+                <label data-es="Vencimiento" data-en="Expiration">Vencimiento</label>
+                <input id="expiry" type="date" />
+            </div>
+            <div class="form-group">
+                <label data-es="Stock Actual" data-en="Current Stock">Stock Actual</label>
+                <input id="qty" type="number" value="0" />
+            </div>
+        </div>
+        <div class="grid-3">
+            <div class="form-group"><label data-es="Mínimo" data-en="Min">Mínimo</label><input id="min" type="number" placeholder="0" /></div>
+	    <div class="form-group"><label data-es="Máximo" data-en="Max">Máximo</label><input id="max" type="number" placeholder="0" /></div>
+            <div class="form-group" style="display:flex; align-items:flex-end;">
+                <button onclick="saveItem()" style="background:var(--success); height:45px; margin:0;" data-es="GUARDAR" data-en="SAVE">GUARDAR</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="list-wrapper" style="width: 100%;">
+        <h3 id="list-title" data-es="Inventario en Mano" data-en="Stock on Hand">Inventario en Mano</h3>
+        <div id="inventory-list"></div>
+    </div>
+</div>
+<div id="chef-section" class="card" style="margin-top:20px; background: #fffde7; border: 1px solid #fbc02d;">
+    <h3 style="color: #f57f17; display: flex; align-items: center; gap: 10px;">
+        👨‍🍳 Chef AI <small style="font-size: 0.5em; background: #fbc02d; padding: 2px 5px; border-radius: 5px;">PRO</small>
+    </h3>
+    <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+        <input type="text" id="chef-prompt" placeholder="¿Qué tipo de comida se te antoja? (Ej: Ecuatoriana)" style="flex: 2;">
+        <button onclick="askChefSuggestion()" style="background: #f57f17; flex: 1;">Sugerir</button>
+    </div>
+    <div style="display: flex; gap: 8px;">
+        <input type="text" id="recipe-request" placeholder="¿Qué deseas preparar exactamente?" style="flex: 2;">
+        <button onclick="getSpecificRecipe()" style="background: #ef6c00; flex: 1;">Receta y Faltantes</button>
+    </div>
+    <div id="chef-response" style="margin-top: 15px; font-size: 0.9em; line-height: 1.4; color: #333; max-height: 300px; overflow-y: auto;"></div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+import { getFirestore, collection, doc, setDoc, updateDoc, deleteDoc, increment, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+
+/* ================= FIREBASE ================= */
+const firebaseConfig = {
+    apiKey: "AIzaSyD8dsAejvIEFDxu_Z2YZCtMnAkXhZr1H3E",
+    authDomain: "velastegui-pantry.firebaseapp.com",
+    projectId: "velastegui-pantry",
+    storageBucket: "velastegui-pantry.firebasestorage.app",
+    messagingSenderId: "927651602097",
+    appId: "1:927651602097:web:b243cfa8aff28886900c90"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const col = collection(db, "inventory");
+
+/* ================= ESTADO ================= */
+let currentView = 'inventory';
+let inventoryData = [];
+let currentLang = 'ES';
+
+/* ================= GEMINI ================= */
+// ⚠️ RECOMENDACIÓN: mover esto a backend en producción
+const GEMINI_API_KEY = "AIzaSyC2zd_Qym9eXV6L168rZCdLmk6JPxFHAsY";
+
+const GEMINI_FLASH = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+
+/* ================= DICCIONARIO ================= */
+const dictionary = {
+    ES: {
+        inventoryTitle: "Inventario en Mano",
+        shoppingTitle: "Lista de Compras",
+        categories: ["-- SELECCIONAR --", "FRUTAS/VERDURAS", "CARNES/DELI", "LACTEOS/HUEVOS", "CONGELADOS", "DESPENSA/ABARROTES", "HARINAS/REPOSTERIA", "LIMPIEZA/CUIDADO", "OTROS"],
+        errCategory: "Por favor, selecciona una categoría válida",
+        shopSections: ["🚨 PRIORIDAD: CADUCIDAD", "⚠️ BAJO STOCK", "🔵 OPCIONAL"],
+        buyBtn: "INGRESAR", vence: "Vence", faltan: "Faltan", buyPh: "Cant.",
+        errMinMax: "El stock MÁXIMO debe ser mayor al MÍNIMO",
+        errFields: "Faltan campos obligatorios"
+    },
+    EN: {
+        inventoryTitle: "Stock on Hand",
+        shoppingTitle: "Shopping List",
+        categories: ["-- SELECT --", "PRODUCE", "MEAT/DELI", "DAIRY/EGGS", "FROZEN", "PANTRY/GROCERY", "BAKING/SPICES", "HOUSEHOLD", "OTHER"],
+        errCategory: "Please select a valid category",
+        shopSections: ["🚨 PRIORITY: EXPIRY", "⚠️ LOW STOCK", "🔵 OPTIONAL"],
+        buyBtn: "ADD STOCK", vence: "Expires", faltan: "Needs", buyPh: "Qty",
+        errMinMax: "MAX stock must be greater than MIN",
+        errFields: "Missing required fields"
+    }
+};
+
+/* ================= UTIL ================= */
+function getInventoryContext() {
+    return inventoryData.map(i => `${i.name} (${i.qty})`).join(", ");
+}
+
+function safeText(data) {
+    const txt = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!txt) throw new Error("Respuesta vacía del modelo");
+    return txt;
+}
+
+/* ================= UI ================= */
+window.resetForm = () => {
+    // Lista completa de IDs incluyendo min y max
+    ['upc','product','qty','expiry','min','max'].forEach(id => {
+        document.getElementById(id).value = ""; 
+    });
+    // Reiniciar el selector de categoría
+    const catSelect = document.getElementById("category");
+    if(catSelect) catSelect.selectedIndex = 0;
+};
+
+window.toggleLanguage = () => {
+    currentLang = currentLang === 'ES' ? 'EN' : 'ES';
+    document.querySelectorAll('[data-es]').forEach(el => {
+        el.innerText = currentLang === 'ES' ? el.dataset.es : el.dataset.en;
+    });
+    const cat = document.getElementById('category');
+    const val = cat.value;
+    cat.innerHTML = dictionary[currentLang].categories.map(c => `<option>${c}</option>`).join('');
+    cat.value = val;
+    toggleView(currentView);
+};
+
+window.toggleView = (view) => {
+    currentView = view;
+    const dict = dictionary[currentLang];
+    document.getElementById('list-title').innerText = view === 'inventory' ? dict.inventoryTitle : dict.shoppingTitle;
+    renderList();
+};
+
+/* ================= INVENTARIO ================= */
+window.saveItem = async () => {
+    const dict = dictionary[currentLang];
+
+    const data = {
+        upc: document.getElementById('upc').value.trim(),
+        name: document.getElementById('product').value.trim(),
+        category: document.getElementById("category").value,
+        expiry: document.getElementById('expiry').value || null,
+        qty: Number(document.getElementById('qty').value),
+        min: Number(document.getElementById('min').value),
+        max: Number(document.getElementById('max').value)
+    };
+
+    if (!data.name) return Swal.fire({ icon:'error', title:dict.errFields });
+    if (data.max <= data.min) return Swal.fire({ icon:'warning', text:dict.errMinMax });
+
+    if (!data.upc) data.upc = "MANUAL_" + Date.now();
+
+    await setDoc(doc(db, "inventory", data.upc), { ...data, updatedAt: Date.now() }, { merge:true });
+    resetForm();
+    Swal.fire({ icon:'success', title:'OK', timer:800, showConfirmButton:false });
+};
+
+window.updateQtyDirect = async (id, val) => {
+    const num = Number(val);
+    if (!isNaN(num) && num >= 0) {
+        await updateDoc(doc(db,"inventory",id), { qty:num, updatedAt:Date.now() });
+    }
+};
+
+window.processPurchase = async (id) => {
+    const val = parseInt(document.getElementById(`buy_${id}`).value);
+    if (!isNaN(val) && val > 0) {
+        await updateDoc(doc(db,"inventory",id), { qty:increment(val), updatedAt:Date.now() });
+    }
+};
+
+window.deleteItem = async (id) => {
+    const res = await Swal.fire({ title:'¿Eliminar?', showCancelButton:true });
+    if (res.isConfirmed) await deleteDoc(doc(db,"inventory",id));
+};
+
+/* ================= RENDERIZADO DINÁMICO ================= */
+function renderList() {
+    const div = document.getElementById("inventory-list");
+    const dict = dictionary[currentLang];
+    div.innerHTML = "";
+
+    // Filtrar datos si estamos en la vista de compras
+    let displayedData = inventoryData;
+    if (currentView === 'shopping') {
+        displayedData = inventoryData.filter(item => 
+            item.qty <= item.min || (item.expiry && new Date(item.expiry) < new Date())
+        );
+    }
+
+    displayedData.forEach(item => {
+        const card = document.createElement("div");
+        
+        let statusClass = "status-ok";
+        if (item.qty <= 0) statusClass = "status-critical";
+        else if (item.qty <= item.min) statusClass = "status-low";
+        if (item.expiry && new Date(item.expiry) < new Date()) statusClass = "status-expired";
+
+        card.className = `card ${statusClass}`;
+        
+        // Vista de Compras vs Inventario
+        const actionControls = currentView === 'inventory' 
+            ? `<button onclick="updateQtyDirect('${item.id}', ${item.qty - 1})" style="width:35px; background:var(--danger);">-</button>
+               <span style="font-weight:bold; width:30px; text-align:center;">${item.qty}</span>
+               <button onclick="updateQtyDirect('${item.id}', ${item.qty + 1})" style="width:35px; background:var(--success);">+</button>`
+            : `<input type="number" id="buy_${item.id}" placeholder="${item.max - item.qty}" style="width:60px; margin-right:5px;">
+               <button onclick="processPurchase('${item.id}')" style="width:auto; padding:8px; background:var(--success); font-size:12px;">${dict.buyBtn}</button>`;
+
+        card.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <b style="font-size:1.1em;">${item.name}</b><br>
+                    <small style="color:#666;">${item.category} | ${dict.vence}: ${item.expiry || '--'}</small>
+                </div>
+                <div style="display:flex; align-items:center; gap:5px;">
+                    ${actionControls}
+                    <button onclick="deleteItem('${item.id}')" style="width:35px; background:#95a5a6; margin-left:5px;">🗑️</button>
+                </div>
+            </div>
+        `;
+        div.appendChild(card);
+    });
+
+    const lowCount = inventoryData.filter(i => i.qty <= i.min).length;
+    document.getElementById('total-low').innerText = lowCount;
+    
+    // Actualizar estado visual de los botones de navegación
+    document.getElementById('nav-inv').className = currentView === 'inventory' ? 'active' : '';
+    document.getElementById('nav-shop').className = currentView === 'shopping' ? 'active' : '';
+}
+
+/* ================= EXPORTACIÓN LOCAL (OFFLINE-FIRST) ================= */
+window.exportToCSV = () => {
+    let csv = "UPC,Producto,Categoria,Cantidad,Minimo,Vencimiento\n";
+    inventoryData.forEach(i => {
+        csv += `${i.upc},${i.name},${i.category},${i.qty},${i.min},${i.expiry || ''}\n`;
+    });
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.setAttribute('href', url);
+    a.setAttribute('download', `Pantry_Export_${new Date().toLocaleDateString()}.csv`);
+    a.click();
+};
+
+onSnapshot(col, snap => {
+    inventoryData = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+    renderList();
+});
+
+/* ================= CHEF AI ================= */
+
+// 🔥 SUGERENCIAS (FLASH rápido)
 window.askChefSuggestion = async () => {
     const promptUser = document.getElementById('chef-prompt').value.trim();
     if (!promptUser) return;
@@ -6,7 +321,7 @@ window.askChefSuggestion = async () => {
     responseDiv.innerHTML = "👨‍🍳 Analizando stock...";
 
     try {
-        const res = await fetch(GEMINI_URL, {
+        const res = await fetch(GEMINI_FLASH, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -34,7 +349,7 @@ window.getSpecificRecipe = async () => {
     div.innerHTML = "👨‍🍳 Generando receta con Flash...";
 
     try {
-        const res = await fetch(GEMINI_URL, {
+        const res = await fetch(GEMINI_FLASH, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -52,3 +367,36 @@ window.getSpecificRecipe = async () => {
         div.innerHTML = `<span style="color:red;">Error: ${e.message}</span>`;
     }
 };
+document.addEventListener('DOMContentLoaded', () => {
+    // Inicializa las categorías según el idioma actual
+    const cat = document.getElementById('category');
+    cat.innerHTML = dictionary[currentLang].categories.map(c => `<option>${c}</option>`).join('');
+    
+    window.resetForm();
+
+
+window.shareApp = () => {
+    if (navigator.share) {
+        navigator.share({
+            title: 'Velastegui Shopper Assistant',
+            text: 'Gestiona nuestro inventario de cocina aquí:',
+            url: window.location.href
+        });
+    } else {
+        Swal.fire("Enlace copiado", window.location.href, "success");
+    }
+};
+</script>
+
+<nav>
+    <div onclick="toggleView('inventory')" id="nav-inv" class="active" data-es="📦 INVENTARIO" data-en="📦 INVENTORY">📦 INVENTARIO</div>
+    <div onclick="toggleView('shopping')" id="nav-shop" data-es="🛒 COMPRAS" data-en="🛒 SHOPPING">🛒 COMPRAS</div>
+</nav>
+<footer>
+    <button onclick="shareApp()" style="width: auto; background: #2ecc71; padding: 8px 15px;" data-es="🔗 COMPARTIR CON FAMILIA" data-en="🔗 SHARE WITH FAMILY">🔗 COMPARTIR CON FAMILIA</button>    <br><br>
+    XAVIER VELASTEGUI | <a href="https://xaviapps.com" target="_blank" style="color: var(--accent); text-decoration: none;">XAVIAPPS.COM</a>
+
+
+</footer>
+</body>
+</html>
