@@ -98,6 +98,7 @@
     </div>
     <div id="chef-response" style="margin-top: 15px; font-size: 0.9em; line-height: 1.4; color: #333; max-height: 300px; overflow-y: auto;"></div>
 </div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
 import { getFirestore, collection, doc, setDoc, updateDoc, deleteDoc, increment, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
@@ -149,8 +150,7 @@ window.resetForm = () => {
     document.getElementById("category").selectedIndex = 0;
 };
 
-// --- EXPORTAR FUNCIONES AL GLOBALES (WINDOW) ---
-
+// --- FUNCIONES GLOBALES ---
 window.toggleLanguage = () => {
     currentLang = currentLang === 'ES' ? 'EN' : 'ES';
     document.querySelectorAll('[data-es]').forEach(el => {
@@ -188,8 +188,6 @@ window.handleUPCChange = async (code) => {
 
 window.saveItem = async () => {
     const dict = dictionary[currentLang];
-    
-    // Referencias a elementos
     const upcEl = document.getElementById('upc');
     const catEl = document.getElementById("category");
     const nameEl = document.getElementById('product');
@@ -207,69 +205,32 @@ window.saveItem = async () => {
         max: Number(maxEl.value)
     };
 
-    // 1. VALIDACIÓN: CAMPOS BÁSICOS VACÍOS
     if (!data.name || qtyEl.value === "" || minEl.value === "" || maxEl.value === "") {
         Swal.fire({ icon: 'error', title: dict.errFields });
         return;
     }
 
-    // 2. VALIDACIÓN: CATEGORÍA VÁLIDA
     if (catEl.selectedIndex === 0) {
-        Swal.fire({ 
-            icon: 'warning', 
-            title: currentLang === 'ES' ? 'Categoría requerida' : 'Category required',
-            text: dict.errCategory 
-        });
+        Swal.fire({ icon: 'warning', title: currentLang === 'ES' ? 'Categoría requerida' : 'Category required', text: dict.errCategory });
         return;
     }
 
-    // 3. VALIDACIÓN: ESTÁNDAR UPC (Si se proporciona uno)
-    // Verifica que sean solo números y longitudes estándar (6, 12, 13)
-    const upcRegex = /^\d+$/;
-    if (data.upc && (!upcRegex.test(data.upc) || ![6, 12, 13].includes(data.upc.length))) {
-        const proceed = await Swal.fire({
-            title: currentLang === 'ES' ? 'UPC No Estándar' : 'Non-Standard UPC',
-            text: currentLang === 'ES' 
-                ? 'El código no parece un estándar UPC (6, 12 o 13 dígitos). ¿Deseas usarlo de todos modos?' 
-                : 'The code does not look like a standard UPC. Use it anyway?',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'Sí, guardar',
-            cancelButtonText: 'Corregir'
-        });
-        if (!proceed.isConfirmed) return;
-    }
-
-    // 4. VALIDACIÓN: LÓGICA DE STOCK (MIN < MAX)
     if (data.max <= data.min) {
         Swal.fire({ icon: 'warning', title: 'Atención', text: dict.errMinMax });
         return;
     }
 
-    // 5. ASIGNACIÓN DE ID MANUAL (Si el UPC está vacío)
     if (!data.upc) {
-        const confirmUPC = await Swal.fire({ 
-            title: currentLang === 'ES' ? '¿Sin código de barras?' : 'No Barcode?',
-            text: currentLang === 'ES' ? 'Se generará un código interno.' : 'An internal code will be generated.',
-            icon: 'question', 
-            showCancelButton: true 
-        });
+        const confirmUPC = await Swal.fire({ title: currentLang === 'ES' ? '¿Sin código?' : 'No Barcode?', text: 'Generar código interno.', icon: 'question', showCancelButton: true });
         if (!confirmUPC.isConfirmed) return;
         data.upc = "MANUAL_" + data.name.toUpperCase().replace(/\s+/g, '_') + "_" + Date.now();
     }
 
-    // EJECUCIÓN DEL GUARDADO
     try {
-        await setDoc(doc(db, "inventory", data.upc), {
-            ...data, updatedAt: Date.now()
-        }, { merge: true });
-        
+        await setDoc(doc(db, "inventory", data.upc), { ...data, updatedAt: Date.now() }, { merge: true });
         window.resetForm();
         Swal.fire({ icon: 'success', title: 'OK', timer: 800, showConfirmButton: false });
-    } catch (e) { 
-        console.error("Error saving:", e);
-        Swal.fire({ icon: 'error', title: 'Firebase Error' });
-    }
+    } catch (e) { console.error(e); }
 };
 
 window.updateQtyDirect = async (id, val) => { 
@@ -363,98 +324,78 @@ onSnapshot(col, (snap) => {
 });
 
 window.onload = () => {
-    window.resetForm(); // Limpieza inicial obligatoria
+    window.resetForm();
     const catSelect = document.getElementById('category');
     catSelect.innerHTML = dictionary[currentLang].categories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
 };
+
 // --- CONFIGURACIÓN CHEF AI (GEMINI) ---
 const GEMINI_API_KEY = "AIzaSyC2zd_Qym9eXV6L168rZCdLmk6JPxFHAsY"; 
-// Opción A (v1 estable) - Recomendada
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
-// Opción B (Si prefieres v1beta, asegúrate del nombre del modelo)
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-// Función auxiliar para obtener el texto del inventario actual
 function getInventoryContext() {
     return inventoryData.map(i => `${i.name} (Cant: ${i.qty})`).join(", ");
 }
 
-// BOTÓN 1: Sugerencias basadas en stock
 window.askChefSuggestion = async () => {
     const promptUser = document.getElementById('chef-prompt').value.trim();
     if (!promptUser) return;
 
     const responseDiv = document.getElementById('chef-response');
-    responseDiv.innerHTML = "<i>👨‍🍳 Analizando tu stock de Velastegui Pantry...</i>";
+    responseDiv.innerHTML = "<i>👨‍🍳 Analizando tu stock...</i>";
 
-    // Simplificamos el inventario para la IA
     const context = inventoryData.map(i => `${i.name}: ${i.qty}`).join(", ");
 
     try {
         const response = await fetch(GEMINI_URL, {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 contents: [{
-                    role: "user", // Agregamos el rol para mayor claridad
-                    parts: [{
-                        text: `Contexto de inventario: ${context}. Sugiere 3 platos de comida ${promptUser}. Responde en español.`
-                    }]
+                    parts: [{ text: `Contexto: ${context}. Sugiere 3 platos de comida ${promptUser}. Responde en español.` }]
                 }]
             })
         });
 
         const data = await response.json();
-
-        // Si hay un error 400, aquí veremos el porqué exacto
-        if (!response.ok) {
-            console.error("Detalle del Error 400:", data);
-            throw new Error(data.error.message || "Error en el formato de la petición");
-        }
+        if (!response.ok) throw new Error(data.error.message || "Error en la petición");
 
         const chefText = data.candidates[0].content.parts[0].text;
         responseDiv.innerHTML = `<b>Sugerencias:</b><br>${chefText.replace(/\n/g, '<br>')}`;
 
     } catch (e) {
-        console.error("Error capturado:", e);
         responseDiv.innerHTML = `<span style="color:red;">Error: ${e.message}</span>`;
     }
 };
-// BOTÓN 2: Receta detallada y faltantes
+
 window.getSpecificRecipe = async () => {
     const dish = document.getElementById('recipe-request').value.trim();
     if (!dish) return Swal.fire("¿Qué quieres cocinar?");
 
     const responseDiv = document.getElementById('chef-response');
-    responseDiv.innerHTML = "<i>Revisando ingredientes y redactando receta...</i>";
+    responseDiv.innerHTML = "<i>Redactando receta...</i>";
 
-    const systemPrompt = `Soy un asistente de cocina. El usuario quiere preparar: ${dish}.
-    Inventario disponible: [${getInventoryContext()}].
-    1. Da la receta paso a paso.
-    2. Identifica EXACTAMENTE qué ingredientes de la receta NO están en el inventario o tienen cantidad 0.
-    3. Lista los ingredientes faltantes bajo el título "🛒 NECESITAS COMPRAR".`;
+    const systemPrompt = `Usuario quiere: ${dish}. Stock: [${getInventoryContext()}]. 1. Receta paso a paso. 2. Ingredientes faltantes bajo título "🛒 NECESITAS COMPRAR".`;
 
     try {
         const res = await fetch(GEMINI_URL, {
             method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ contents: [{ parts: [{ text: systemPrompt }] }] })
         });
         const data = await res.json();
+        if (!res.ok) throw new Error(data.error.message);
+
         const markdownText = data.candidates[0].content.parts[0].text;
-        
-        // Convertir el formato básico de la IA a HTML legible
         responseDiv.innerHTML = markdownText
             .replace(/### (.*)/g, '<b>$1</b>')
             .replace(/\*\*(.*)\*\*/g, '<b>$1</b>')
             .replace(/\n/g, '<br>');
     } catch (e) {
-        responseDiv.innerHTML = "El Chef tuvo un problema con la receta.";
+        responseDiv.innerHTML = "Error del Chef: " + e.message;
     }
 };
 </script>
-
 
 <nav>
     <div onclick="toggleView('inventory')" id="nav-inv" class="active" data-es="📦 INVENTARIO" data-en="📦 INVENTORY">📦 INVENTARIO</div>
