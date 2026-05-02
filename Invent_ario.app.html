@@ -368,7 +368,7 @@ window.onload = () => {
     catSelect.innerHTML = dictionary[currentLang].categories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
 };
 // --- CONFIGURACIÓN CHEF AI (GEMINI) ---
-const GEMINI_API_KEY = "AIzaSyCxMRqavNSSeRNfVk7UayR-llE_71R4NNI"; 
+const GEMINI_API_KEY = "AIzaSyC2zd_Qym9eXV6L168rZCdLmk6JPxFHAsY"; 
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 // Función auxiliar para obtener el texto del inventario actual
 function getInventoryContext() {
