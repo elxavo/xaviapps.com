@@ -29,6 +29,7 @@
         video { width: 100%; height: auto; }
         .section-title { margin-top: 25px; padding-bottom: 5px; font-size: 14px; font-weight: bold; border-bottom: 2px solid; }
         footer { text-align: center; padding: 20px; font-size: 12px; color: #777; margin-bottom: 80px; }
+	<link rel="icon" href="data:,">
     </style>
 </head>
 <body>
@@ -380,9 +381,9 @@ window.askChefSuggestion = async () => {
     if (!promptUser) return;
 
     const responseDiv = document.getElementById('chef-response');
-    responseDiv.innerHTML = "<i>👨‍🍳 El Chef está revisando tu inventario...</i>";
+    responseDiv.innerHTML = "<i>👨‍🍳 Analizando tu stock de Velastegui Pantry...</i>";
 
-    // Contexto de tu despensa
+    // Simplificamos el inventario para la IA
     const context = inventoryData.map(i => `${i.name}: ${i.qty}`).join(", ");
 
     try {
@@ -393,24 +394,30 @@ window.askChefSuggestion = async () => {
             },
             body: JSON.stringify({
                 contents: [{
+                    role: "user", // Agregamos el rol para mayor claridad
                     parts: [{
-                        text: `Actúa como Chef experto. Inventario: ${context}. Sugiere 3 platos de tipo ${promptUser}. Responde en español y sé breve.`
+                        text: `Contexto de inventario: ${context}. Sugiere 3 platos de comida ${promptUser}. Responde en español.`
                     }]
                 }]
             })
         });
 
-        if (!response.ok) throw new Error("Error en la respuesta de Google");
-
         const data = await response.json();
+
+        // Si hay un error 400, aquí veremos el porqué exacto
+        if (!response.ok) {
+            console.error("Detalle del Error 400:", data);
+            throw new Error(data.error.message || "Error en el formato de la petición");
+        }
+
         const chefText = data.candidates[0].content.parts[0].text;
-        
         responseDiv.innerHTML = `<b>Sugerencias:</b><br>${chefText.replace(/\n/g, '<br>')}`;
+
     } catch (e) {
+        console.error("Error capturado:", e);
         responseDiv.innerHTML = `<span style="color:red;">Error: ${e.message}</span>`;
     }
 };
-
 // BOTÓN 2: Receta detallada y faltantes
 window.getSpecificRecipe = async () => {
     const dish = document.getElementById('recipe-request').value.trim();
