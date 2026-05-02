@@ -103,6 +103,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
 import { getFirestore, collection, doc, setDoc, updateDoc, deleteDoc, increment, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
+/* ================= FIREBASE ================= */
 const firebaseConfig = {
     apiKey: "AIzaSyD8dsAejvIEFDxu_Z2YZCtMnAkXhZr1H3E",
     authDomain: "velastegui-pantry.firebaseapp.com",
@@ -116,10 +117,19 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const col = collection(db, "inventory");
 
+/* ================= ESTADO ================= */
 let currentView = 'inventory';
 let inventoryData = [];
 let currentLang = 'ES';
 
+/* ================= GEMINI ================= */
+// ⚠️ RECOMENDACIÓN: mover esto a backend en producción
+const GEMINI_API_KEY = "AIzaSyC2zd_Qym9eXV6L168rZCdLmk6JPxFHAsY";
+
+const GEMINI_FLASH = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+const GEMINI_PRO   = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${GEMINI_API_KEY}`;
+
+/* ================= DICCIONARIO ================= */
 const dictionary = {
     ES: {
         inventoryTitle: "Inventario en Mano",
@@ -143,256 +153,187 @@ const dictionary = {
     }
 };
 
-// --- UTILIDADES ---
+/* ================= UTIL ================= */
+function getInventoryContext() {
+    return inventoryData.map(i => `${i.name} (${i.qty})`).join(", ");
+}
+
+function safeText(data) {
+    const txt = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!txt) throw new Error("Respuesta vacía del modelo");
+    return txt;
+}
+
+/* ================= UI ================= */
 window.resetForm = () => {
-    const fields = ['upc', 'product', 'qty', 'expiry', 'min', 'max'];
-    fields.forEach(id => { document.getElementById(id).value = ""; });
+    ['upc','product','qty','expiry','min','max'].forEach(id => document.getElementById(id).value = "");
     document.getElementById("category").selectedIndex = 0;
 };
 
-// --- FUNCIONES GLOBALES ---
 window.toggleLanguage = () => {
     currentLang = currentLang === 'ES' ? 'EN' : 'ES';
     document.querySelectorAll('[data-es]').forEach(el => {
-        el.innerText = currentLang === 'ES' ? el.getAttribute('data-es') : el.getAttribute('data-en');
+        el.innerText = currentLang === 'ES' ? el.dataset.es : el.dataset.en;
     });
-    const catSelect = document.getElementById('category');
-    const currentVal = catSelect.value;
-    catSelect.innerHTML = dictionary[currentLang].categories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
-    catSelect.value = currentVal;
-    window.toggleView(currentView); 
+    const cat = document.getElementById('category');
+    const val = cat.value;
+    cat.innerHTML = dictionary[currentLang].categories.map(c => `<option>${c}</option>`).join('');
+    cat.value = val;
+    toggleView(currentView);
 };
 
 window.toggleView = (view) => {
     currentView = view;
     const dict = dictionary[currentLang];
-    document.getElementById('nav-inv').className = view === 'inventory' ? 'active' : '';
-    document.getElementById('nav-shop').className = view === 'shopping' ? 'active' : '';
     document.getElementById('list-title').innerText = view === 'inventory' ? dict.inventoryTitle : dict.shoppingTitle;
-    document.getElementById('main-container').style.flexDirection = view === 'inventory' ? 'column' : 'column-reverse';
     renderList();
 };
 
-window.handleUPCChange = async (code) => {
-    if (!code) return;
-    const docSnap = await getDoc(doc(db, "inventory", code));
-    if (docSnap.exists()) window.fillForm(docSnap.data(), code);
-    else {
-        try {
-            const res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${code}.json`);
-            const data = await res.json();
-            if (data.status === 1) document.getElementById("product").value = data.product.product_name || "";
-        } catch (e) {}
-    }
-};
-
+/* ================= INVENTARIO ================= */
 window.saveItem = async () => {
     const dict = dictionary[currentLang];
-    const upcEl = document.getElementById('upc');
-    const catEl = document.getElementById("category");
-    const nameEl = document.getElementById('product');
-    const qtyEl = document.getElementById('qty');
-    const minEl = document.getElementById('min');
-    const maxEl = document.getElementById('max');
 
     const data = {
-        upc: upcEl.value.trim(),
-        name: nameEl.value.trim(),
-        category: catEl.value,
+        upc: document.getElementById('upc').value.trim(),
+        name: document.getElementById('product').value.trim(),
+        category: document.getElementById("category").value,
         expiry: document.getElementById('expiry').value || null,
-        qty: Number(qtyEl.value),
-        min: Number(minEl.value),
-        max: Number(maxEl.value)
+        qty: Number(document.getElementById('qty').value),
+        min: Number(document.getElementById('min').value),
+        max: Number(document.getElementById('max').value)
     };
 
-    if (!data.name || qtyEl.value === "" || minEl.value === "" || maxEl.value === "") {
-        Swal.fire({ icon: 'error', title: dict.errFields });
-        return;
-    }
+    if (!data.name) return Swal.fire({ icon:'error', title:dict.errFields });
+    if (data.max <= data.min) return Swal.fire({ icon:'warning', text:dict.errMinMax });
 
-    if (catEl.selectedIndex === 0) {
-        Swal.fire({ icon: 'warning', title: currentLang === 'ES' ? 'Categoría requerida' : 'Category required', text: dict.errCategory });
-        return;
-    }
+    if (!data.upc) data.upc = "MANUAL_" + Date.now();
 
-    if (data.max <= data.min) {
-        Swal.fire({ icon: 'warning', title: 'Atención', text: dict.errMinMax });
-        return;
-    }
-
-    if (!data.upc) {
-        const confirmUPC = await Swal.fire({ title: currentLang === 'ES' ? '¿Sin código?' : 'No Barcode?', text: 'Generar código interno.', icon: 'question', showCancelButton: true });
-        if (!confirmUPC.isConfirmed) return;
-        data.upc = "MANUAL_" + data.name.toUpperCase().replace(/\s+/g, '_') + "_" + Date.now();
-    }
-
-    try {
-        await setDoc(doc(db, "inventory", data.upc), { ...data, updatedAt: Date.now() }, { merge: true });
-        window.resetForm();
-        Swal.fire({ icon: 'success', title: 'OK', timer: 800, showConfirmButton: false });
-    } catch (e) { console.error(e); }
+    await setDoc(doc(db, "inventory", data.upc), { ...data, updatedAt: Date.now() }, { merge:true });
+    resetForm();
+    Swal.fire({ icon:'success', title:'OK', timer:800, showConfirmButton:false });
 };
 
-window.updateQtyDirect = async (id, val) => { 
-    if (val >= 0) await updateDoc(doc(db, "inventory", id), { qty: Number(val), updatedAt: Date.now() }); 
+window.updateQtyDirect = async (id, val) => {
+    const num = Number(val);
+    if (!isNaN(num) && num >= 0) {
+        await updateDoc(doc(db,"inventory",id), { qty:num, updatedAt:Date.now() });
+    }
+};
+
+window.processPurchase = async (id) => {
+    const val = parseInt(document.getElementById(`buy_${id}`).value);
+    if (!isNaN(val) && val > 0) {
+        await updateDoc(doc(db,"inventory",id), { qty:increment(val), updatedAt:Date.now() });
+    }
 };
 
 window.deleteItem = async (id) => {
-    const result = await Swal.fire({ title: '¿Eliminar?', icon: 'warning', showCancelButton: true });
-    if (result.isConfirmed) await deleteDoc(doc(db, "inventory", id));
+    const res = await Swal.fire({ title:'¿Eliminar?', showCancelButton:true });
+    if (res.isConfirmed) await deleteDoc(doc(db,"inventory",id));
 };
 
-window.processPurchase = async (id, current) => {
-    const inputField = document.getElementById(`buy_${id}`);
-    const val = parseInt(inputField.value);
-    if (val > 0) {
-        await updateDoc(doc(db, "inventory", id), { qty: increment(val), updatedAt: Date.now() });
-        inputField.value = "";
-    }
-};
-
-window.fillForm = (data, upc) => {
-    document.getElementById("upc").value = upc; 
-    document.getElementById("product").value = data.name;
-    document.getElementById("category").value = data.category; 
-    document.getElementById("expiry").value = data.expiry || "";
-    document.getElementById("qty").value = data.qty; 
-    document.getElementById("min").value = data.min; 
-    document.getElementById("max").value = data.max;
-};
-
-// --- RENDERIZADO ---
+/* ================= RENDER ================= */
 function renderList() {
-    const listDiv = document.getElementById("inventory-list");
-    listDiv.innerHTML = "";
-    let countLow = 0;
-    const today = new Date();
-    const nextWeek = new Date(); nextWeek.setDate(today.getDate() + 7);
+    const div = document.getElementById("inventory-list");
+    div.innerHTML = "";
 
-    inventoryData.forEach(item => { if (item.qty <= item.min) countLow++; });
-    document.getElementById("total-low").innerText = countLow;
-
-    if (currentView === 'inventory') {
-        inventoryData.sort((a,b) => (a.expiry || '9999').localeCompare(b.expiry || '9999')).forEach(item => {
-            const isNear = item.expiry && new Date(item.expiry) <= nextWeek;
-            let cls = item.qty <= item.min ? "status-low" : "status-ok";
-            if (isNear) cls = "status-expired";
-
-            const card = document.createElement("div");
-            card.className = `card ${cls}`;
-            card.innerHTML = `
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <b>${item.name}</b>
-                    <div style="display:flex; gap:8px; align-items:center;">
-                        <input type="number" value="${item.qty}" onchange="updateQtyDirect('${item.id}', this.value)" style="width:50px; text-align:center;">
-                        <button onclick="deleteItem('${item.id}')" style="background:var(--danger); width:30px;">X</button>
-                    </div>
-                </div>
-                <small>${item.category} | ${dictionary[currentLang].vence}: ${item.expiry || 'N/A'}</small>
-            `;
-            listDiv.appendChild(card);
-        });
-    } else {
-        const dict = dictionary[currentLang];
-        const sections = [
-            { title: dict.shopSections[0], items: inventoryData.filter(i => i.expiry && new Date(i.expiry) <= nextWeek), color: "#9b59b6" },
-            { title: dict.shopSections[1], items: inventoryData.filter(i => i.qty <= i.min && !(i.expiry && new Date(i.expiry) <= nextWeek)), color: "#e67e22" },
-            { title: dict.shopSections[2], items: inventoryData.filter(i => i.qty > i.min && i.qty < i.max && !(i.expiry && new Date(i.expiry) <= nextWeek)), color: "#3498db" }
-        ];
-        sections.forEach(sec => {
-            if (sec.items.length === 0) return;
-            const h = document.createElement("div"); h.className = "section-title"; h.style.color = sec.color; h.innerText = sec.title;
-            listDiv.appendChild(h);
-            sec.items.forEach(item => {
-                const card = document.createElement("div"); card.className = "card";
-                card.innerHTML = `
-                    <div style="display:flex; justify-content:space-between;"><b>${item.name}</b><small>${dict.faltan}: ${item.max - item.qty}</small></div>
-                    <div style="margin-top:10px; display:flex; gap:8px;">
-                        <input type="number" id="buy_${item.id}" placeholder="${dict.buyPh}" style="flex:1;">
-                        <button onclick="processPurchase('${item.id}', ${item.qty})" style="background:${sec.color}; flex:1;">${dict.buyBtn}</button>
-                    </div>
-                `;
-                listDiv.appendChild(card);
-            });
-        });
-    }
+    inventoryData.forEach(item => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+            <b>${item.name}</b> (${item.qty})
+            <button onclick="deleteItem('${item.id}')">X</button>
+        `;
+        div.appendChild(card);
+    });
 }
 
-onSnapshot(col, (snap) => {
-    inventoryData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+onSnapshot(col, snap => {
+    inventoryData = snap.docs.map(d => ({ id:d.id, ...d.data() }));
     renderList();
 });
 
-window.onload = () => {
-    window.resetForm();
-    const catSelect = document.getElementById('category');
-    catSelect.innerHTML = dictionary[currentLang].categories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
-};
+/* ================= CHEF AI ================= */
 
-// --- CONFIGURACIÓN CHEF AI (GEMINI) ---
-const GEMINI_API_KEY = "AIzaSyC2zd_Qym9eXV6L168rZCdLmk6JPxFHAsY"; 
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${GEMINI_API_KEY}`;
-
-const getInventoryContext() {
-    return inventoryData.map(i => `${i.name} (Cant: ${i.qty})`).join(", ");
-}
-
+// 🔥 SUGERENCIAS (FLASH rápido)
 window.askChefSuggestion = async () => {
     const promptUser = document.getElementById('chef-prompt').value.trim();
     if (!promptUser) return;
 
     const responseDiv = document.getElementById('chef-response');
-    responseDiv.innerHTML = "<i>👨‍🍳 Analizando tu stock...</i>";
-
-    const context = inventoryData.map(i => `${i.name}: ${i.qty}`).join(", ");
+    responseDiv.innerHTML = "👨‍🍳 Analizando...";
 
     try {
-        const response = await fetch(GEMINI_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
+        const res = await fetch(GEMINI_FLASH, {
+            method:"POST",
+            headers:{ "Content-Type":"application/json" },
             body: JSON.stringify({
-                contents: [{
-                    parts: [{ text: `Contexto: ${context}. Sugiere 3 platos de comida ${promptUser}. Responde en español.` }]
+                contents:[{
+                    parts:[{
+                        text: `
+Eres un chef práctico.
+
+Inventario:
+${getInventoryContext()}
+
+Sugiere 3 platos ${promptUser}.
+`
+                    }]
                 }]
             })
         });
 
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error.message || "Error en la petición");
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error?.message);
 
-        const chefText = data.candidates[0].content.parts[0].text;
-        responseDiv.innerHTML = `<b>Sugerencias:</b><br>${chefText.replace(/\n/g, '<br>')}`;
+        const text = safeText(data);
+        responseDiv.innerHTML = text.replace(/\n/g,"<br>");
 
-    } catch (e) {
-        responseDiv.innerHTML = `<span style="color:red;">Error: ${e.message}</span>`;
+    } catch(e) {
+        responseDiv.innerHTML = "Error: " + e.message;
     }
 };
 
+// 🔥 RECETA (PRO inteligente)
 window.getSpecificRecipe = async () => {
     const dish = document.getElementById('recipe-request').value.trim();
     if (!dish) return Swal.fire("¿Qué quieres cocinar?");
 
-    const responseDiv = document.getElementById('chef-response');
-    responseDiv.innerHTML = "<i>Redactando receta...</i>";
-
-    const systemPrompt = `Usuario quiere: ${dish}. Stock: [${getInventoryContext()}]. 1. Receta paso a paso. 2. Ingredientes faltantes bajo título "🛒 NECESITAS COMPRAR".`;
+    const div = document.getElementById('chef-response');
+    div.innerHTML = "👨‍🍳 Generando receta...";
 
     try {
-        const res = await fetch(GEMINI_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ contents: [{ parts: [{ text: systemPrompt }] }] })
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error.message);
+        const res = await fetch(GEMINI_PRO, {
+            method:"POST",
+            headers:{ "Content-Type":"application/json" },
+            body: JSON.stringify({
+                contents:[{
+                    parts:[{
+                        text: `
+Eres un chef experto.
 
-        const markdownText = data.candidates[0].content.parts[0].text;
-        responseDiv.innerHTML = markdownText
-            .replace(/### (.*)/g, '<b>$1</b>')
-            .replace(/\*\*(.*)\*\*/g, '<b>$1</b>')
-            .replace(/\n/g, '<br>');
-    } catch (e) {
-        responseDiv.innerHTML = "Error del Chef: " + e.message;
+Inventario:
+${getInventoryContext()}
+
+Crea receta para: ${dish}
+
+Incluye:
+1. Pasos
+2. 🛒 NECESITAS COMPRAR
+`
+                    }]
+                }]
+            })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error?.message);
+
+        const text = safeText(data);
+        div.innerHTML = text.replace(/\n/g,"<br>");
+
+    } catch(e) {
+        div.innerHTML = "Error: " + e.message;
     }
 };
 </script>
