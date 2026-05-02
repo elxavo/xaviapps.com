@@ -333,7 +333,7 @@ window.onload = () => {
 const GEMINI_API_KEY = "AIzaSyC2zd_Qym9eXV6L168rZCdLmk6JPxFHAsY"; 
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1/models/gemini-3.1-flash-lite-preview:generateContent?key=${GEMINI_API_KEY}`;
 
-getInventoryContext() {
+const getInventoryContext() {
     return inventoryData.map(i => `${i.name} (Cant: ${i.qty})`).join(", ");
 }
 
