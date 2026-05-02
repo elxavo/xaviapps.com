@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-    <title>Xavier Shopping Assistant</title>
+    <title>Velastegui Pantry Gold PRO</title>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         :root { --primary: #2c3e50; --accent: #3498db; --danger: #e74c3c; --warning: #f39c12; --success: #27ae60; --expired: #9b59b6; --bg: #f4f7f6; --text: #333; }
@@ -30,6 +30,10 @@
         .section-title { margin-top: 25px; padding-bottom: 5px; font-size: 14px; font-weight: bold; border-bottom: 2px solid; }
         footer { text-align: center; padding: 20px; font-size: 12px; color: #777; margin-bottom: 80px; }
 	<link rel="icon" href="data:,">
+	.container {
+    	display: flex;
+    	flex-direction: column;
+}
     </style>
 </head>
 <body>
@@ -86,7 +90,7 @@
 </div>
 <div id="chef-section" class="card" style="margin-top:20px; background: #fffde7; border: 1px solid #fbc02d;">
     <h3 style="color: #f57f17; display: flex; align-items: center; gap: 10px;">
-        👨‍🍳 Chef AI <small style="font-size: 0.5em; background: #fbc02d; padding: 2px 5px; border-radius: 5px;">PRO</small>
+        👨‍🍳 Chef Xavier <small style="font-size: 0.5em; background: #fbc02d; padding: 2px 5px; border-radius: 5px;">PRO</small>
     </h3>
     <div style="display: flex; gap: 8px; margin-bottom: 10px;">
         <input type="text" id="chef-prompt" placeholder="¿Qué tipo de comida se te antoja? (Ej: Ecuatoriana)" style="flex: 2;">
@@ -124,7 +128,7 @@ let currentLang = 'ES';
 
 /* ================= GEMINI ================= */
 // ⚠️ RECOMENDACIÓN: mover esto a backend en producción
-const GEMINI_API_KEY = "AIzaSyBiqHHmyUBl7PBR9x21JXzyaWBMlA4waA8";
+const GEMINI_API_KEY = "AIzaSyC2zd_Qym9eXV6L168rZCdLmk6JPxFHAsY";
 
 const GEMINI_FLASH = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
@@ -189,7 +193,25 @@ window.toggleLanguage = () => {
 window.toggleView = (view) => {
     currentView = view;
     const dict = dictionary[currentLang];
+    const listWrapper = document.getElementById('list-wrapper');
+    const formCard = document.getElementById('view-add');
+
+    // Cambiar el título
     document.getElementById('list-title').innerText = view === 'inventory' ? dict.inventoryTitle : dict.shoppingTitle;
+
+    if (view === 'shopping') {
+        // En modo Compras: La lista va arriba (order 1) y el formulario abajo (order 2)
+        listWrapper.style.order = "1";
+        formCard.style.order = "2";
+        // Opcional: Ocultar el formulario en modo compras para más espacio
+        // formCard.style.display = "none"; 
+    } else {
+        // En modo Inventario: El formulario arriba (order 1) y la lista abajo (order 2)
+        formCard.style.order = "1";
+        listWrapper.style.order = "2";
+        formCard.style.display = "block";
+    }
+
     renderList();
 };
 
@@ -197,24 +219,64 @@ window.toggleView = (view) => {
 window.saveItem = async () => {
     const dict = dictionary[currentLang];
 
+    // Captura de datos
+    let upc = document.getElementById('upc').value.trim();
+    const name = document.getElementById('product').value.trim();
+    const category = document.getElementById("category").value;
+    const qtyInput = document.getElementById('qty').value;
+    const expiry = document.getElementById('expiry').value || null;
+    const min = Number(document.getElementById('min').value);
+    const max = Number(document.getElementById('max').value);
+
+    // 1. Validaciones de campos obligatorios básicos
+    if (!name) return Swal.fire({ icon: 'error', title: 'Nombre Requerido' });
+    if (category.includes("--")) return Swal.fire({ icon: 'error', title: 'Categoría Requerida' });
+    if (qtyInput === "") return Swal.fire({ icon: 'error', title: 'Stock Requerido' });
+    if (max <= min) return Swal.fire({ icon: 'warning', text: dict.errMinMax });
+
+// 2. Lógica de UPC Estandarizado (6, 12, 13 dígitos)
+const isStandardUPC = /^\d{6}$|^\d{7}$|^\d{8}$|^\d{12}$|^\d{13}$/.test(upc);
+
+if (!upc || !isStandardUPC) {
+    let mensaje = !upc 
+        ? "No has ingresado un código." 
+        : "El código ingresado no tiene un formato estándar.";
+
+    const confirm = await Swal.fire({
+        title: '¿Generar código automático?',
+        text: mensaje + " Se creará un ID de sistema para este producto.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Generar y Guardar',
+        cancelButtonText: 'Corregir UPC'
+    });
+
+    if (confirm.isConfirmed) {
+        // Overwrite con estándar interno de XaviApps
+        upc = "XAVI-" + Date.now(); 
+    } else {
+        return; // Detener para que el usuario corrija el UPC
+    }
+}
+
     const data = {
-        upc: document.getElementById('upc').value.trim(),
-        name: document.getElementById('product').value.trim(),
-        category: document.getElementById("category").value,
-        expiry: document.getElementById('expiry').value || null,
-        qty: Number(document.getElementById('qty').value),
-        min: Number(document.getElementById('min').value),
-        max: Number(document.getElementById('max').value)
+        upc: upc,
+        name: name,
+        category: category,
+        expiry: expiry,
+        qty: Number(qtyInput),
+        min: min,
+        max: max,
+        updatedAt: Date.now()
     };
 
-    if (!data.name) return Swal.fire({ icon:'error', title:dict.errFields });
-    if (data.max <= data.min) return Swal.fire({ icon:'warning', text:dict.errMinMax });
-
-    if (!data.upc) data.upc = "MANUAL_" + Date.now();
-
-    await setDoc(doc(db, "inventory", data.upc), { ...data, updatedAt: Date.now() }, { merge:true });
-    resetForm();
-    Swal.fire({ icon:'success', title:'OK', timer:800, showConfirmButton:false });
+    try {
+        await setDoc(doc(db, "inventory", data.upc), data, { merge: true });
+        resetForm();
+        Swal.fire({ icon: 'success', title: 'Guardado', timer: 800, showConfirmButton: false });
+    } catch (error) {
+        console.error("Error Firebase:", error);
+    }
 };
 
 window.updateQtyDirect = async (id, val) => {
@@ -235,6 +297,53 @@ window.deleteItem = async (id) => {
     const res = await Swal.fire({ title:'¿Eliminar?', showCancelButton:true });
     if (res.isConfirmed) await deleteDoc(doc(db,"inventory",id));
 };
+window.handleUPCChange = async (upc) => {
+    if (!upc) return;
+
+    // 1. BUSCAR EN FIREBASE (Tu Inventario)
+    try {
+        const docRef = doc(db, "inventory", upc);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            // Llenar el formulario con tus datos guardados
+            document.getElementById('product').value = data.name || "";
+            document.getElementById('category').value = data.category || "";
+            document.getElementById('qty').value = data.qty || 0;
+            document.getElementById('min').value = data.min || 0;
+            document.getElementById('max').value = data.max || 0;
+            document.getElementById('expiry').value = data.expiry || "";
+            
+            Swal.fire({ icon: 'info', title: 'Producto en Inventario', timer: 1000, showConfirmButton: false });
+            return; // Detener búsqueda si ya lo tenemos
+        }
+    } catch (err) {
+        console.error("Error buscando en Firebase:", err);
+    }
+
+    // 2. BUSCAR EN OPEN FOOD FACTS (Si no está en Firebase)
+    try {
+        const res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${upc}.json`);
+        const data = await res.json();
+
+        if (data.status === 1) {
+            const prod = data.product;
+            document.getElementById('product').value = prod.product_name || prod.product_name_es || "Producto Desconocido";
+            
+            // Intentar mapear categoría de OpenFood (opcional)
+            if (prod.categories_tags && prod.categories_tags.length > 0) {
+                console.log("Categoría sugerida:", prod.categories_tags[0]);
+            }
+
+            Swal.fire({ icon: 'success', title: 'Encontrado en Web', timer: 1000, showConfirmButton: false });
+        } else {
+            Swal.fire({ icon: 'warning', title: 'No encontrado', text: 'Ingresa los datos manualmente', timer: 1500 });
+        }
+    } catch (err) {
+        console.error("Error buscando en OpenFoodFacts:", err);
+    }
+};
 
 /* ================= RENDERIZADO DINÁMICO ================= */
 function renderList() {
@@ -242,12 +351,19 @@ function renderList() {
     const dict = dictionary[currentLang];
     div.innerHTML = "";
 
-    // Filtrar datos si estamos en la vista de compras
-    let displayedData = inventoryData;
-    if (currentView === 'shopping') {
+    let displayedData = [...inventoryData]; // Copia para no alterar el original
+
+if (currentView === 'shopping') {
+        // FILTRAR: El artículo se queda en la lista hasta que el stock sea igual o mayor al máximo
         displayedData = inventoryData.filter(item => 
-            item.qty <= item.min || (item.expiry && new Date(item.expiry) < new Date())
+            item.qty < item.max || (item.expiry && new Date(item.expiry) < new Date())
         );
+
+        // ORDENAR: Primero los que tienen stock 0 o están vencidos, luego por prioridad de falta
+        displayedData.sort((a, b) => {
+            if (a.qty <= 0) return -1;
+            return (a.qty / a.max) - (b.qty / b.max);
+        }); 
     }
 
     displayedData.forEach(item => {
@@ -259,16 +375,30 @@ function renderList() {
         if (item.expiry && new Date(item.expiry) < new Date()) statusClass = "status-expired";
 
         card.className = `card ${statusClass}`;
-        
-        // Vista de Compras vs Inventario
+        card.style.position = "relative"; // Necesario para ubicar el "Faltan" arriba a la derecha
+
+        // Cálculo de cuánto falta para llegar al máximo
+        const faltantes = Math.max(0, item.max - item.qty);
+
+        // Controles según la vista
         const actionControls = currentView === 'inventory' 
-            ? `<button onclick="updateQtyDirect('${item.id}', ${item.qty - 1})" style="width:35px; background:var(--danger);">-</button>
-               <span style="font-weight:bold; width:30px; text-align:center;">${item.qty}</span>
-               <button onclick="updateQtyDirect('${item.id}', ${item.qty + 1})" style="width:35px; background:var(--success);">+</button>`
-            : `<input type="number" id="buy_${item.id}" placeholder="${item.max - item.qty}" style="width:60px; margin-right:5px;">
+            ? `<div style="display:flex; align-items:center; gap:5px;">
+                   <button onclick="updateQtyDirect('${item.id}', ${item.qty - 1})" style="width:30px; background:var(--danger); padding:5px;">-</button>
+                   <input type="number" value="${item.qty}" onchange="updateQtyDirect('${item.id}', this.value)" style="width:50px; text-align:center; padding:5px; margin:0; border:1px solid #ccc;">
+                   <button onclick="updateQtyDirect('${item.id}', ${item.qty + 1})" style="width:30px; background:var(--success); padding:5px;">+</button>
+               </div>`
+            : `<input type="number" id="buy_${item.id}" placeholder="${faltantes}" style="width:60px; margin-right:5px;">
                <button onclick="processPurchase('${item.id}')" style="width:auto; padding:8px; background:var(--success); font-size:12px;">${dict.buyBtn}</button>`;
 
+        // Etiqueta "Faltan" solo visible en modo Shopping o si hay faltantes
+        const faltanBadge = currentView === 'shopping' 
+            ? `<span style="position:absolute; top:5px; right:10px; font-size:0.75em; font-weight:bold; color:var(--danger);">
+                ${dict.faltan}: ${faltantes}
+               </span>` 
+            : "";
+
         card.innerHTML = `
+            ${faltanBadge}
             <div style="display:flex; justify-content:space-between; align-items:center;">
                 <div>
                     <b style="font-size:1.1em;">${item.name}</b><br>
@@ -286,7 +416,6 @@ function renderList() {
     const lowCount = inventoryData.filter(i => i.qty <= i.min).length;
     document.getElementById('total-low').innerText = lowCount;
     
-    // Actualizar estado visual de los botones de navegación
     document.getElementById('nav-inv').className = currentView === 'inventory' ? 'active' : '';
     document.getElementById('nav-shop').className = currentView === 'shopping' ? 'active' : '';
 }
@@ -346,7 +475,7 @@ window.getSpecificRecipe = async () => {
     if (!dish) return Swal.fire("¿Qué quieres cocinar?");
 
     const div = document.getElementById('chef-response');
-    div.innerHTML = "👨‍🍳 Generando receta con Flash...";
+    div.innerHTML = "👨‍🍳 Generando receta ...";
 
     try {
         const res = await fetch(GEMINI_FLASH, {
