@@ -1,1 +1,550 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>¡Mis 53 Años! - Invitación Interactiva</title>
+  <!-- Fuentes elegantes -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 40%, #0f3460 70%, #533483 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Playfair Display', serif;
+      overflow-x: hidden;
+      padding: 20px;
+      position: relative;
+    }
+
+    /* Contenedor de globos */
+    #balloon-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .balloon {
+      position: absolute;
+      bottom: -150px;
+      border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%;
+      animation: floatUpBalloon linear infinite, sway ease-in-out infinite alternate;
+      transform-origin: bottom center;
+      box-shadow: inset -5px -5px 10px rgba(0,0,0,0.2);
+    }
+
+    .balloon::after {
+      content: '';
+      position: absolute;
+      bottom: -25px;
+      left: 50%;
+      width: 2px;
+      height: 30px;
+      background: rgba(255, 255, 255, 0.7);
+      transform: translateX(-50%);
+    }
+
+    .balloon::before {
+      content: '';
+      position: absolute;
+      bottom: -35px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 8px;
+      height: 8px;
+      background: rgba(255,255,255,0.6);
+      border-radius: 50%;
+    }
+
+    @keyframes floatUpBalloon {
+      0% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 0.7;
+      }
+      10% {
+        opacity: 1;
+      }
+      90% {
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(-120vh) rotate(10deg);
+        opacity: 0;
+      }
+    }
+
+    @keyframes sway {
+      0% {
+        transform: translateX(-8px);
+      }
+      100% {
+        transform: translateX(8px);
+      }
+    }
+
+    /* Contenedor de confeti */
+    #confetti-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+      overflow: hidden;
+    }
+
+    .confetti {
+      position: absolute;
+      top: -10%;
+      animation: confettiFall linear forwards;
+      opacity: 0.9;
+      border-radius: 2px;
+    }
+
+    @keyframes confettiFall {
+      0% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 1;
+      }
+      80% {
+        opacity: 0.8;
+      }
+      100% {
+        transform: translateY(110vh) rotate(720deg);
+        opacity: 0;
+      }
+    }
+
+    /* Tarjeta principal */
+    .card {
+      position: relative;
+      z-index: 2;
+      max-width: 500px;
+      width: 100%;
+      background: rgba(255, 250, 240, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 30px;
+      padding: 40px 30px;
+      box-shadow: 0 30px 50px rgba(0, 0, 0, 0.5), 0 0 0 2px #d4af37 inset, 0 0 30px #d4af37;
+      text-align: center;
+      animation: cardAppear 1.2s cubic-bezier(0.23, 1, 0.32, 1);
+      border: 2px solid #d4af37;
+    }
+
+    @keyframes cardAppear {
+      0% {
+        opacity: 0;
+        transform: translateY(40px) scale(0.9);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .card h1 {
+      font-family: 'Great Vibes', cursive;
+      font-size: 4.5rem;
+      color: #b8860b;
+      text-shadow: 2px 2px 0 #ffd700, 4px 4px 0 rgba(0,0,0,0.1);
+      line-height: 1.1;
+      margin-bottom: 5px;
+    }
+
+    .card .age {
+      font-family: 'Great Vibes', cursive;
+      font-size: 3.5rem;
+      color: #c59b27;
+      margin: -10px 0 10px;
+    }
+
+    .card .invite-text {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #4a2c2a;
+      margin: 15px 0 20px;
+    }
+
+    .cake-container {
+      margin: 20px auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* Pastel simple */
+    .cake {
+      position: relative;
+      width: 160px;
+    }
+
+    .layer {
+      margin: 0 auto;
+      height: 22px;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    }
+    .layer-bottom {
+      width: 100%;
+      background: linear-gradient(180deg, #6f4e37, #4a2c2a);
+    }
+    .layer-middle {
+      width: 80%;
+      background: linear-gradient(180deg, #f5deb3, #deb887);
+    }
+    .layer-top {
+      width: 60%;
+      background: linear-gradient(180deg, #ffb6c1, #ff69b4);
+    }
+    .candles {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: -10px;
+    }
+    .candle {
+      width: 10px;
+      height: 30px;
+      background: linear-gradient(180deg, #ffd966, #f0b323);
+      border-radius: 4px 4px 2px 2px;
+      position: relative;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .flame {
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 10px;
+      height: 14px;
+      background: radial-gradient(circle, #fff 10%, #ffb703 80%);
+      border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+      animation: flicker 0.15s infinite alternate;
+    }
+
+    @keyframes flicker {
+      0% { transform: translateX(-50%) scale(1, 1); opacity: 1; }
+      100% { transform: translateX(-50%) scale(1, 0.8); opacity: 0.8; }
+    }
+
+    .details {
+      background: rgba(212, 175, 55, 0.1);
+      border-radius: 20px;
+      padding: 20px;
+      margin: 25px 0 20px;
+      border: 1px dashed #d4af37;
+      font-size: 1.1rem;
+      color: #3e2723;
+    }
+
+    .details p {
+      margin: 10px 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .details a {
+      color: #1e6091;
+      text-decoration: none;
+      font-weight: 700;
+      border-bottom: 1px dotted #1e6091;
+    }
+
+    .music-btn {
+      background: #d4af37;
+      border: none;
+      padding: 15px 30px;
+      font-size: 1.3rem;
+      font-weight: bold;
+      color: #2c2c2c;
+      border-radius: 50px;
+      cursor: pointer;
+      box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+      transition: all 0.3s ease;
+      margin: 10px;
+      font-family: 'Playfair Display', serif;
+    }
+
+    .music-btn:hover {
+      background: #f1c40f;
+      transform: translateY(-3px);
+      box-shadow: 0 12px 20px rgba(0,0,0,0.3);
+    }
+
+    .music-btn:active {
+      transform: translateY(2px);
+    }
+
+    .confetti-btn {
+      background: #ff7b9c;
+      border: none;
+      padding: 12px 25px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: white;
+      border-radius: 50px;
+      cursor: pointer;
+      box-shadow: 0 6px 12px rgba(255, 123, 156, 0.4);
+      transition: 0.3s;
+      font-family: 'Playfair Display', serif;
+      margin: 5px;
+    }
+
+    .confetti-btn:hover {
+      background: #ff4d6d;
+    }
+
+    .signature {
+      font-family: 'Great Vibes', cursive;
+      font-size: 2.5rem;
+      color: #b8860b;
+      margin-top: 15px;
+    }
+
+    @media (max-width: 500px) {
+      .card {
+        padding: 25px 20px;
+      }
+      .card h1 {
+        font-size: 3.2rem;
+      }
+      .card .age {
+        font-size: 2.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Globos animados -->
+  <div id="balloon-container"></div>
+
+  <!-- Confeti -->
+  <div id="confetti-container"></div>
+
+  <!-- Tarjeta -->
+  <div class="card">
+    <h1>¡Feliz Cumpleaños!</h1>
+    <div class="age">Mis 53 Años</div>
+
+    <!-- Pastelito -->
+    <div class="cake-container">
+      <div class="cake">
+        <div class="layer layer-bottom"></div>
+        <div class="layer layer-middle"></div>
+        <div class="layer layer-top"></div>
+        <div class="candles">
+          <div class="candle"><div class="flame"></div></div>
+          <div class="candle"><div class="flame"></div></div>
+          <div class="candle"><div class="flame"></div></div>
+          <div class="candle"><div class="flame"></div></div>
+          <div class="candle"><div class="flame"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="invite-text">🎈 ¡Estás invitado a celebrar conmigo! 🎈</div>
+
+    <div class="details">
+      <p>📅 <strong>Sábado 20 de junio de 2026</strong></p>
+      <p>🕒 <strong>3:00 PM</strong></p>
+      <p>📍 <strong>500 Metlars Ln</strong><br>
+        <a href="https://www.google.com/maps/search/500+Metlars+Ln" target="_blank" rel="noopener">🗺️ Ver en el mapa</a>
+      </p>
+    </div>
+
+    <p style="font-size:1.2rem; color:#5d4037;">¡Te espero para brindar juntos! 🥂</p>
+
+    <button id="musicButton" class="music-btn">🎵 Toca la música</button>
+    <button id="confettiButton" class="confetti-btn">🎉 ¡Más confeti!</button>
+
+    <div class="signature">Con cariño</div>
+  </div>
+
+  <script>
+    (function() {
+      // --- CREACIÓN DE GLOBOS ---
+      function createBalloons() {
+        const container = document.getElementById('balloon-container');
+        const colorSets = [
+          ['#ff4d6d', '#c9184a'],
+          ['#ffb703', '#fb8500'],
+          ['#ffb3c6', '#ff4d6d'],
+          ['#80ed99', '#38b000'],
+          ['#a9d6e5', '#468faf'],
+          ['#e0aaff', '#7b2cbf'],
+          ['#f9c74f', '#f9844a'],
+          ['#f9844a', '#d9480f']
+        ];
+        for (let i = 0; i < 18; i++) {
+          const balloon = document.createElement('div');
+          balloon.className = 'balloon';
+          const col = colorSets[Math.floor(Math.random() * colorSets.length)];
+          balloon.style.background = `radial-gradient(circle at 30% 30%, ${col[0]}, ${col[1]})`;
+          balloon.style.left = Math.random() * 100 + '%';
+          balloon.style.animationDuration = (Math.random() * 7 + 8) + 's';
+          balloon.style.animationDelay = Math.random() * 6 + 's';
+          balloon.style.width = (Math.random() * 30 + 40) + 'px';
+          balloon.style.height = (Math.random() * 40 + 60) + 'px';
+          container.appendChild(balloon);
+        }
+      }
+
+      // --- CONFETI ---
+      const confettiContainer = document.getElementById('confetti-container');
+
+      function createConfettiPiece() {
+        const piece = document.createElement('div');
+        piece.className = 'confetti';
+        const colors = ['#f94144','#f3722c','#f8961e','#f9c74f','#90be6d','#577590','#f9844a','#43aa8b','#f9c74f','#e63946'];
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        piece.style.backgroundColor = color;
+        piece.style.left = Math.random() * 100 + '%';
+        const duration = Math.random() * 3 + 2.5;
+        piece.style.animationDuration = duration + 's';
+        piece.style.animationDelay = Math.random() * 2 + 's';
+        piece.style.width = (Math.random() * 10 + 6) + 'px';
+        piece.style.height = (Math.random() * 10 + 6) + 'px';
+        piece.style.transform = `rotate(${Math.random() * 360}deg)`;
+        confettiContainer.appendChild(piece);
+
+        setTimeout(() => {
+          if (piece.parentNode) piece.remove();
+        }, (duration + parseFloat(piece.style.animationDelay)) * 1000 + 200);
+      }
+
+      function burstConfetti(count = 40) {
+        for (let i = 0; i < count; i++) {
+          setTimeout(() => createConfettiPiece(), i * 20);
+        }
+      }
+
+      // --- MÚSICA SINTETIZADA (Happy Birthday) ---
+      let audioCtx = null;
+      let currentOscillators = [];
+      let isPlaying = false;
+      const musicButton = document.getElementById('musicButton');
+
+      function stopAllSounds() {
+        currentOscillators.forEach(obj => {
+          try {
+            obj.osc.stop();
+            obj.gain.disconnect();
+          } catch(e) {}
+        });
+        currentOscillators = [];
+      }
+
+      function playMelody(ctx) {
+        stopAllSounds();
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        gain.gain.setValueAtTime(0, now);
+        osc.start(now);
+
+        currentOscillators.push({ osc, gain });
+
+        // Notas: [frecuencia, inicio relativo (seg), duración (seg)]
+        const notes = [
+          // Feliz cumpleaños a ti
+          { freq: 392.00, start: 0.0, dur: 0.3 },
+          { freq: 392.00, start: 0.3, dur: 0.15 },
+          { freq: 440.00, start: 0.45, dur: 0.3 },
+          { freq: 392.00, start: 0.75, dur: 0.45 },
+          { freq: 523.25, start: 1.2, dur: 0.3 },
+          { freq: 493.88, start: 1.5, dur: 0.7 },
+          // Feliz cumpleaños a ti
+          { freq: 392.00, start: 2.4, dur: 0.3 },
+          { freq: 392.00, start: 2.7, dur: 0.15 },
+          { freq: 440.00, start: 2.85, dur: 0.3 },
+          { freq: 392.00, start: 3.15, dur: 0.45 },
+          { freq: 587.33, start: 3.6, dur: 0.3 },
+          { freq: 523.25, start: 3.9, dur: 0.7 },
+          // Feliz cumpleaños querido(a) ...
+          { freq: 392.00, start: 4.8, dur: 0.3 },
+          { freq: 392.00, start: 5.1, dur: 0.15 },
+          { freq: 783.99, start: 5.25, dur: 0.3 },
+          { freq: 659.25, start: 5.55, dur: 0.45 },
+          { freq: 523.25, start: 6.0, dur: 0.3 },
+          { freq: 493.88, start: 6.3, dur: 0.3 },
+          { freq: 440.00, start: 6.6, dur: 0.7 },
+          // ... que los cumplas feliz
+          { freq: 698.46, start: 7.5, dur: 0.3 },
+          { freq: 698.46, start: 7.8, dur: 0.15 },
+          { freq: 659.25, start: 7.95, dur: 0.3 },
+          { freq: 523.25, start: 8.25, dur: 0.45 },
+          { freq: 587.33, start: 8.7, dur: 0.3 },
+          { freq: 523.25, start: 9.0, dur: 0.9 }
+        ];
+
+        const totalDuration = 10.2; // un poco más para asegurar el final
+
+        notes.forEach(({ freq, start, dur }) => {
+          const t0 = now + start + 0.1;
+          const t1 = t0 + dur;
+          osc.frequency.setValueAtTime(freq, t0);
+          gain.gain.setValueAtTime(0, t0);
+          gain.gain.linearRampToValueAtTime(0.5, t0 + 0.02);
+          gain.gain.setValueAtTime(0.5, t1 - 0.05);
+          gain.gain.linearRampToValueAtTime(0, t1);
+        });
+
+        osc.stop(now + totalDuration + 0.3);
+        return totalDuration;
+      }
+
+      function startMusic() {
+        if (!audioCtx) {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (isPlaying) return;
+        isPlaying = true;
+        musicButton.textContent = '🎵 Melodía sonando...';
+        musicButton.disabled = true;
+
+        const total = playMelody(audioCtx);
+
+        setTimeout(() => {
+          isPlaying = false;
+          musicButton.textContent = '🎵 Toca la música';
+          musicButton.disabled = false;
+        }, total * 1000 + 800);
+      }
+
+      musicButton.addEventListener('click', startMusic);
+
+      // Botón de confeti extra
+      document.getElementById('confettiButton').addEventListener('click', () => {
+        burstConfetti(50);
+      });
+
+      // Iniciar todo al cargar
+      window.addEventListener('load', () => {
+        createBalloons();
+        burstConfetti(40); // confeti inicial
+      });
+    })();
+  </script>
+</body>
+</html>
