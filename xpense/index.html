@@ -1913,24 +1913,23 @@ function renderCalendar() {
     const dayTxns = txnsByDay[dateStr] || [];
     dayTxns.forEach(t => { runningBal += t.amount; });
     const projectedBal = runningBal;
-    dayTxns.forEach(t => { runningBal += t.amount; });
-const projectedBal = runningBal;
-dayTxns.forEach(t => {
-  // Los cargos con tarjeta no afectan el efectivo real
-  if (t.isCardCharge) return;
-  if (t.isCardPayment) {
-    // los pagos de tarjeta sí afectan el cash si están realizados (siempre lo están)
-    runningActualBal += t.amount;
-    return;
-  }
-  const status = isOccurrenceCompleted(t.item, t.date);
-  if (status) {
-    const amount = t.amount > 0
-      ? getOccurrenceAmount(t.item, t.date, t.amount)
-      : -getOccurrenceAmount(t.item, t.date, Math.abs(t.amount));
-    runningActualBal += amount;
-  }
-});
+
+    dayTxns.forEach(t => {
+      // Los cargos con tarjeta no afectan el efectivo real
+      if (t.isCardCharge) return;
+      if (t.isCardPayment) {
+        runningActualBal += t.amount;
+        return;
+      }
+      const status = isOccurrenceCompleted(t.item, t.date);
+      if (status) {
+        const amount = t.amount > 0
+          ? getOccurrenceAmount(t.item, t.date, t.amount)
+          : -getOccurrenceAmount(t.item, t.date, Math.abs(t.amount));
+        runningActualBal += amount;
+      }
+    });
+
     const actualBal = runningActualBal;
     const isToday = dateStr === todayStr;
     const hasTxnsToday = isToday && dayTxns.some(t => isOccurrenceCompleted(t.item, t.date));
@@ -1938,6 +1937,8 @@ dayTxns.forEach(t => {
     const gap = actualBal - projectedBal;
     const hasGap = Math.abs(gap) > 0.01;
     html += `<div class="cal-day ${isToday ? 'today' : ''} ${hasTxnsToday ? 'today-txn' : ''} ${isNeg ? 'negative' : ''}">
+      ...
+    </div>`;
       <div class="cal-day-num">${d}</div>
       <div class="cal-day-projected">${t('label_projected')}: ${fmt(projectedBal)}</div>
       <div class="cal-day-actual ${actualBal >= 0 ? 'positive' : 'negative'}">${t('label_actual')}: ${fmt(actualBal)}</div>
