@@ -229,9 +229,26 @@
   button.success { background: var(--green); border-color: var(--green); color: #fff; }
   button.warning { background: var(--yellow); border-color: var(--yellow); color: #fff; }
   .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
-  .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 12px; }
+  .calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));  /* ← minmax(0,1fr) en vez de 1fr */
+  gap: 4px;
+  margin-top: 12px;
+  width: 100%;
+  overflow: hidden;
+}
   .cal-header { text-align: center; font-size: 11px; color: var(--text-dim); padding: 6px 4px; font-weight: 600; text-transform: uppercase; }
-  .cal-day { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 7px; min-height: 88px; font-size: 11px; position: relative; }
+  .cal-day {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 5px;
+  min-height: 88px;
+  font-size: 11px;
+  position: relative;
+  min-width: 0;      /* ← CLAVE: permite que el contenido se encoja */
+  overflow: hidden;  /* ← evita que el contenido se salga */
+}
   .cal-day.empty { background: transparent; border: none; }
   .cal-day.today { border-color: var(--accent); border-width: 2px; }
   .cal-day.negative { border-color: var(--red); background: #fef2f2; }
@@ -239,11 +256,28 @@
   .cal-day.today-txn .cal-day-txn { font-size: 10px; font-weight: 700; }
   .cal-day-num { font-weight: 700; margin-bottom: 3px; color: var(--text); }
   .cal-day-projected { font-size: 10px; color: var(--text-dim); }
-  .cal-day-actual { font-size: 12px; font-weight: 700; }
+  .cal-day-actual {
+  font-size: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
   .cal-day-actual.positive { color: var(--green); }
   .cal-day-actual.negative { color: var(--red); }
-  .cal-day-gap { font-size: 10px; color: var(--yellow); margin-top: 2px; font-weight: 600; }
-  .cal-day-txn { font-size: 9px; color: var(--text-dim); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cal-day-gap {
+  font-size: 9px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+  .cal-day-txn {
+  font-size: 9px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
   .cal-day-txn.positive { color: var(--green); font-weight: 600; }
   .cal-day-txn.negative { color: var(--red); font-weight: 600; }
   .month-nav { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
@@ -723,7 +757,15 @@ h1 span { color: #fff; opacity: 0.85; }
   color: var(--accent);
   font-weight: 700;
 }
-
+.menu-separator {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: rgba(255,255,255,0.5);
+  padding: 12px 14px 6px 14px;
+  margin-top: 4px;
+}
 /* Responsive */
 @media (max-width: 600px) {
   .nav-user { display: none; }
@@ -811,15 +853,24 @@ h1 span { color: #fff; opacity: 0.85; }
     <span class="menu-title">Menú</span>
     <button type="button" class="menu-close" onclick="closeMenu()" aria-label="Cerrar">✕</button>
   </div>
+
   <button type="button" class="tab active" role="tab" data-section="dashboard" data-i18n="tab_dashboard">📊 Dashboard</button>
-  <button type="button" class="tab" role="tab" data-section="cards" data-i18n="tab_cards">💳 Tarjetas</button>
-  <button type="button" class="tab" role="tab" data-section="advisor" data-i18n="tab_advisor">🧠 Asesor</button>
-  <button type="button" class="tab" role="tab" data-section="calendar" data-i18n="tab_calendar">📅 Calendario</button>
+
+  <div class="menu-separator" data-i18n="menu_movements">Movimientos</div>
   <button type="button" class="tab" role="tab" data-section="income" data-i18n="tab_income">⬇️ Ingresos</button>
   <button type="button" class="tab" role="tab" data-section="expenses" data-i18n="tab_expenses">⬆️ Gastos</button>
+
+  <div class="menu-separator" data-i18n="menu_planning">Planificación</div>
+  <button type="button" class="tab" role="tab" data-section="calendar" data-i18n="tab_calendar">📅 Calendario</button>
   <button type="button" class="tab" role="tab" data-section="projection" data-i18n="tab_projection">📈 Proyección</button>
-  <button type="button" class="tab" role="tab" data-section="reports" data-i18n="tab_reports">📄 Reportes</button>
   <button type="button" class="tab" role="tab" data-section="pending" data-i18n="tab_pending">📋 Pendientes</button>
+
+  <div class="menu-separator" data-i18n="menu_debts">Deudas</div>
+  <button type="button" class="tab" role="tab" data-section="cards" data-i18n="tab_cards">💳 Tarjetas</button>
+  <button type="button" class="tab" role="tab" data-section="advisor" data-i18n="tab_advisor">🧠 Asesor</button>
+
+  <div class="menu-separator" data-i18n="menu_data">Datos</div>
+  <button type="button" class="tab" role="tab" data-section="reports" data-i18n="tab_reports">📄 Reportes</button>
   <button type="button" class="tab" role="tab" data-section="settings" data-i18n="tab_settings">⚙️ Ajustes</button>
 </nav>
   <main id="main">
@@ -1410,7 +1461,11 @@ const i18n = {
     lbl_payment_method: 'Método de pago', th_payment_method: 'Método',
     payment_cash: '💵 Efectivo / Débito', payment_card: '💳',
     report_format: 'Formato del reporte',
-    btn_csv: '📊 CSV (Excel)', btn_ofx: '🏦 OFX (Bancos)', btn_pdf: '📄 PDF', btn_json: '💾 JSON'
+    btn_csv: '📊 CSV (Excel)', btn_ofx: '🏦 OFX (Bancos)', btn_pdf: '📄 PDF', btn_json: '💾 JSON',
+    menu_movements: 'Movimientos',
+    menu_planning: 'Planificación',
+    menu_debts: 'Deudas',
+    menu_data: 'Datos'
     },
   en: {
     tab_dashboard: '📊 Dashboard', tab_cards: '💳 Cards', tab_advisor: '🧠 Advisor', tab_calendar: '📅 Calendar',
@@ -1483,7 +1538,11 @@ const i18n = {
     lbl_payment_method: 'Payment method', th_payment_method: 'Method',
     payment_cash: '💵 Cash / Debit', payment_card: '💳',
     report_format: 'Report format',
-    btn_csv: '📊 CSV (Excel)', btn_ofx: '🏦 OFX (Banks)', btn_pdf: '📄 PDF', btn_json: '💾 JSON'
+    btn_csv: '📊 CSV (Excel)', btn_ofx: '🏦 OFX (Banks)', btn_pdf: '📄 PDF', btn_json: '💾 JSON',
+    menu_movements: 'Movements',
+    menu_planning: 'Planning',
+    menu_debts: 'Debts',
+    menu_data: 'Data'
   }
 };
 
