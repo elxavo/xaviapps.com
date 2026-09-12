@@ -588,13 +588,19 @@
     <div class="card">
       <div class="card-title" data-i18n="card_movement">💸 Registrar movimiento de tarjeta</div>
       <div class="form-row">
-        <div class="form-group"><label data-i18n="lbl_card">Tarjeta</label><select id="cardTxnCard"></select></div>
-        <div class="form-group"><label data-i18n="lbl_card_txn_type">Tipo</label>
-          <select id="cardTxnType">
-            <option value="charge" data-i18n="opt_charge">Cargo / Compra</option>
-            <option value="payment" data-i18n="opt_payment">Pago</option>
-          </select>
-        </div>
+  <div class="form-group"><label data-i18n="lbl_card">Tarjeta</label><select id="cardTxnCard"></select></div>
+  <div class="form-group"><label data-i18n="lbl_card_txn_type">Tipo</label>
+    <select id="cardTxnType">
+      <option value="charge" data-i18n="opt_charge">Cargo / Compra</option>
+      <option value="payment" data-i18n="opt_payment">Pago</option>
+    </select>
+  </div>
+  <div class="form-group"><label data-i18n="lbl_amount">Monto</label><input id="cardTxnAmount" type="number" placeholder="0.00" step="0.01" data-i18n-placeholder="ph_amount"></div>
+  <div class="form-group"><label data-i18n="lbl_date">Fecha</label><input id="cardTxnDate" type="date"></div>
+  <div class="form-group"><label data-i18n="lbl_category">Categoría</label><select id="cardTxnCategory"></select></div>
+  <div class="form-group"><label data-i18n="lbl_desc">Descripción</label><input id="cardTxnDesc" placeholder="Compra super / Pago mensual" data-i18n-placeholder="ph_card_txn_desc"></div>
+  <div class="form-group"><button type="button" onclick="addCardTransaction()" data-i18n="btn_add">+ Agregar</button></div>
+</div>
         <div class="form-group"><label data-i18n="lbl_amount">Monto</label><input id="cardTxnAmount" type="number" placeholder="0.00" step="0.01"></div>
         <div class="form-group"><label data-i18n="lbl_date">Fecha</label><input id="cardTxnDate" type="date"></div>
         <div class="form-group"><label data-i18n="lbl_category">Categoría</label><select id="cardTxnCategory"></select></div>
@@ -1135,7 +1141,19 @@ const i18n = {
     menu_planning: 'Planificación',
     menu_debts: 'Deudas',
     menu_data: 'Datos'
-    },
+    ph_amount: '0.00',
+    ph_inc_name: 'Salario',
+    ph_inc_spor_name: 'Bonus',
+    ph_exp_name: 'Netflix',
+    ph_one_name: 'Compra',
+    ph_day_range: '1-31',
+    ph_months_infinite: '0 = ∞',
+    ph_card_name: 'Visa Banco X',
+    ph_apr: '24.99',
+    ph_cutoff_day: '15',
+    ph_payment_day: '25',
+    ph_owner_name: 'Ej: Juan Pérez',
+    ph_cat_name: 'Nombre',
   en: {
     app_title: 'XP<span>ENSE</span>', doc_title: 'XPENSE | Personal Finances', skip_link: 'Skip tp content',
     auth_subtitle: 'Your personal finance manager',
@@ -1223,7 +1241,19 @@ const i18n = {
     menu_planning: 'Planning',
     menu_debts: 'Debts',
     menu_data: 'Data'
-  }
+    ph_amount: '0.00',
+    ph_inc_name: 'Salary',
+    ph_inc_spor_name: 'Bonus',
+    ph_exp_name: 'Netflix',
+    ph_one_name: 'Purchase',
+    ph_day_range: '1-31',
+    ph_months_infinite: '0 = ∞',
+    ph_card_name: 'Visa Bank X',
+    ph_apr: '24.99',
+    ph_cutoff_day: '15',
+    ph_payment_day: '25',
+    ph_owner_name: 'e.g. John Doe',
+    ph_cat_name: 'Name',}
 };
 
 let lang = localStorage.getItem('xpense-lang') || 'es';
