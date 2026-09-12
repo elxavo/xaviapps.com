@@ -1004,6 +1004,21 @@ const NEEDS_CATEGORIES = ['Vivienda','Comida','Transporte','Servicios','Salud','
 const WANTS_CATEGORIES = ['Ocio','Restaurantes','Compras','Viajes','Cuidado personal','Regalos','Mascotas','Niños','Otros gastos','Leisure','Restaurants','Shopping','Travel','Personal care','Gifts','Pets','Kids','Other expenses'];
 const SAVINGS_CATEGORIES = ['Ahorro','Inversión','Fondo emergencia','Savings','Investment','Emergency fund'];
 
+const fmt = n => new Intl.NumberFormat(lang === 'es' ? 'es-ES' : 'en-US', {style:'currency', currency:'USD'}).format(n||0);
+const uid = () => Math.random().toString(36).slice(2,10);
+const parseDate = s => new Date(s + 'T00:00:00');
+const addDays = (date, n) => { const d = new Date(date); d.setDate(d.getDate() + n); return d; };
+const addMonths = (date, n) => { const d = new Date(date); d.setMonth(d.getMonth() + n); return d; };
+const daysInMonth = (y, m) => new Date(y, m + 1, 0).getDate();
+const toDateStr = d => d.toISOString().slice(0, 10);
+const nowISO = () => new Date().toISOString();
+const formatDate = d => new Date(d).toLocaleDateString(lang === 'es' ? 'es-ES' : 'en-US', { day: '2-digit', month: 'short', year: 'numeric' });
+const formatDateTime = d => new Date(d).toLocaleString(lang === 'es' ? 'es-ES' : 'en-US', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+const formatDateLong = d => new Date(d).toLocaleDateString(lang === 'es' ? 'es-ES' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' });
+
+function freqIntervalDays(freq) { if (freq === 'weekly') return 7; if (freq === 'biweekly') return 14; if (freq === 'every4weeks') return 28; return null; }
+function freqLabel(freq) { return t('freq_label_' + (freq || 'monthly')); }
+
 let state = {
   initialBalance: 0, ownerName: '',
   categories: DEFAULT_CATS_ES.slice(),
