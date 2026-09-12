@@ -600,8 +600,14 @@
   <div class="form-group"><label data-i18n="lbl_category">Categoría</label><select id="cardTxnCategory"></select></div>
   <div class="form-group"><label data-i18n="lbl_desc">Descripción</label><input id="cardTxnDesc" placeholder="Compra super / Pago mensual" data-i18n-placeholder="ph_card_txn_desc"></div>
   <div class="form-group"><button type="button" onclick="addCardTransaction()" data-i18n="btn_add">+ Agregar</button></div>
-   </div>
-        </div>
+</div>
+        <div class="form-group"><label data-i18n="lbl_amount">Monto</label><input id="cardTxnAmount" type="number" placeholder="0.00" step="0.01"></div>
+        <div class="form-group"><label data-i18n="lbl_date">Fecha</label><input id="cardTxnDate" type="date"></div>
+        <div class="form-group"><label data-i18n="lbl_category">Categoría</label><select id="cardTxnCategory"></select></div>
+        <div class="form-group"><label data-i18n="lbl_desc">Descripción</label><input id="cardTxnDesc" placeholder="Compra super / Pago mensual"></div>
+        <div class="form-group"><button type="button" onclick="addCardTransaction()" data-i18n="btn_add">+ Agregar</button></div>
+      </div>
+    </div>
     <div class="card">
       <div class="card-title" data-i18n="list_cards">💳 Mis tarjetas (por prioridad)</div>
       <div id="cardList"></div>
