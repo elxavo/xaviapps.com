@@ -1137,6 +1137,8 @@ auth.onAuthStateChanged(user => {
 
 const i18n = {
   es: {
+    kpi_balance_on_hand: 'Balance disponible',
+    sub_today: 'Hoy',
     app_title: 'XP<span>ENSE</span>', doc_title: 'XPENSE | Finanzas Personales', skip_link: 'Saltar al contenido',
     auth_subtitle: 'Tu gestor de finanzas personales',
     auth_login: 'Iniciar sesión',
@@ -1241,6 +1243,8 @@ const i18n = {
     ph_notes: 'Notas opcionales'
   },
   en: {
+    kpi_balance_on_hand: 'Balance on hand',
+    sub_today: 'Today',
     app_title: 'XP<span>ENSE</span>', doc_title: 'XPENSE | Personal Finances', skip_link: 'Skip to content',
     auth_subtitle: 'Your personal finance manager',
     auth_login: 'Sign in',
@@ -1711,6 +1715,48 @@ function calculateActual(startDate, endDate) {
   }, 0);
 }
 
+  // Saldo disponible AHORA (solo transacciones hasta hoy)
+function getBalanceOnHand() {
+  const today = new Date(); today.setHours(23, 59, 59, 999);
+  // Rango: desde el inicio hasta hoy
+  const start = new Date(2000, 0, 1);
+  const end = today;
+  const txns = getTransactionsInRange(start, end);
+
+  let balance = state.initialBalance;
+
+  txns.forEach(t => {
+    // Los cargos con tarjeta NO afectan el cash
+    if (t.isCardCharge) return;
+
+    // Los pagos de tarjeta SÍ afectan el cash (siempre)
+    if (t.isCardPayment) {
+      balance += t.amount;
+      return;
+    }
+
+    // Para ingresos/gastos: solo si están completados o su fecha ya pasó
+    const tDate = parseDate(t.date);
+    const isPast = tDate <= today;
+    const status = t.item ? getOccurrenceStatus(t.item, t.date) : 'pending';
+
+    if (status === 'cancelled') return;
+
+    if (status === 'completed') {
+      // Usa el monto real (override o completedAmount)
+      const amount = t.amount > 0
+        ? getOccurrenceAmount(t.item, t.date, t.amount)
+        : -getOccurrenceAmount(t.item, t.date, Math.abs(t.amount));
+      balance += amount;
+    } else if (isPast) {
+      // Pendiente pero ya pasó la fecha: cuenta como si se hubiera hecho (para no romper el balance)
+      // Si prefieres que NO cuente, comenta esta línea
+      balance += t.amount;
+    }
+  });
+
+  return balance;
+}
 function getPendingToday() {
   const today = new Date(); today.setHours(0,0,0,0);
   const pending = [];
@@ -1818,7 +1864,10 @@ function renderKPIs() {
   const bufferDays = dailyAvg > 0 ? Math.max(0, Math.floor(curMonth.endBalance / dailyAvg)) : 999;
   const totalDebt = getTotalCardDebt();
   const util = getCardUtilization();
+  const balanceOnHand = getBalanceOnHand();
   document.getElementById('kpiGrid').innerHTML = `
+  <div class="kpi clickable" onclick="openBreakdown('balanceOnHand')" style="border-left:3px solid var(--green);"><div class="kpi-label">💰 ${t('kpi_balance_on_hand')}</div><div class="kpi-value ${balanceOnHand >= 0 ? 'positive' : 'negative'}">${fmt(balanceOnHand)}</div><div class="kpi-sub">${t('sub_today')}</div></div>
+  <div class="kpi clickable" onclick="openBreakdown('endBalance')">... (resto igual)
   <div class="kpi clickable" onclick="openBreakdown('endBalance')"><div class="kpi-label">${t('kpi_end_balance')}</div><div class="kpi-value ${curMonth.endBalance >= 0 ? 'positive' : 'negative'}">${fmt(curMonth.endBalance)}</div><div class="kpi-sub">${t('sub_current')}</div></div>
   <div class="kpi clickable" onclick="openBreakdown('income')"><div class="kpi-label">${t('kpi_income')}</div><div class="kpi-value positive">${fmt(totalIncome)}</div><div class="kpi-sub">${curMonth.txns.filter(t => t.amount > 0).length} ${t('sub_movements')}</div></div>
   <div class="kpi clickable" onclick="openBreakdown('expense')"><div class="kpi-label">${t('kpi_expense')}</div><div class="kpi-value negative">${fmt(totalExpense)}</div><div class="kpi-sub">${curMonth.txns.filter(t => t.amount < 0 && t.type !== 'transfer').length} ${t('sub_movements')}</div></div>
