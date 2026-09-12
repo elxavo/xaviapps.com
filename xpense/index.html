@@ -1937,8 +1937,6 @@ function renderCalendar() {
     const gap = actualBal - projectedBal;
     const hasGap = Math.abs(gap) > 0.01;
     html += `<div class="cal-day ${isToday ? 'today' : ''} ${hasTxnsToday ? 'today-txn' : ''} ${isNeg ? 'negative' : ''}">
-      ...
-    </div>`;
       <div class="cal-day-num">${d}</div>
       <div class="cal-day-projected">${t('label_projected')}: ${fmt(projectedBal)}</div>
       <div class="cal-day-actual ${actualBal >= 0 ? 'positive' : 'negative'}">${t('label_actual')}: ${fmt(actualBal)}</div>
