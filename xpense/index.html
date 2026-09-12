@@ -3213,6 +3213,13 @@ function openBreakdown(type) {
     list = txns;
     titleText = t('kpi_end_balance');
     total = state.initialBalance + txns.reduce((s, t) => s + t.amount, 0);
+  } else if (type === 'balanceOnHand') {
+  // Solo transacciones hasta hoy
+  const today = new Date(); today.setHours(23, 59, 59, 999);
+  const txnsAll = getTransactionsInRange(new Date(2000,0,1), today);
+  list = txnsAll.filter(t => !t.isCardCharge);
+  titleText = t('kpi_balance_on_hand');
+  total = getBalanceOnHand();
   } else if (type === 'budget_needs' || type === 'budget_wants' || type === 'budget_savings') {
     const catMap = {
       budget_needs: NEEDS_CATEGORIES,
