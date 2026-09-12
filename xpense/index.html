@@ -1301,7 +1301,7 @@ function calculateMinimumOnlyPlan() {
 }
 
 let flowChart, catChart, projChart;
-function render() {
+ffunction render() {
   if (!currentUser) return;
   renderKPIs();
   renderBudgetRule();
@@ -1317,11 +1317,10 @@ function render() {
   renderCards();
   renderCardTransactions();
   renderAdvisor();
-  populateCardSelects();
-  populateCategorySelects();
+  populateCardSelects();        // ← AÑADIR
+  populateCategorySelects();    // ← AÑADIR (el importante)
   renderReportPreview();
 }
-
 function renderKPIs() {
   const now = new Date();
   const curMonth = simulateMonthBalance(state.initialBalance, now.getFullYear(), now.getMonth());
