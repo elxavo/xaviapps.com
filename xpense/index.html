@@ -497,82 +497,78 @@
   width: 100%;
 }
 .google-btn:hover { background: var(--bg-card-2); }
-/* ═══════════ HEADER + MENÚ REORGANIZADO ═══════════ */
+/* ═══════════ HEADER + MENÚ DESPLEGABLE ═══════════ */
 header {
-  display: grid !important;
-  grid-template-columns: auto 1fr auto;
-  grid-template-areas:
-    "brand tabs user"
-    "brand tabs user";
+  display: flex !important;
+  justify-content: space-between;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   padding: 10px 18px;
   background: var(--accent);
+  color: #fff;
   position: sticky;
   top: 0;
   z-index: 50;
   box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
 
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.menu-btn {
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 18px;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-family: inherit;
+  padding: 0;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+.menu-btn:hover { background: rgba(255,255,255,0.28); }
+
+.menu-icon { line-height: 1; }
+
 .brand {
-  grid-area: brand;
   display: flex;
   flex-direction: column;
   gap: 2px;
-  flex-shrink: 0;
+  min-width: 0;
 }
 
-.nav-tabs {
-  grid-area: tabs;
-  display: flex;
-  flex-wrap: nowrap;
-  gap: 6px;
-  justify-content: flex-start;
-  overflow-x: auto;
-  scrollbar-width: thin;
-  padding-bottom: 2px;
-}
-
-  .nav-tabs::-webkit-scrollbar { height: 4px; }
-.nav-tabs::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.3);
-  border-radius: 2px;
-}
-
-.tab {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 7px 13px;
-  background: rgba(255,255,255,0.14);
-  border: 1px solid rgba(255,255,255,0.18);
-  border-radius: 7px;
+h1 {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
   color: #fff;
-  font-size: 12px;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
   white-space: nowrap;
-  transition: background 0.15s;
 }
+h1 span { color: #fff; opacity: 0.85; }
 
-.tab:hover {
-  background: rgba(255,255,255,0.28);
+.brand-link {
+  font-size: 11px;
+  color: rgba(255,255,255,0.7);
+  text-decoration: none;
+  white-space: nowrap;
 }
-
-.tab.active {
-  background: #fff;
-  color: var(--accent);
-  border-color: #fff;
-}
+.brand-link:hover { color: #fff; }
 
 .header-right {
-  grid-area: user;
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
+  flex-shrink: 0;
 }
 
 .lang-toggle {
@@ -581,85 +577,160 @@ header {
   border-radius: 6px;
   overflow: hidden;
 }
-
 .lang-btn {
-  padding: 6px 11px;
+  padding: 5px 10px;
   background: transparent;
   border: none;
   color: rgba(255,255,255,0.85);
+  cursor: pointer;
   font-size: 12px;
   font-weight: 600;
-  cursor: pointer;
   font-family: inherit;
 }
-
-.lang-btn.active {
-  background: #fff;
-  color: var(--accent);
-}
+.lang-btn.active { background: #fff; color: var(--accent); }
 
 .sync-wrap {
   display: flex;
   align-items: center;
   gap: 5px;
 }
-
 .sync-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
   background: var(--green);
+  transition: background 0.3s;
 }
-
-.sync-lbl {
-  font-size: 10px;
-  color: rgba(255,255,255,0.8);
-}
+.sync-dot.syncing { background: var(--yellow); animation: blink 0.8s infinite; }
+.sync-dot.error { background: var(--red); }
+@keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+.sync-lbl { font-size: 10px; color: rgba(255,255,255,0.7); }
 
 .nav-user {
   font-size: 11px;
-  color: rgba(255,255,255,0.8);
-  max-width: 180px;
+  color: rgba(255,255,255,0.75);
+  max-width: 140px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .logout-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 12px;
   background: rgba(255,255,255,0.15);
   border: 1px solid rgba(255,255,255,0.25);
   border-radius: 6px;
   color: #fff;
+  font-family: inherit;
   font-size: 11px;
   font-weight: 600;
+  padding: 6px 10px;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+.logout-btn:hover { background: rgba(255,255,255,0.28); }
+
+/* ═══ Menú desplegable ═══ */
+.menu-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s, visibility 0.2s;
+  z-index: 60;
+}
+.menu-overlay.open {
+  opacity: 1;
+  visibility: visible;
+}
+
+.menu-panel {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 260px;
+  max-width: 80vw;
+  background: var(--accent);
+  color: #fff;
+  padding: 18px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transform: translateX(-100%);
+  transition: transform 0.25s ease;
+  z-index: 70;
+  overflow-y: auto;
+  box-shadow: 4px 0 20px rgba(0,0,0,0.25);
+}
+.menu-panel.open {
+  transform: translateX(0);
+}
+
+.menu-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 6px 14px 6px;
+  border-bottom: 1px solid rgba(255,255,255,0.15);
+  margin-bottom: 8px;
+}
+.menu-title {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: rgba(255,255,255,0.75);
+}
+.menu-close {
+  background: transparent;
+  border: none;
+  color: rgba(255,255,255,0.8);
+  font-size: 16px;
+  width: auto;
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: 6px;
+}
+.menu-close:hover { background: rgba(255,255,255,0.15); color: #fff; }
+
+.menu-panel .tab {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: rgba(255,255,255,0.9);
+  font-size: 13px;
+  font-weight: 500;
   font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+.menu-panel .tab:hover {
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+}
+.menu-panel .tab.active {
+  background: #fff;
+  color: var(--accent);
+  font-weight: 700;
 }
 
-.logout-btn:hover {
-  background: rgba(255,255,255,0.28);
-}
-
-/* En pantallas medianas: los tabs van debajo del brand */
-@media (max-width: 900px) {
-  header {
-    grid-template-columns: 1fr auto;
-    grid-template-areas:
-      "brand user"
-      "tabs tabs";
-  }
-  .nav-tabs {
-    justify-content: flex-start;
-  }
-}
-
+/* Responsive */
 @media (max-width: 600px) {
   .nav-user { display: none; }
-  .tab { font-size: 11px; padding: 6px 10px; }
+  .sync-lbl { display: none; }
+  header { padding: 10px 12px; gap: 8px; }
+  .menu-panel { width: 240px; }
+  .brand-link { display: none; }
 }
 </style>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>">
@@ -709,33 +780,48 @@ header {
 <a href="#main" class="skip-link" data-i18n="skip_link">Saltar al contenido</a>
 <div class="container">
   <header>
+  <div class="header-left">
+    <button type="button" class="menu-btn" id="menuBtn" onclick="toggleMenu()" aria-label="Menú" aria-expanded="false">
+      <span class="menu-icon">☰</span>
+    </button>
     <div class="brand">
       <h1 id="appTitle">XP<span>ENSE</span></h1>
       <a href="https://xaviapps.com" target="_blank" class="brand-link" rel="noopener">xaviapps.com</a>
     </div>
-    <div class="header-right">
-      <div class="lang-toggle" role="group" aria-label="Language">
-        <button type="button" class="lang-btn active" id="langES" onclick="setLang('es')" aria-pressed="true">ES</button>
-        <button type="button" class="lang-btn" id="langEN" onclick="setLang('en')" aria-pressed="false">EN</button>
-      </div>
-      <nav class="nav-tabs" role="tablist">
-        <button type="button" class="tab active" role="tab" data-section="dashboard" data-i18n="tab_dashboard">📊 Dashboard</button>
-        <button type="button" class="tab" role="tab" data-section="cards" data-i18n="tab_cards">💳 Tarjetas</button>
-        <button type="button" class="tab" role="tab" data-section="advisor" data-i18n="tab_advisor">🧠 Asesor</button>
-        <button type="button" class="tab" role="tab" data-section="calendar" data-i18n="tab_calendar">📅 Calendario</button>
-        <button type="button" class="tab" role="tab" data-section="income" data-i18n="tab_income">⬇️ Ingresos</button>
-        <button type="button" class="tab" role="tab" data-section="expenses" data-i18n="tab_expenses">⬆️ Gastos</button>
-        <button type="button" class="tab" role="tab" data-section="projection" data-i18n="tab_projection">📈 Proyección</button>
-        <button type="button" class="tab" role="tab" data-section="reports" data-i18n="tab_reports">📄 Reportes</button>
-        <button type="button" class="tab" role="tab" data-section="pending" data-i18n="tab_pending">📋 Pendientes</button>
-        <button type="button" class="tab" role="tab" data-section="settings" data-i18n="tab_settings">⚙️ Ajustes</button>
-      </nav>
-      <div class="sync-wrap"><div class="sync-dot" id="sync-dot"></div><span class="sync-lbl" id="sync-lbl">Guardado</span></div>
-      <span class="nav-user" id="nav-user"></span>
-      <button class="logout-btn" onclick="doLogout()">🚪 <span data-i18n="signout">Salir</span></button>
-    </div>
-  </header>
+  </div>
 
+  <div class="header-right">
+    <div class="lang-toggle" role="group" aria-label="Language">
+      <button type="button" class="lang-btn active" id="langES" onclick="setLang('es')" aria-pressed="true">ES</button>
+      <button type="button" class="lang-btn" id="langEN" onclick="setLang('en')" aria-pressed="false">EN</button>
+    </div>
+    <div class="sync-wrap" title="Estado de sincronización">
+      <div class="sync-dot" id="sync-dot"></div>
+      <span class="sync-lbl" id="sync-lbl">Guardado</span>
+    </div>
+    <span class="nav-user" id="nav-user"></span>
+    <button class="logout-btn" onclick="doLogout()">🚪 <span data-i18n="signout">Salir</span></button>
+  </div>
+</header>
+
+<!-- MENÚ DESPLEGABLE -->
+<div class="menu-overlay" id="menuOverlay" onclick="closeMenu()"></div>
+<nav class="menu-panel" id="menuPanel" role="tablist" aria-label="Navegación principal">
+  <div class="menu-header">
+    <span class="menu-title">Menú</span>
+    <button type="button" class="menu-close" onclick="closeMenu()" aria-label="Cerrar">✕</button>
+  </div>
+  <button type="button" class="tab active" role="tab" data-section="dashboard" data-i18n="tab_dashboard">📊 Dashboard</button>
+  <button type="button" class="tab" role="tab" data-section="cards" data-i18n="tab_cards">💳 Tarjetas</button>
+  <button type="button" class="tab" role="tab" data-section="advisor" data-i18n="tab_advisor">🧠 Asesor</button>
+  <button type="button" class="tab" role="tab" data-section="calendar" data-i18n="tab_calendar">📅 Calendario</button>
+  <button type="button" class="tab" role="tab" data-section="income" data-i18n="tab_income">⬇️ Ingresos</button>
+  <button type="button" class="tab" role="tab" data-section="expenses" data-i18n="tab_expenses">⬆️ Gastos</button>
+  <button type="button" class="tab" role="tab" data-section="projection" data-i18n="tab_projection">📈 Proyección</button>
+  <button type="button" class="tab" role="tab" data-section="reports" data-i18n="tab_reports">📄 Reportes</button>
+  <button type="button" class="tab" role="tab" data-section="pending" data-i18n="tab_pending">📋 Pendientes</button>
+  <button type="button" class="tab" role="tab" data-section="settings" data-i18n="tab_settings">⚙️ Ajustes</button>
+</nav>
   <main id="main">
   <div class="section active" id="dashboard" role="tabpanel">
     <div class="kpi-grid" id="kpiGrid"></div>
@@ -1474,8 +1560,9 @@ document.querySelectorAll('.tab').forEach(tab => {
     document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
     document.querySelectorAll('.section').forEach(x => { x.classList.remove('active'); x.hidden = true; });
     tab.classList.add('active');
-    const panel = document.getElementById(tab.dataset.section);
-    if (panel) { panel.classList.add('active'); panel.hidden = false; }
+    const section = document.getElementById(tab.dataset.section);
+    if (section) { section.classList.add('active'); section.hidden = false; }
+    closeMenu();  // ← Cierra el menú desplegable
     render();
   };
 });
@@ -1954,9 +2041,54 @@ function renderStatusBadge(item) {
 }
 function renderStatusActions(item, type) {
   if (item.status === 'cancelled') return '';
-  // Los recurrentes no se marcan desde la tabla (se marcan desde calendario / próximos movimientos)
-  if (type === 'income' || type === 'recurring') return '';
+
+  // Ingresos recurrentes y gastos recurrentes: tick que marca la próxima ocurrencia pendiente
+  if (type === 'income' || type === 'recurring') {
+    const isExpense = (type === 'recurring');
+    const next = getNextOccurrence(item, isExpense);
+    if (!next) return '';
+    const isDone = next.status === 'completed';
+    const label = isDone ? '✓' : '☑';
+    return `<button type="button" class="icon-btn success" onclick="openModal('${item.id}','${type}','${next.date}')" title="${next.date}">${label}</button>`;
+  }
+
+  // Items únicos (esporádicos, one-time): comportamiento original
   return `<button type="button" class="icon-btn success" onclick="openModal('${item.id}','${type}')">${item.status === 'completed' ? '✓' : '☑'}</button>`;
+}
+
+// Devuelve la próxima ocurrencia (pasada o futura) de un item recurrente,
+// junto con su estado (según override por fecha).
+function getNextOccurrence(item, isExpense) {
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  // 1) Buscar la primera ocurrencia PENDIENTE entre -6 y +6 meses
+  for (let offset = -6; offset <= 6; offset++) {
+    const d = new Date(today.getFullYear(), today.getMonth() + offset, 1);
+    const occs = getOccurrencesInMonth(item, d.getFullYear(), d.getMonth(), isExpense);
+    const sorted = occs.slice().sort((a, b) => a.date.localeCompare(b.date));
+    for (const o of sorted) {
+      const key = item.id + '|' + o.date;
+      const ov = state.overrides && state.overrides[key];
+      const status = ov ? ov.status : (o.status || 'pending');
+      if (status !== 'completed' && status !== 'cancelled') {
+        return { date: o.date, status };
+      }
+    }
+  }
+
+  // 2) Si no hay pendientes, devolver la última ocurrencia (para mostrar ✓)
+  for (let offset = 6; offset >= -6; offset--) {
+    const d = new Date(today.getFullYear(), today.getMonth() + offset, 1);
+    const occs = getOccurrencesInMonth(item, d.getFullYear(), d.getMonth(), isExpense);
+    if (occs.length > 0) {
+      const last = occs[occs.length - 1];
+      const key = item.id + '|' + last.date;
+      const ov = state.overrides && state.overrides[key];
+      return { date: last.date, status: ov ? ov.status : (last.status || 'pending') };
+    }
+  }
+
+  return null;
 }
   function renderEditBtn(type, id) { return `<button type="button" class="icon-btn warning" onclick="startEdit('${type}','${id}')">✏️</button>`; }
 
@@ -3012,7 +3144,32 @@ function downloadFile(blob, filename) {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
+// ═══ Menú desplegable ═══
+function toggleMenu() {
+  const panel = document.getElementById('menuPanel');
+  const overlay = document.getElementById('menuOverlay');
+  const btn = document.getElementById('menuBtn');
+  const isOpen = panel.classList.contains('open');
+  if (isOpen) closeMenu();
+  else {
+    panel.classList.add('open');
+    overlay.classList.add('open');
+    btn.setAttribute('aria-expanded', 'true');
+  }
+}
+function closeMenu() {
+  const panel = document.getElementById('menuPanel');
+  const overlay = document.getElementById('menuOverlay');
+  const btn = document.getElementById('menuBtn');
+  panel.classList.remove('open');
+  overlay.classList.remove('open');
+  btn.setAttribute('aria-expanded', 'false');
+}
 
+// Cerrar con Escape
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeMenu();
+});
 // ═══════════════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════════════
