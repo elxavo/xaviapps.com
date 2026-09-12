@@ -450,29 +450,29 @@
     <div class="auth-brand">X<span>PENSE</span></div>
     <div class="auth-subtitle" data-i18n="auth_subtitle">Tu gestor de finanzas personales</div>
     <div class="auth-tabs">
-      <button class="auth-tab active" id="tab-login" onclick="showAuthTab('login')">Iniciar sesión</button>
-      <button class="auth-tab" id="tab-register" onclick="showAuthTab('register')">Registrarse</button>
+      <button class="auth-tab active" id="tab-login" onclick="showAuthTab('login')" data-i18n="auth_login">Iniciar sesión</button>
+      <button class="auth-tab" id="tab-register" onclick="showAuthTab('register')" data-i18n="auth_register">Registrarse</button>
     </div>
     <div id="auth-error" class="auth-error"></div>
     <div id="auth-login" class="auth-fields">
-      <input class="auth-input" id="login-email" type="email" placeholder="Correo electrónico">
-      <input class="auth-input" id="login-password" type="password" placeholder="Contraseña">
-      <button class="auth-btn" onclick="emailLogin()">Iniciar sesión</button>
-      <div class="auth-divider">o</div>
+      <input class="auth-input" id="login-email" type="email" placeholder="Correo electrónico" data-i18n-placeholder="auth_email">
+      <input class="auth-input" id="login-password" type="password" placeholder="Contraseña" data-i18n-placeholder="auth_password">
+      <button class="auth-btn" onclick="emailLogin()" data-i18n="auth_login">Iniciar sesión</button>
+      <div class="auth-divider" data-i18n="auth_or">o</div>
       <button class="google-btn" onclick="googleLogin()">
         <svg width="16" height="16" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-        Continuar con Google
+        <span data-i18n="auth_google">Continuar con Google</span>
       </button>
     </div>
     <div id="auth-register" class="auth-fields" style="display:none;">
-      <input class="auth-input" id="reg-email" type="email" placeholder="Correo electrónico">
-      <input class="auth-input" id="reg-password" type="password" placeholder="Contraseña (mín. 6 caracteres)">
-      <input class="auth-input" id="reg-password2" type="password" placeholder="Confirmar contraseña">
-      <button class="auth-btn" onclick="emailRegister()">Crear cuenta</button>
-      <div class="auth-divider">o</div>
+      <input class="auth-input" id="reg-email" type="email" placeholder="Correo electrónico" data-i18n-placeholder="auth_email">
+      <input class="auth-input" id="reg-password" type="password" placeholder="Contraseña (mín. 6 caracteres)" data-i18n-placeholder="auth_password_min">
+      <input class="auth-input" id="reg-password2" type="password" placeholder="Confirmar contraseña" data-i18n-placeholder="auth_password_confirm">
+      <button class="auth-btn" onclick="emailRegister()" data-i18n="auth_register">Crear cuenta</button>
+      <div class="auth-divider" data-i18n="auth_or">o</div>
       <button class="google-btn" onclick="googleLogin()">
         <svg width="16" height="16" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-        Continuar con Google
+        <span data-i18n="auth_google">Continuar con Google</span>
       </button>
     </div>
   </div>
@@ -1050,9 +1050,17 @@ auth.onAuthStateChanged(user => {
 
 const i18n = {
   es: {
-    app_title: 'XP<span>ENSE</span>', doc_title: 'XPENSE | Personal Finance', skip_link: 'Saltar al contenido',
+    app_title: 'XP<span>ENSE</span>', doc_title: 'XPENSE | Finanzas Personales', skip_link: 'Saltar al contenido',
     auth_subtitle: 'Tu gestor de finanzas personales',
-    tab_dashboard: '📊 Dashboard', tab_cards: '💳 Tarjetas', tab_advisor: '🧠 Asesor', tab_calendar: '📅 Calendario',
+    auth_login: 'Iniciar sesión',
+    auth_register: 'Registrarse',
+    auth_email: 'Correo electrónico',
+    auth_password: 'Contraseña',
+    auth_password_min: 'Contraseña (mín. 6 caracteres)',
+    auth_password_confirm: 'Confirmar contraseña',
+    auth_google: 'Continuar con Google',
+    auth_or: 'o',
+    auth_register_btn: 'Crear cuenta',tab_dashboard: '📊 Panel', tab_cards: '💳 Tarjetas', tab_advisor: '🧠 Tu Asesor', tab_calendar: '📅 Calendario',
     tab_income: '⬇️ Ingresos', tab_expenses: '⬆️ Gastos', tab_projection: '📈 Proyección', tab_reports: '📄 Reportes',
     tab_pending: '📋 Pendientes', tab_settings: '⚙️ Ajustes',
     signout: 'Salir',
@@ -1129,6 +1137,17 @@ const i18n = {
     menu_data: 'Datos'
     },
   en: {
+    app_title: 'XP<span>ENSE</span>', doc_title: 'XPENSE | Personal Finances', skip_link: 'Skip tp content',
+    auth_subtitle: 'Your personal finance manager',
+    auth_login: 'Sign in',
+    auth_register: 'Sign up',
+    auth_email: 'Email',
+    auth_password: 'Password',
+    auth_password_min: 'Password (min. 6 characters)',
+    auth_password_confirm: 'Confirm password',
+    auth_google: 'Continue with Google',
+    auth_or: 'or',
+    auth_register_btn: 'Create account',
     tab_dashboard: '📊 Dashboard', tab_cards: '💳 Cards', tab_advisor: '🧠 Advisor', tab_calendar: '📅 Calendar',
     tab_income: '⬇️ Income', tab_expenses: '⬆️ Expenses', tab_projection: '📈 Projection', tab_reports: '📄 Reports',
     tab_pending: '📋 Pending', tab_settings: '⚙️ Settings',
@@ -1304,10 +1323,6 @@ function setLang(l) {
   if (authES) authES.classList.toggle('active', l === 'es');
   if (authEN) authEN.classList.toggle('active', l === 'en');
   
-  // Update auth subtitle
-  const authSub = document.querySelector('.auth-subtitle');
-  if (authSub) authSub.textContent = l === 'es' ? 'Tu gestor de finanzas personales' : 'Your personal finance manager';
-  
   if (!state.catsCustomized) state.categories = (l === 'en' ? DEFAULT_CATS_EN : DEFAULT_CATS_ES).slice();
   applyI18n();
   render();
@@ -1318,7 +1333,6 @@ function applyI18n() {
     const key = el.getAttribute('data-i18n');
     if (el.tagName === 'INPUT' && el.type !== 'button') return;
     const val = t(key);
-    // Si el valor contiene HTML, usar innerHTML
     if (val.indexOf('<') !== -1) {
       el.innerHTML = val;
     } else {
