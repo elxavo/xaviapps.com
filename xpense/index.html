@@ -1808,8 +1808,19 @@ function renderKPIs() {
   const netFlow = curMonth.txns.reduce((s, t) => s + t.amount, 0);
   const totalIncome = curMonth.txns.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0);
   const totalExpense = curMonth.txns.filter(t => t.amount < 0 && t.type !== 'transfer').reduce((s, t) => s + Math.abs(t.amount), 0);
-  const dailyAvg = totalExpense / daysInMonth(now.getFullYear(), now.getMonth());
-  const bufferDays = dailyAvg > 0 ? Math.floor(curMonth.endBalance / dailyAvg) : 999;
+    // ═══ Buffer: promedio de gasto de los últimos 3 meses ═══
+  let totalExpense3m = 0, days3m = 0;
+  for (let i = 0; i < 3; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const sim = simulateMonthBalance(state.initialBalance, d.getFullYear(), d.getMonth());
+    const exp = sim.txns
+      .filter(t => t.amount < 0 && t.type !== 'transfer')
+      .reduce((s, t) => s + Math.abs(t.amount), 0);
+    totalExpense3m += exp;
+    days3m += daysInMonth(d.getFullYear(), d.getMonth());
+  }
+  const dailyAvg = days3m > 0 ? totalExpense3m / days3m : 0;
+  const bufferDays = dailyAvg > 0 ? Math.max(0, Math.floor(curMonth.endBalance / dailyAvg)) : 999;
   const totalDebt = getTotalCardDebt();
   const util = getCardUtilization();
   document.getElementById('kpiGrid').innerHTML = `
@@ -1941,7 +1952,12 @@ function renderStatusBadge(item) {
   const labels = { completed: t('status_completed'), pending: t('status_pending'), cancelled: t('status_cancelled') };
   return `<span class="badge ${classes[status]}">${labels[status]}</span>`;
 }
-
+function renderStatusActions(item, type) {
+  if (item.status === 'cancelled') return '';
+  // Los recurrentes no se marcan desde la tabla (se marcan desde calendario / próximos movimientos)
+  if (type === 'income' || type === 'recurring') return '';
+  return `<button type="button" class="icon-btn success" onclick="openModal('${item.id}','${type}')">${item.status === 'completed' ? '✓' : '☑'}</button>`;
+}
   function renderEditBtn(type, id) { return `<button type="button" class="icon-btn warning" onclick="startEdit('${type}','${id}')">✏️</button>`; }
 
 function renderIncomeTable() {
@@ -2001,17 +2017,17 @@ function renderUpcoming() {
   for (let off = 0; off < 3; off++) {
     const d = new Date(now.getFullYear(), now.getMonth() + off, 1);
     const txns = getMonthTransactions(d.getFullYear(), d.getMonth());
-    txns.forEach(t => { 
-  const td = parseDate(t.date); 
-  if (td >= now && td <= in30) all.push({ 
-    date: td, 
-    name: t.name, 
-    amount: t.amount, 
-    isCompleted: t.isCompleted || (t.item && t.item.status === 'completed'),
-    itemId: t.item && t.item.id,
-    itemType: t.type
-  }); 
-});
+    txns.forEach(t => {
+      const td = parseDate(t.date);
+      if (td >= now && td <= in30) all.push({
+        date: td,
+        name: t.name,
+        amount: t.amount,
+        isCompleted: t.isCompleted || (t.item && t.item.status === 'completed'),
+        itemId: t.item && t.item.id,
+        itemType: t.type
+      });
+    });
   }
   const seen = new Set();
   let unique = all.filter(a => { const k = a.date.toISOString() + a.name + a.amount; if (seen.has(k)) return false; seen.add(k); return true; }).sort((a,b) => a.date - b.date);
@@ -2019,14 +2035,15 @@ function renderUpcoming() {
   if (filter === 'completed') unique = unique.filter(a => a.isCompleted);
   if (filter === 'today') { const ts = toDateStr(now); unique = unique.filter(a => toDateStr(a.date) === ts); }
   document.getElementById('upcomingList').innerHTML = unique.length ? unique.map(a => `
-  `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;">
-  <div><strong>${a.date.toLocaleDateString(lang === 'es' ? 'es-ES' : 'en-US', { day:'2-digit', month:'short' })}</strong> — ${a.name} ${a.isCompleted ? ' ✓' : ''}</div>
-  <div style="display:flex;align-items:center;gap:8px;">
-    <span class="${a.amount > 0 ? 'amount-pos' : 'amount-neg'}">${fmt(a.amount)}</span>
-    ${!a.isCompleted && a.itemId ? `<button class="icon-btn success" onclick="openModal('${p.item.id}','${p.type}','${p.date}')">✓</button>` : ''}
-  </div>
-</div>`.join('') : `<div class="empty-state">${t('empty_upcoming')}</div>`;
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;">
+      <div><strong>${a.date.toLocaleDateString(lang === 'es' ? 'es-ES' : 'en-US', { day:'2-digit', month:'short' })}</strong> — ${a.name} ${a.isCompleted ? ' ✓' : ''}</div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="${a.amount > 0 ? 'amount-pos' : 'amount-neg'}">${fmt(a.amount)}</span>
+        ${!a.isCompleted && a.itemId ? `<button class="icon-btn success" onclick="openModal('${a.itemId}','${a.itemType}','${toDateStr(a.date)}')">✓</button>` : ''}
+      </div>
+    </div>`).join('') : `<div class="empty-state">${t('empty_upcoming')}</div>`;
 }
+document.querySelectorAll('input[name="upcomingFilter"]').forEach(el => { el.onchange = render; });
 document.querySelectorAll('input[name="upcomingFilter"]').forEach(el => { el.onchange = render; });
 
 function renderPendingToday() {
