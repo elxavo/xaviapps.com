@@ -558,76 +558,73 @@
   </div>
 
   <div class="section" id="cards" role="tabpanel" hidden>
-    <div class="card">
-      <div class="card-title">
-        <span id="cardFormTitle" data-i18n="add_card">💳 Agregar tarjeta de crédito</span>
-        <span id="cardEditBadge" class="edit-indicator" style="display:none;" data-i18n="editing">Editando</span>
-      </div>
-      <div class="form-row">
-        <div class="form-group"><label data-i18n="lbl_name">Nombre</label><input id="cardName" placeholder="Visa Banco X"></div>
-        <div class="form-group"><label data-i18n="lbl_card_balance">Balance inicial</label><input id="cardBalance" type="number" placeholder="0.00" step="0.01"></div>
-        <div class="form-group"><label data-i18n="lbl_card_apr">APR (%)</label><input id="cardAPR" type="number" placeholder="24.99" step="0.01"></div>
-        <div class="form-group"><label data-i18n="lbl_card_min">Pago mínimo</label><input id="cardMinPayment" type="number" placeholder="0.00" step="0.01"></div>
-        <div class="form-group"><label data-i18n="lbl_card_limit">Límite</label><input id="cardLimit" type="number" placeholder="0.00" step="0.01"></div>
-        <div class="form-group"><label data-i18n="lbl_card_cutoff">Día de corte</label><input id="cardCutoffDay" type="number" placeholder="15" min="1" max="31"></div>
-        <div class="form-group"><label data-i18n="lbl_card_payment">Día de pago</label><input id="cardPaymentDay" type="number" placeholder="25" min="1" max="31"></div>
-      </div>
-      <div style="display:flex;gap:14px;align-items:flex-start;margin-top:12px;">
-        <div class="logo-preview" id="cardLogoPreview">💳</div>
-        <div style="flex:1;">
-          <label style="font-size:11px;color:var(--text-dim);text-transform:uppercase;display:block;margin-bottom:6px;" data-i18n="lbl_card_logo">Logo de la tarjeta (opcional)</label>
-          <input type="file" id="cardLogoFile" accept="image/*" onchange="handleLogoUpload(event)">
-          <button type="button" class="secondary" style="margin-top:8px;width:auto;" onclick="removeCardLogo()" data-i18n="btn_remove_logo">Quitar logo</button>
-        </div>
-      </div>
-      <div class="btn-row" style="margin-top:12px;">
-        <button type="button" id="cardAddBtn" onclick="saveCard()" data-i18n="btn_add">+ Agregar</button>
-        <button type="button" id="cardCancelGroup" class="secondary" style="display:none;width:auto;" onclick="cancelEditCard()" data-i18n="btn_cancel">Cancelar</button>
+  <div class="card">
+    <div class="card-title">
+      <span id="cardFormTitle" data-i18n="add_card">💳 Agregar tarjeta de crédito</span>
+      <span id="cardEditBadge" class="edit-indicator" style="display:none;" data-i18n="editing">Editando</span>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label data-i18n="lbl_name">Nombre</label><input id="cardName" placeholder="Visa Banco X" data-i18n-placeholder="ph_card_name"></div>
+      <div class="form-group"><label data-i18n="lbl_card_balance">Balance inicial</label><input id="cardBalance" type="number" placeholder="0.00" step="0.01" data-i18n-placeholder="ph_amount"></div>
+      <div class="form-group"><label data-i18n="lbl_card_apr">APR (%)</label><input id="cardAPR" type="number" placeholder="24.99" step="0.01" data-i18n-placeholder="ph_apr"></div>
+      <div class="form-group"><label data-i18n="lbl_card_min">Pago mínimo</label><input id="cardMinPayment" type="number" placeholder="0.00" step="0.01" data-i18n-placeholder="ph_amount"></div>
+      <div class="form-group"><label data-i18n="lbl_card_limit">Límite</label><input id="cardLimit" type="number" placeholder="0.00" step="0.01" data-i18n-placeholder="ph_amount"></div>
+      <div class="form-group"><label data-i18n="lbl_card_cutoff">Día de corte</label><input id="cardCutoffDay" type="number" placeholder="15" min="1" max="31" data-i18n-placeholder="ph_cutoff_day"></div>
+      <div class="form-group"><label data-i18n="lbl_card_payment">Día de pago</label><input id="cardPaymentDay" type="number" placeholder="25" min="1" max="31" data-i18n-placeholder="ph_payment_day"></div>
+    </div>
+    <div style="display:flex;gap:14px;align-items:flex-start;margin-top:12px;">
+      <div class="logo-preview" id="cardLogoPreview">💳</div>
+      <div style="flex:1;">
+        <label style="font-size:11px;color:var(--text-dim);text-transform:uppercase;display:block;margin-bottom:6px;" data-i18n="lbl_card_logo">Logo de la tarjeta (opcional)</label>
+        <input type="file" id="cardLogoFile" accept="image/*" onchange="handleLogoUpload(event)">
+        <button type="button" class="secondary" style="margin-top:8px;width:auto;" onclick="removeCardLogo()" data-i18n="btn_remove_logo">Quitar logo</button>
       </div>
     </div>
-    <div class="card">
-      <div class="card-title" data-i18n="card_movement">💸 Registrar movimiento de tarjeta</div>
-      <div class="form-row">
-  <div class="form-group"><label data-i18n="lbl_card">Tarjeta</label><select id="cardTxnCard"></select></div>
-  <div class="form-group"><label data-i18n="lbl_card_txn_type">Tipo</label>
-    <select id="cardTxnType">
-      <option value="charge" data-i18n="opt_charge">Cargo / Compra</option>
-      <option value="payment" data-i18n="opt_payment">Pago</option>
-    </select>
+    <div class="btn-row" style="margin-top:12px;">
+      <button type="button" id="cardAddBtn" onclick="saveCard()" data-i18n="btn_add">+ Agregar</button>
+      <button type="button" id="cardCancelGroup" class="secondary" style="display:none;width:auto;" onclick="cancelEditCard()" data-i18n="btn_cancel">Cancelar</button>
+    </div>
   </div>
-  <div class="form-group"><label data-i18n="lbl_amount">Monto</label><input id="cardTxnAmount" type="number" placeholder="0.00" step="0.01" data-i18n-placeholder="ph_amount"></div>
-  <div class="form-group"><label data-i18n="lbl_date">Fecha</label><input id="cardTxnDate" type="date"></div>
-  <div class="form-group"><label data-i18n="lbl_category">Categoría</label><select id="cardTxnCategory"></select></div>
-  <div class="form-group"><label data-i18n="lbl_desc">Descripción</label><input id="cardTxnDesc" placeholder="Compra super / Pago mensual" data-i18n-placeholder="ph_card_txn_desc"></div>
-  <div class="form-group"><button type="button" onclick="addCardTransaction()" data-i18n="btn_add">+ Agregar</button></div>
+
+  <div class="card">
+    <div class="card-title" data-i18n="card_movement">💸 Registrar movimiento de tarjeta</div>
+    <div class="form-row">
+      <div class="form-group"><label data-i18n="lbl_card">Tarjeta</label><select id="cardTxnCard"></select></div>
+      <div class="form-group"><label data-i18n="lbl_card_txn_type">Tipo</label>
+        <select id="cardTxnType">
+          <option value="charge" data-i18n="opt_charge">Cargo / Compra</option>
+          <option value="payment" data-i18n="opt_payment">Pago</option>
+        </select>
+      </div>
+      <div class="form-group"><label data-i18n="lbl_amount">Monto</label><input id="cardTxnAmount" type="number" placeholder="0.00" step="0.01" data-i18n-placeholder="ph_amount"></div>
+      <div class="form-group"><label data-i18n="lbl_date">Fecha</label><input id="cardTxnDate" type="date"></div>
+      <div class="form-group"><label data-i18n="lbl_category">Categoría</label><select id="cardTxnCategory"></select></div>
+      <div class="form-group"><label data-i18n="lbl_desc">Descripción</label><input id="cardTxnDesc" placeholder="Compra super / Pago mensual" data-i18n-placeholder="ph_card_txn_desc"></div>
+      <div class="form-group"><button type="button" onclick="addCardTransaction()" data-i18n="btn_add">+ Agregar</button></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title" data-i18n="list_cards">💳 Mis tarjetas (por prioridad)</div>
+    <div id="cardList"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title" data-i18n="card_movements_list">📋 Historial de movimientos</div>
+    <table>
+      <thead><tr>
+        <th data-i18n="th_date">Fecha</th>
+        <th data-i18n="th_card">Tarjeta</th>
+        <th data-i18n="th_type">Tipo</th>
+        <th data-i18n="th_category">Categoría</th>
+        <th data-i18n="th_desc">Descripción</th>
+        <th data-i18n="th_amount">Monto</th>
+        <th></th>
+      </tr></thead>
+      <tbody id="cardTxnTable"></tbody>
+    </table>
+  </div>
 </div>
-        <div class="form-group"><label data-i18n="lbl_amount">Monto</label><input id="cardTxnAmount" type="number" placeholder="0.00" step="0.01"></div>
-        <div class="form-group"><label data-i18n="lbl_date">Fecha</label><input id="cardTxnDate" type="date"></div>
-        <div class="form-group"><label data-i18n="lbl_category">Categoría</label><select id="cardTxnCategory"></select></div>
-        <div class="form-group"><label data-i18n="lbl_desc">Descripción</label><input id="cardTxnDesc" placeholder="Compra super / Pago mensual"></div>
-        <div class="form-group"><button type="button" onclick="addCardTransaction()" data-i18n="btn_add">+ Agregar</button></div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-title" data-i18n="list_cards">💳 Mis tarjetas (por prioridad)</div>
-      <div id="cardList"></div>
-    </div>
-    <div class="card">
-      <div class="card-title" data-i18n="card_movements_list">📋 Historial de movimientos</div>
-      <table>
-        <thead><tr>
-          <th data-i18n="th_date">Fecha</th>
-          <th data-i18n="th_card">Tarjeta</th>
-          <th data-i18n="th_type">Tipo</th>
-          <th data-i18n="th_category">Categoría</th>
-          <th data-i18n="th_desc">Descripción</th>
-          <th data-i18n="th_amount">Monto</th>
-          <th></th>
-        </tr></thead>
-        <tbody id="cardTxnTable"></tbody>
-      </table>
-    </div>
-  </div>
 
   <div class="section" id="advisor" role="tabpanel" hidden>
     <div id="advisorContent"></div>
