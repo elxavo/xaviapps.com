@@ -264,7 +264,7 @@
     z-index: 50;
     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
   }
-  .header-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .header-left { display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1; }
   .menu-btn {
     background: rgba(255,255,255,0.15);
     border: 1px solid rgba(255,255,255,0.25);
@@ -284,7 +284,18 @@
   }
   .menu-btn:hover { background: rgba(255,255,255,0.28); }
   .menu-icon { line-height: 1; }
-  .brand { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .brand {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  pointer-events: none;
+}
+.brand a { pointer-events: auto; }
   h1 { font-size: 17px; font-weight: 700; letter-spacing: -0.2px; color: #fff; white-space: nowrap; }
   h1 span { color: #fff; opacity: 0.85; }
   .brand-link { font-size: 11px; color: rgba(255,255,255,0.7); text-decoration: none; white-space: nowrap; }
@@ -300,6 +311,7 @@
   @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
   .sync-lbl { font-size: 10px; color: rgba(255,255,255,0.7); }
   .nav-user { font-size: 11px; color: rgba(255,255,255,0.75); max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  header { position: sticky; } /* ya lo tienes, pero asegúrate de que sea position: sticky o relative */
   .logout-btn {
     background: rgba(255,255,255,0.15);
     border: 1px solid rgba(255,255,255,0.25);
@@ -386,6 +398,12 @@
     header { padding: 10px 12px; gap: 8px; }
     .menu-panel { width: 240px; }
     .brand-link { display: none; }
+    .brand {
+  position: static;
+  transform: none;
+  text-align: left;
+  pointer-events: auto;
+}
   }
 
   /* ═══════════ AUTH SCREEN ═══════════ */
@@ -435,6 +453,63 @@
     .cal-day-txn { display: none; }
   }
   body, .container, main { overflow-x: hidden; }
+ /* ═══════════ CARDS CLICKEABLES ═══════════ */
+.kpi.clickable { cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; position: relative; padding-right: 28px; }
+.kpi.clickable:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+.kpi.clickable::after {
+  content: '›';
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 22px;
+  color: var(--text-light);
+  opacity: 0.4;
+  transition: opacity 0.15s, transform 0.15s;
+}
+.kpi.clickable:hover::after { opacity: 0.9; transform: translateY(-50%) translateX(2px); }
+
+.budget-item.clickable { cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; position: relative; }
+.budget-item.clickable:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+.budget-item.clickable::after {
+  content: '›';
+  position: absolute;
+  right: 12px;
+  top: 16px;
+  font-size: 20px;
+  color: var(--text-light);
+  opacity: 0.4;
+}
+.budget-item.clickable:hover::after { opacity: 0.9; }
+
+/* Desglose */
+.breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 9px 4px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.breakdown-row:last-of-type { border-bottom: none; }
+.breakdown-row .bd-left { flex: 1; min-width: 0; }
+.breakdown-row .bd-name { font-weight: 600; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.breakdown-row .bd-meta { font-size: 11px; color: var(--text-dim); display: block; margin-top: 2px; }
+.breakdown-row .bd-amount { font-weight: 700; margin-left: 12px; white-space: nowrap; }
+.breakdown-row .bd-amount.positive { color: var(--green); }
+.breakdown-row .bd-amount.negative { color: var(--red); }
+.breakdown-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 4px;
+  margin-top: 8px;
+  border-top: 2px solid var(--border);
+  font-size: 15px;
+  font-weight: 700;
+}
+.breakdown-empty { text-align: center; padding: 24px; color: var(--text-dim); font-size: 13px; }
+.breakdown-cat-chip { display: inline-block; padding: 1px 7px; border-radius: 8px; font-size: 10px; font-weight: 600; margin-right: 6px; } 
 </style>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>">
 </head>
@@ -902,6 +977,16 @@
       <div class="form-group"><label data-i18n="modal_date_actual">Fecha/hora</label><input id="modalDate" type="datetime-local"></div>
       <div class="form-group"><label data-i18n="modal_notes">Notas</label><textarea id="modalNotes" rows="2"></textarea></div>
     </div>
+    <!-- MODAL DE DESGLOSE -->
+<div class="modal-overlay" id="breakdownModal">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-title" id="breakdownTitle">Desglose</div>
+    <div id="breakdownBody" style="max-height:60vh;overflow-y:auto;"></div>
+    <div class="btn-row" style="margin-top:16px;">
+      <button type="button" class="secondary" onclick="closeBreakdown()" data-i18n="btn_cancel">Cerrar</button>
+    </div>
+  </div>
+</div>
     <div class="btn-row" style="margin-top:12px;">
       <button type="button" class="success" onclick="saveModalStatus()" data-i18n="btn_save">Guardar</button>
       <button type="button" class="secondary" onclick="closeModal()" data-i18n="btn_cancel">Cancelar</button>
@@ -1064,6 +1149,7 @@ const i18n = {
     auth_google: 'Continuar con Google',
     auth_or: 'o',
     auth_register_btn: 'Crear cuenta',
+    breakdown_title: 'Desglose',
     tab_dashboard: '📊 Panel', tab_cards: '💳 Tarjetas', tab_advisor: '🧠 Tu Asesor', tab_calendar: '📅 Calendario',
     tab_income: '⬇️ Ingresos', tab_expenses: '⬆️ Gastos', tab_projection: '📈 Proyección', tab_reports: '📄 Reportes',
     tab_pending: '📋 Pendientes', tab_settings: '⚙️ Ajustes',
@@ -1167,6 +1253,7 @@ const i18n = {
     auth_google: 'Continue with Google',
     auth_or: 'or',
     auth_register_btn: 'Create account',
+    breakdown_title: 'Breakdown',
     tab_dashboard: '📊 Dashboard', tab_cards: '💳 Cards', tab_advisor: '🧠 Advisor', tab_calendar: '📅 Calendar',
     tab_income: '⬇️ Income', tab_expenses: '⬆️ Expenses', tab_projection: '📈 Projection', tab_reports: '📄 Reports',
     tab_pending: '📋 Pending', tab_settings: '⚙️ Settings',
@@ -1417,7 +1504,31 @@ function toggleExpFields() {
   document.getElementById('expDayGroup').style.display = m ? '' : 'none';
   updateHints();
 }
+// Devuelve el estado REAL de una ocurrencia (override por fecha o item.status)
+function getOccurrenceStatus(item, dateStr) {
+  if (!item) return 'pending';
+  // Si hay override por fecha, manda
+  const key = item.id + '|' + dateStr;
+  const ov = state.overrides && state.overrides[key];
+  if (ov && ov.status) return ov.status;
+  // Si no, el status del item (para items esporádicos / one-time)
+  return item.status || 'pending';
+}
 
+// Devuelve el monto REAL de una ocurrencia (completedAmount del override o item.completedAmount)
+function getOccurrenceAmount(item, dateStr, fallbackAmount) {
+  if (!item) return fallbackAmount;
+  const key = item.id + '|' + dateStr;
+  const ov = state.overrides && state.overrides[key];
+  if (ov && ov.completedAmount !== undefined && ov.completedAmount !== null) return ov.completedAmount;
+  if (item.completedAmount !== undefined && item.completedAmount !== null) return item.completedAmount;
+  return fallbackAmount;
+}
+
+// Devuelve true si la ocurrencia está completada
+function isOccurrenceCompleted(item, dateStr) {
+  return getOccurrenceStatus(item, dateStr) === 'completed';
+}
 function getOccurrencesInMonth(item, year, month, isExpense) {
   const results = [];
   const lastDay = daysInMonth(year, month);
@@ -1511,20 +1622,28 @@ function getMonthTransactions(year, month) {
   const txns = [];
   state.incomes.forEach(inc => { txns.push(...getOccurrencesInMonth(inc, year, month, false)); });
   state.sporadicIncomes.forEach(inc => {
-    const d = parseDate(inc.date);
-    if (d.getFullYear() === year && d.getMonth() === month && inc.status !== 'cancelled') {
-      const amount = inc.status === 'completed' && inc.completedAmount !== null ? inc.completedAmount : inc.amount;
-      txns.push({ date: inc.date, amount, name: inc.name, type: 'income', category: inc.category, id: inc.id, item: inc, isCompleted: inc.status === 'completed' });
-    }
-  });
+  const d = parseDate(inc.date);
+  if (d.getFullYear() === year && d.getMonth() === month && inc.status !== 'cancelled') {
+    const status = getOccurrenceStatus(inc, inc.date);
+    if (status === 'cancelled') return;
+    const amount = status === 'completed'
+      ? getOccurrenceAmount(inc, inc.date, inc.amount)
+      : inc.amount;
+    txns.push({ date: inc.date, amount, name: inc.name, type: 'income', category: inc.category, id: inc.id, item: inc, isCompleted: status === 'completed' });
+  }
+});
   state.recurring.forEach(exp => { txns.push(...getOccurrencesInMonth(exp, year, month, true)); });
   state.oneTime.forEach(one => {
-    const d = parseDate(one.date);
-    if (d.getFullYear() === year && d.getMonth() === month && one.status !== 'cancelled') {
-      const amount = one.status === 'completed' && one.completedAmount !== null ? -one.completedAmount : -one.amount;
-      txns.push({ date: one.date, amount, name: one.name, type: 'expense', category: one.category, id: one.id, item: one, isCompleted: one.status === 'completed' });
-    }
-  });
+  const d = parseDate(one.date);
+  if (d.getFullYear() === year && d.getMonth() === month && one.status !== 'cancelled') {
+    const status = getOccurrenceStatus(one, one.date);
+    if (status === 'cancelled') return;
+    const amount = status === 'completed'
+      ? -getOccurrenceAmount(one, one.date, one.amount)
+      : -one.amount;
+    txns.push({ date: one.date, amount, name: one.name, type: 'expense', category: one.category, id: one.id, item: one, isCompleted: status === 'completed' });
+  }
+});
   txns.push(...getCardChargeOccurrences(year, month));
   txns.push(...getCardPaymentOccurrences(year, month));
   return txns.sort((a, b) => a.date.localeCompare(b.date));
@@ -1576,10 +1695,20 @@ function getTransactionsInRange(startDate, endDate) {
 
 function calculateActual(startDate, endDate) {
   const txns = getTransactionsInRange(startDate, endDate);
-  return txns.filter(t => t.isCompleted || (t.item && t.item.status === 'completed')).reduce((acc, t) => {
-    const item = t.item;
-    if (item && item.completedAmount !== null && item.completedAmount !== undefined) return acc + (t.amount > 0 ? item.completedAmount : -item.completedAmount);
-    return acc + t.amount;
+  return txns.reduce((acc, t) => {
+    if (!t.item) return acc;
+    // Usa el estado real de la ocurrencia (override por fecha)
+    const dateStr = t.date;
+    const isCompleted = t.isCardCharge || t.isCardPayment
+      ? true // los cargos con tarjeta no tienen override
+      : isOccurrenceCompleted(t.item, dateStr);
+    if (!isCompleted) return acc;
+    const amount = t.isCardCharge || t.isCardPayment
+      ? t.amount
+      : (t.amount > 0
+          ? getOccurrenceAmount(t.item, dateStr, t.amount)
+          : -getOccurrenceAmount(t.item, dateStr, Math.abs(t.amount)));
+    return acc + amount;
   }, 0);
 }
 
@@ -1591,7 +1720,10 @@ function getPendingToday() {
     const txns = getMonthTransactions(d.getFullYear(), d.getMonth());
     txns.forEach(t => {
       const tDate = parseDate(t.date);
-      if (tDate <= today && t.item && t.item.status === 'pending' && !t.isCardPayment && !t.isCardCharge) pending.push({ ...t, dueDate: t.date });
+      if (tDate <= today && t.item && !t.isCardPayment && !t.isCardCharge) {
+  const status = getOccurrenceStatus(t.item, t.date);
+  if (status === 'pending') pending.push({ ...t, dueDate: t.date });
+}
     });
   }
   const seen = new Set();
@@ -1688,15 +1820,15 @@ function renderKPIs() {
   const totalDebt = getTotalCardDebt();
   const util = getCardUtilization();
   document.getElementById('kpiGrid').innerHTML = `
-    <div class="kpi"><div class="kpi-label">${t('kpi_end_balance')}</div><div class="kpi-value ${curMonth.endBalance >= 0 ? 'positive' : 'negative'}">${fmt(curMonth.endBalance)}</div><div class="kpi-sub">${t('sub_current')}</div></div>
-    <div class="kpi"><div class="kpi-label">${t('kpi_income')}</div><div class="kpi-value positive">${fmt(totalIncome)}</div><div class="kpi-sub">${curMonth.txns.filter(t => t.amount > 0).length} ${t('sub_movements')}</div></div>
-    <div class="kpi"><div class="kpi-label">${t('kpi_expense')}</div><div class="kpi-value negative">${fmt(totalExpense)}</div><div class="kpi-sub">${curMonth.txns.filter(t => t.amount < 0 && t.type !== 'transfer').length} ${t('sub_movements')}</div></div>
-    <div class="kpi"><div class="kpi-label">${t('kpi_net')}</div><div class="kpi-value ${netFlow >= 0 ? 'positive' : 'negative'}">${fmt(netFlow)}</div><div class="kpi-sub">${netFlow >= 0 ? t('sub_surplus') : t('sub_deficit')}</div></div>
-    <div class="kpi"><div class="kpi-label">🛡️ ${t('kpi_buffer')}</div><div class="kpi-value ${bufferDays >= 30 ? 'positive' : bufferDays >= 14 ? 'warning' : 'negative'}">${bufferDays > 365 ? '∞' : bufferDays + ' ' + t('days')}</div><div class="kpi-sub">${t('sub_buffer')}</div></div>
-    <div class="kpi"><div class="kpi-label">${t('kpi_proj12')}</div><div class="kpi-value ${finalProj.endBalance >= 0 ? 'positive' : 'negative'}">${fmt(finalProj.endBalance)}</div><div class="kpi-sub">${t('sub_est')}</div></div>
-    <div class="kpi" style="border-left:3px solid var(--red);"><div class="kpi-label">${t('kpi_card_debt')}</div><div class="kpi-value ${totalDebt > 0 ? 'negative' : 'positive'}">${fmt(totalDebt)}</div><div class="kpi-sub">${state.creditCards.length}</div></div>
-    <div class="kpi" style="border-left:3px solid var(--yellow);"><div class="kpi-label">${t('kpi_card_util')}</div><div class="kpi-value ${util > 80 ? 'negative' : util > 50 ? 'warning' : 'positive'}">${util.toFixed(1)}%</div></div>
-  `;
+  <div class="kpi clickable" onclick="openBreakdown('endBalance')"><div class="kpi-label">${t('kpi_end_balance')}</div><div class="kpi-value ${curMonth.endBalance >= 0 ? 'positive' : 'negative'}">${fmt(curMonth.endBalance)}</div><div class="kpi-sub">${t('sub_current')}</div></div>
+  <div class="kpi clickable" onclick="openBreakdown('income')"><div class="kpi-label">${t('kpi_income')}</div><div class="kpi-value positive">${fmt(totalIncome)}</div><div class="kpi-sub">${curMonth.txns.filter(t => t.amount > 0).length} ${t('sub_movements')}</div></div>
+  <div class="kpi clickable" onclick="openBreakdown('expense')"><div class="kpi-label">${t('kpi_expense')}</div><div class="kpi-value negative">${fmt(totalExpense)}</div><div class="kpi-sub">${curMonth.txns.filter(t => t.amount < 0 && t.type !== 'transfer').length} ${t('sub_movements')}</div></div>
+  <div class="kpi clickable" onclick="openBreakdown('net')"><div class="kpi-label">${t('kpi_net')}</div><div class="kpi-value ${netFlow >= 0 ? 'positive' : 'negative'}">${fmt(netFlow)}</div><div class="kpi-sub">${netFlow >= 0 ? t('sub_surplus') : t('sub_deficit')}</div></div>
+  <div class="kpi"><div class="kpi-label">🛡️ ${t('kpi_buffer')}</div><div class="kpi-value ${bufferDays >= 30 ? 'positive' : bufferDays >= 14 ? 'warning' : 'negative'}">${bufferDays > 365 ? '∞' : bufferDays + ' ' + t('days')}</div><div class="kpi-sub">${t('sub_buffer')}</div></div>
+  <div class="kpi"><div class="kpi-label">${t('kpi_proj12')}</div><div class="kpi-value ${finalProj.endBalance >= 0 ? 'positive' : 'negative'}">${fmt(finalProj.endBalance)}</div><div class="kpi-sub">${t('sub_est')}</div></div>
+  <div class="kpi clickable" onclick="openBreakdown('cardDebt')" style="border-left:3px solid var(--red);"><div class="kpi-label">${t('kpi_card_debt')}</div><div class="kpi-value ${totalDebt > 0 ? 'negative' : 'positive'}">${fmt(totalDebt)}</div><div class="kpi-sub">${state.creditCards.length}</div></div>
+  <div class="kpi clickable" onclick="openBreakdown('cardUtil')" style="border-left:3px solid var(--yellow);"><div class="kpi-label">${t('kpi_card_util')}</div><div class="kpi-value ${util > 80 ? 'negative' : util > 50 ? 'warning' : 'positive'}">${util.toFixed(1)}%</div></div>
+`;
 }
 
 function renderBudgetRule() {
@@ -1722,7 +1854,7 @@ function renderBudgetRule() {
     const displayPct = Math.min(pct, 100);
     const diff = target - spent;
     const diffText = diff >= 0 ? `${t('budget_remaining')}: ${fmt(diff)}` : `${t('budget_over')} ${fmt(Math.abs(diff))}`;
-    return `<div class="budget-item ${labelClass}">
+    return `<div class="budget-item ${labelClass} clickable" onclick="openBreakdown('budget_${labelClass}')">
       <div class="budget-header"><span class="label">${label}</span><span class="percent">${pct.toFixed(0)}%</span></div>
       <div class="amounts"><span>${t('budget_target')}: <strong>${fmt(target)}</strong></span><span>${t('budget_spent')}: <strong>${fmt(spent)}</strong></span></div>
       <div class="progress-bar"><div class="progress-fill ${colorClass}" style="width: ${displayPct}%"></div></div>
@@ -1781,16 +1913,27 @@ function renderCalendar() {
     const dayTxns = txnsByDay[dateStr] || [];
     dayTxns.forEach(t => { runningBal += t.amount; });
     const projectedBal = runningBal;
-    dayTxns.forEach(t => {
-      if (t.isCompleted || (t.item && t.item.status === 'completed')) {
-        const item = t.item;
-        if (item && item.completedAmount !== null && item.completedAmount !== undefined) runningActualBal += (t.amount > 0 ? item.completedAmount : -item.completedAmount);
-        else runningActualBal += t.amount;
-      }
-    });
+    dayTxns.forEach(t => { runningBal += t.amount; });
+const projectedBal = runningBal;
+dayTxns.forEach(t => {
+  // Los cargos con tarjeta no afectan el efectivo real
+  if (t.isCardCharge) return;
+  if (t.isCardPayment) {
+    // los pagos de tarjeta sí afectan el cash si están realizados (siempre lo están)
+    runningActualBal += t.amount;
+    return;
+  }
+  const status = isOccurrenceCompleted(t.item, t.date);
+  if (status) {
+    const amount = t.amount > 0
+      ? getOccurrenceAmount(t.item, t.date, t.amount)
+      : -getOccurrenceAmount(t.item, t.date, Math.abs(t.amount));
+    runningActualBal += amount;
+  }
+});
     const actualBal = runningActualBal;
     const isToday = dateStr === todayStr;
-    const hasTxnsToday = isToday && dayTxns.length > 0;
+    const hasTxnsToday = isToday && dayTxns.some(t => isOccurrenceCompleted(t.item, t.date));
     const isNeg = projectedBal < 0;
     const gap = actualBal - projectedBal;
     const hasGap = Math.abs(gap) > 0.01;
@@ -1927,16 +2070,19 @@ function renderUpcoming() {
     const d = new Date(now.getFullYear(), now.getMonth() + off, 1);
     const txns = getMonthTransactions(d.getFullYear(), d.getMonth());
     txns.forEach(t => {
-      const td = parseDate(t.date);
-      if (td >= now && td <= in30) all.push({
-        date: td,
-        name: t.name,
-        amount: t.amount,
-        isCompleted: t.isCompleted || (t.item && t.item.status === 'completed'),
-        itemId: t.item && t.item.id,
-        itemType: t.type
-      });
+  const td = parseDate(t.date);
+  if (td >= now && td <= in30) {
+    const status = isOccurrenceCompleted(t.item, t.date);
+    all.push({
+      date: td,
+      name: t.name,
+      amount: t.amount,
+      isCompleted: status,
+      itemId: t.item && t.item.id,
+      itemType: t.type
     });
+  }
+});
   }
   const seen = new Set();
   let unique = all.filter(a => { const k = a.date.toISOString() + a.name + a.amount; if (seen.has(k)) return false; seen.add(k); return true; }).sort((a,b) => a.date - b.date);
@@ -2945,6 +3091,134 @@ function closeMenu() {
 // Cerrar con Escape
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') closeMenu();
+});
+  // ═══════════ DESGLOSE DE CARDS ═══════════
+function openBreakdown(type) {
+  const now = new Date();
+  const year = now.getFullYear(), month = now.getMonth();
+  const txns = getMonthTransactions(year, month);
+  const modal = document.getElementById('breakdownModal');
+  const title = document.getElementById('breakdownTitle');
+  const body = document.getElementById('breakdownBody');
+  let titleText = '';
+
+  // ─── Deuda en tarjetas ───
+  if (type === 'cardDebt') {
+    const cards = sortCardsByAvalanche();
+    const total = cards.reduce((s, c) => s + Math.max(0, getCardBalance(c.id)), 0);
+    titleText = t('kpi_card_debt');
+    body.innerHTML = cards.map(c => {
+      const bal = getCardBalance(c.id);
+      return `<div class="breakdown-row">
+        <div class="bd-left">
+          <span class="bd-name">${c.name}</span>
+          <span class="bd-meta">APR ${c.apr}% · Mín ${fmt(c.minPayment)}</span>
+        </div>
+        <span class="bd-amount negative">${fmt(bal)}</span>
+      </div>`;
+    }).join('') + `<div class="breakdown-total"><span>${titleText}</span><span>${fmt(total)}</span></div>`;
+    if (cards.length === 0) body.innerHTML = `<div class="breakdown-empty">${t('empty_cards')}</div>`;
+    title.textContent = titleText;
+    modal.classList.add('active');
+    return;
+  }
+
+  // ─── Utilización de tarjetas ───
+  if (type === 'cardUtil') {
+    const cards = sortCardsByAvalanche();
+    titleText = t('kpi_card_util');
+    body.innerHTML = cards.map(c => {
+      const bal = Math.max(0, getCardBalance(c.id));
+      const lim = c.limit || 0;
+      const util = lim > 0 ? (bal / lim) * 100 : 0;
+      const cls = util > 80 ? 'negative' : util > 50 ? 'warning' : 'positive';
+      return `<div class="breakdown-row">
+        <div class="bd-left">
+          <span class="bd-name">${c.name}</span>
+          <span class="bd-meta">${fmt(bal)} / ${fmt(lim)}</span>
+        </div>
+        <span class="bd-amount ${cls}">${util.toFixed(1)}%</span>
+      </div>`;
+    }).join('') + `<div class="breakdown-total"><span>${titleText}</span><span>${getCardUtilization().toFixed(1)}%</span></div>`;
+    if (cards.length === 0) body.innerHTML = `<div class="breakdown-empty">${t('empty_cards')}</div>`;
+    title.textContent = titleText;
+    modal.classList.add('active');
+    return;
+  }
+
+  // ─── Filtros por tipo ───
+  let list = [];
+  let total = 0;
+
+  if (type === 'income') {
+    list = txns.filter(t => t.amount > 0);
+    titleText = t('kpi_income');
+    total = list.reduce((s, t) => s + t.amount, 0);
+  } else if (type === 'expense') {
+    list = txns.filter(t => t.amount < 0 && t.type !== 'transfer');
+    titleText = t('kpi_expense');
+    total = list.reduce((s, t) => s + Math.abs(t.amount), 0);
+  } else if (type === 'net') {
+    list = txns.filter(t => t.type !== 'transfer');
+    titleText = t('kpi_net');
+    total = list.reduce((s, t) => s + t.amount, 0);
+  } else if (type === 'endBalance') {
+    list = txns;
+    titleText = t('kpi_end_balance');
+    total = state.initialBalance + txns.reduce((s, t) => s + t.amount, 0);
+  } else if (type === 'budget_needs' || type === 'budget_wants' || type === 'budget_savings') {
+    const catMap = {
+      budget_needs: NEEDS_CATEGORIES,
+      budget_wants: WANTS_CATEGORIES,
+      budget_savings: SAVINGS_CATEGORIES
+    };
+    const cats = catMap[type];
+    list = txns.filter(t => t.amount < 0 && t.type !== 'transfer' && t.category && cats.includes(t.category));
+    titleText = t(type);
+    total = list.reduce((s, t) => s + Math.abs(t.amount), 0);
+  } else {
+    body.innerHTML = `<div class="breakdown-empty">—</div>`;
+    title.textContent = 'Desglose';
+    modal.classList.add('active');
+    return;
+  }
+
+  // Render lista genérica
+  const rows = list.map(tx => {
+    const catColor = tx.category ? getCatColor(tx.category) : '#94a3b8';
+    const catChip = tx.category
+      ? `<span class="breakdown-cat-chip" style="background:${catColor}22;color:${catColor}">${tx.category}</span>`
+      : '';
+    return `<div class="breakdown-row">
+      <div class="bd-left">
+        <span class="bd-name">${tx.name}</span>
+        <span class="bd-meta">${tx.date} ${catChip}</span>
+      </div>
+      <span class="bd-amount ${tx.amount > 0 ? 'positive' : 'negative'}">${fmt(tx.amount)}</span>
+    </div>`;
+  }).join('');
+
+  body.innerHTML = (rows || `<div class="breakdown-empty">${lang === 'es' ? 'Sin movimientos este mes' : 'No transactions this month'}</div>`)
+    + `<div class="breakdown-total"><span>${titleText}</span><span class="${total >= 0 ? 'positive' : 'negative'}">${fmt(total)}</span></div>`;
+
+  title.textContent = titleText;
+  modal.classList.add('active');
+}
+
+function closeBreakdown() {
+  document.getElementById('breakdownModal').classList.remove('active');
+}
+
+// Cerrar con Escape o clic fuera
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    const bd = document.getElementById('breakdownModal');
+    if (bd && bd.classList.contains('active')) closeBreakdown();
+  }
+});
+document.addEventListener('click', (e) => {
+  const bd = document.getElementById('breakdownModal');
+  if (bd && e.target === bd) closeBreakdown();
 });
 // ═══════════════════════════════════════════════════════════
 // INIT
