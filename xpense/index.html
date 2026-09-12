@@ -26,50 +26,158 @@
   button:focus:not(:focus-visible), .tab:focus:not(:focus-visible) { outline: none; }
   .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
   .container { max-width: 1200px; margin: 0 auto; }
-  header { background: var(--accent); color: #fff; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; position: sticky; top: 0; z-index: 50; box-shadow: var(--shadow); }
-  .brand { display: flex; flex-direction: column; gap: 2px; }
-  h1 { font-size: 17px; font-weight: 700; letter-spacing: -0.2px; color: #fff; }
-  h1 span { color: #fff; opacity: 0.85; font-weight: 400; }
-  .brand-link { font-size: 11px; color: rgba(255,255,255,0.7); text-decoration: none; }
+  /* ═══════════ HEADER + NAV FIX ═══════════ */
+  body {
+    background: var(--accent);
+    padding: 0;
+    margin: 0;
+  }
+  .container {
+    max-width: 100%;
+    margin: 0;
+    background: var(--bg);
+    min-height: 100vh;
+    padding: 0 0 40px 0;
+  }
+  header {
+    background: var(--accent);
+    color: #fff;
+    padding: 12px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 16px;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    width: 100%;
+    overflow-x: auto;
+  }
+  .brand {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex-shrink: 0;
+  }
+  h1 {
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: -0.2px;
+    color: #fff;
+    white-space: nowrap;
+  }
+  h1 span { color: #fff; opacity: 0.85; }
+  .brand-link {
+    font-size: 11px;
+    color: rgba(255,255,255,0.7);
+    text-decoration: none;
+    white-space: nowrap;
+  }
   .brand-link:hover { color: #fff; }
-  .header-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-  .lang-toggle { display: flex; background: rgba(255,255,255,0.15); border-radius: 6px; overflow: hidden; }
-  .lang-btn { padding: 5px 10px; background: transparent; border: none; color: rgba(255,255,255,0.85); cursor: pointer; font-size: 12px; font-weight: 600; font-family: inherit; }
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    flex-wrap: nowrap;
+  }
+  .lang-toggle {
+    display: flex;
+    background: rgba(255,255,255,0.15);
+    border-radius: 6px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .lang-btn {
+    padding: 5px 10px;
+    background: transparent;
+    border: none;
+    color: rgba(255,255,255,0.85);
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: inherit;
+  }
   .lang-btn.active { background: #fff; color: var(--accent); }
-  .nav-tabs { display: flex; gap: 4px; flex-wrap: wrap; }
-  .tab { padding: 7px 13px; background: rgba(255,255,255,0.12); border: none; border-radius: 6px; cursor: pointer; font-size: 12px; color: rgba(255,255,255,0.9); font-family: inherit; font-weight: 500; transition: all 0.15s; white-space: nowrap; }
+  .nav-tabs {
+    display: flex;
+    gap: 6px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    flex: 1;
+    scrollbar-width: thin;
+  }
+  .nav-tabs::-webkit-scrollbar { height: 4px; }
+  .nav-tabs::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 2px; }
+  .tab {
+    padding: 8px 14px;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    color: rgba(255,255,255,0.9);
+    font-family: inherit;
+    font-weight: 500;
+    transition: all 0.15s;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
   .tab:hover { background: rgba(255,255,255,0.22); color: #fff; }
-  .tab.active { background: #fff; color: var(--accent); font-weight: 600; }
-  .nav-user { font-size: 11px; color: rgba(255,255,255,0.7); max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .logout-btn { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); border-radius: 6px; color: #fff; font-family: inherit; font-size: 11px; padding: 5px 10px; cursor: pointer; }
+  .tab.active {
+    background: #fff;
+    color: var(--accent);
+    font-weight: 600;
+    border-color: #fff;
+  }
+  .nav-user {
+    font-size: 11px;
+    color: rgba(255,255,255,0.7);
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .logout-btn {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 6px;
+    color: #fff;
+    font-family: inherit;
+    font-size: 11px;
+    padding: 6px 10px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
   .logout-btn:hover { background: rgba(255,255,255,0.25); }
-  .sync-wrap { display: flex; align-items: center; gap: 5px; }
-  .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); transition: background 0.3s; }
+  .sync-wrap {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-shrink: 0;
+  }
+  .sync-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--green);
+    transition: background 0.3s;
+  }
   .sync-dot.syncing { background: var(--yellow); animation: blink 0.8s infinite; }
   .sync-dot.error { background: var(--red); }
   @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
   .sync-lbl { font-size: 10px; color: rgba(255,255,255,0.7); }
-  #auth-screen { position: fixed; inset: 0; background: linear-gradient(135deg, #1e4d8c 0%, #163a68 100%); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
-  .auth-box { background: #fff; border-radius: 16px; padding: 32px 28px; width: 100%; max-width: 400px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
-  .auth-brand { text-align: center; margin-bottom: 6px; font-size: 28px; font-weight: 800; color: var(--accent); letter-spacing: -1px; }
-  .auth-brand span { color: var(--green); }
-  .auth-subtitle { text-align: center; font-size: 13px; color: var(--text-dim); margin-bottom: 24px; }
-  .auth-tabs { display: flex; gap: 8px; margin-bottom: 20px; background: var(--bg); padding: 4px; border-radius: 8px; }
-  .auth-tab { flex: 1; padding: 9px; background: transparent; border: none; border-radius: 6px; font-family: inherit; font-size: 13px; font-weight: 600; color: var(--text-dim); cursor: pointer; transition: all 0.15s; }
-  .auth-tab.active { background: #fff; color: var(--accent); box-shadow: var(--shadow); }
-  .auth-fields { display: flex; flex-direction: column; gap: 12px; }
-  .auth-input { padding: 11px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; font-family: inherit; background: var(--bg-card); color: var(--text); }
-  .auth-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); }
-  .auth-btn { padding: 12px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
-  .auth-btn:hover { opacity: 0.92; }
-  .auth-divider { display: flex; align-items: center; gap: 12px; color: var(--text-dim); font-size: 12px; margin: 4px 0; }
-  .auth-divider::before, .auth-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-  .google-btn { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 11px; background: #fff; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; font-weight: 600; color: var(--text); cursor: pointer; font-family: inherit; }
-  .google-btn:hover { background: var(--bg-card-2); }
-  .auth-error { display: none; padding: 10px 14px; background: var(--red-light); color: var(--red); border-radius: 8px; font-size: 13px; margin-bottom: 12px; }
-  .auth-lang-toggle { position: absolute; top: 20px; right: 20px; display: flex; background: rgba(255,255,255,0.15); border-radius: 6px; overflow: hidden; }
-  .auth-lang-btn { padding: 6px 12px; background: transparent; border: none; color: rgba(255,255,255,0.85); cursor: pointer; font-size: 12px; font-weight: 600; font-family: inherit; }
-  .auth-lang-btn.active { background: #fff; color: var(--accent); }
   .section { display: none; padding: 20px 16px 0 16px; animation: fade 0.3s; }
   .section.active { display: block; }
   .section[hidden] { display: none !important; }
@@ -286,20 +394,20 @@
         <button type="button" class="lang-btn" id="langEN" onclick="setLang('en')" aria-pressed="false">EN</button>
       </div>
       <nav class="nav-tabs" role="tablist">
-        <button type="button" class="tab active" role="tab" data-section="dashboard" data-i18n="tab_dashboard">Dashboard</button>
+        <button type="button" class="tab active" role="tab" data-section="dashboard" data-i18n="tab_dashboard">📊 Dashboard</button>
         <button type="button" class="tab" role="tab" data-section="cards" data-i18n="tab_cards">💳 Tarjetas</button>
         <button type="button" class="tab" role="tab" data-section="advisor" data-i18n="tab_advisor">🧠 Asesor</button>
-        <button type="button" class="tab" role="tab" data-section="calendar" data-i18n="tab_calendar">Calendario</button>
-        <button type="button" class="tab" role="tab" data-section="income" data-i18n="tab_income">Ingresos</button>
-        <button type="button" class="tab" role="tab" data-section="expenses" data-i18n="tab_expenses">Gastos</button>
-        <button type="button" class="tab" role="tab" data-section="projection" data-i18n="tab_projection">Proyección</button>
+        <button type="button" class="tab" role="tab" data-section="calendar" data-i18n="tab_calendar">📅 Calendario</button>
+        <button type="button" class="tab" role="tab" data-section="income" data-i18n="tab_income">⬇️ Ingresos</button>
+        <button type="button" class="tab" role="tab" data-section="expenses" data-i18n="tab_expenses">⬆️ Gastos</button>
+        <button type="button" class="tab" role="tab" data-section="projection" data-i18n="tab_projection">📈 Proyección</button>
         <button type="button" class="tab" role="tab" data-section="reports" data-i18n="tab_reports">📄 Reportes</button>
         <button type="button" class="tab" role="tab" data-section="pending" data-i18n="tab_pending">📋 Pendientes</button>
-        <button type="button" class="tab" role="tab" data-section="settings" data-i18n="tab_settings">Ajustes</button>
+        <button type="button" class="tab" role="tab" data-section="settings" data-i18n="tab_settings">⚙️ Ajustes</button>
       </nav>
       <div class="sync-wrap"><div class="sync-dot" id="sync-dot"></div><span class="sync-lbl" id="sync-lbl">Guardado</span></div>
       <span class="nav-user" id="nav-user"></span>
-      <button class="logout-btn" onclick="doLogout()">Salir</button>
+      <button class="logout-btn" onclick="doLogout()">🚪 <span data-i18n="signout">Salir</span></button>tn" 
     </div>
   </header>
 
@@ -820,9 +928,10 @@ const i18n = {
   es: {
     app_title: 'XP<span>ENSE</span>', doc_title: 'XPENSE | Personal Finance', skip_link: 'Saltar al contenido',
     auth_subtitle: 'Tu gestor de finanzas personales',
-    tab_dashboard: 'Dashboard', tab_cards: '💳 Tarjetas', tab_advisor: '🧠 Asesor', tab_calendar: 'Calendario',
-    tab_income: 'Ingresos', tab_expenses: 'Gastos', tab_projection: 'Proyección', tab_reports: '📄 Reportes',
-    tab_pending: '📋 Pendientes', tab_settings: 'Ajustes',
+    tab_dashboard: '📊 Dashboard', tab_cards: '💳 Tarjetas', tab_advisor: '🧠 Asesor', tab_calendar: '📅 Calendario',
+    tab_income: '⬇️ Ingresos', tab_expenses: '⬆️ Gastos', tab_projection: '📈 Proyección', tab_reports: '📄 Reportes',
+    tab_pending: '📋 Pendientes', tab_settings: '⚙️ Ajustes',
+    signout: 'Salir',
     chart_flow: 'Flujo de caja (12 meses)', chart_cat: 'Gastos por categoría (mes actual)', upcoming: 'Próximos movimientos (30 días)',
     today: 'Hoy', legend_today: 'Hoy', legend_neg: 'Saldo negativo', legend_gap: 'Gap Proyectado/Real',
     add_card: '💳 Agregar tarjeta de crédito', list_cards: '💳 Mis tarjetas (por prioridad)',
@@ -890,13 +999,12 @@ const i18n = {
     payment_cash: '💵 Efectivo / Débito', payment_card: '💳',
     report_format: 'Formato del reporte',
     btn_csv: '📊 CSV (Excel)', btn_ofx: '🏦 OFX (Bancos)', btn_pdf: '📄 PDF', btn_json: '💾 JSON'
-  },
+    },
   en: {
-    app_title: 'XP<span>ENSE</span>', doc_title: 'XPENSE | Personal Finance', skip_link: 'Skip to content',
-    auth_subtitle: 'Your personal finance manager',
-    tab_dashboard: 'Dashboard', tab_cards: '💳 Cards', tab_advisor: '🧠 Advisor', tab_calendar: 'Calendar',
-    tab_income: 'Income', tab_expenses: 'Expenses', tab_projection: 'Projection', tab_reports: '📄 Reports',
-    tab_pending: '📋 Pending', tab_settings: 'Settings',
+    tab_dashboard: '📊 Dashboard', tab_cards: '💳 Cards', tab_advisor: '🧠 Advisor', tab_calendar: '📅 Calendar',
+    tab_income: '⬇️ Income', tab_expenses: '⬆️ Expenses', tab_projection: '📈 Projection', tab_reports: '📄 Reports',
+    tab_pending: '📋 Pending', tab_settings: '⚙️ Settings',
+    signout: 'Sign out',
     chart_flow: 'Cash Flow (12 months)', chart_cat: 'Expenses by category', upcoming: 'Upcoming (30 days)',
     today: 'Today', legend_today: 'Today', legend_neg: 'Negative balance', legend_gap: 'Projected/Actual gap',
     add_card: '💳 Add credit card', list_cards: '💳 My cards (by priority)',
