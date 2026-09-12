@@ -754,8 +754,7 @@
           </select>
         </div>
         <div class="form-group" id="incDayGroup"><label data-i18n="lbl_day">Día del mes</label><input id="incDay" type="number" placeholder="1-31" min="1" max="31"></div>
-        <div class="form-group" id="incStartGroup" style="display:none;"><label data-i18n="lbl_start">Fecha de inicio</label><input id="incStart" type="date"></div>
-        <div class="form-group"><label data-i18n="lbl_category">Categoría</label><select id="incCategory"></select></div>
+        <div class="form-group" id="incStartGroup"><label data-i18n="lbl_start">Fecha de inicio</label><input id="incStart" type="date"></div><div class="form-group"><label data-i18n="lbl_category">Categoría</label><select id="incCategory"></select></div>
         <div class="form-group"><button type="button" id="incAddBtn" onclick="addIncome()" data-i18n="btn_add">+ Agregar</button></div>
         <div class="form-group" id="incCancelGroup" style="display:none;"><button type="button" class="secondary" onclick="cancelEdit('income')" data-i18n="btn_cancel">Cancelar</button></div>
       </div>
@@ -1499,7 +1498,7 @@ function updateHints() {
 function toggleIncFields() {
   const m = document.getElementById('incFreq').value === 'monthly';
   document.getElementById('incDayGroup').style.display = m ? '' : 'none';
-  document.getElementById('incStartGroup').style.display = m ? 'none' : '';
+  document.getElementById('incStartGroup').style.display = '';  // siempre visible
   updateHints();
 }
 function toggleExpFields() {
@@ -1560,8 +1559,14 @@ function getOccurrencesInMonth(item, year, month, isExpense) {
   }
 
   if (freq === 'monthly') {
-    const day = Math.min(item.day || 1, lastDay);
-    if (isExpense && item.start) {
+  const day = Math.min(item.day || 1, lastDay);
+  if (item.start) {                        // ← ahora también incomes
+    const start = parseDate(item.start);
+    const startYM = start.getFullYear() * 12 + start.getMonth();
+    const currentYM = year * 12 + month;
+    if (currentYM < startYM) return results;
+    if (isExpense && item.months > 0 && currentYM >= startYM + item.months) return results;
+  }
       const start = parseDate(item.start);
       const startYM = start.getFullYear() * 12 + start.getMonth();
       const currentYM = year * 12 + month;
@@ -1718,41 +1723,22 @@ function calculateActual(startDate, endDate) {
   // Saldo disponible AHORA (solo transacciones hasta hoy)
 function getBalanceOnHand() {
   const today = new Date(); today.setHours(23, 59, 59, 999);
-  // Rango: desde el inicio hasta hoy
   const start = new Date(2000, 0, 1);
-  const end = today;
-  const txns = getTransactionsInRange(start, end);
+  const txns = getTransactionsInRange(start, today);
 
   let balance = state.initialBalance;
 
   txns.forEach(t => {
-    // Los cargos con tarjeta NO afectan el cash
-    if (t.isCardCharge) return;
+    if (t.isCardCharge) return;                    // los cargos no afectan cash
+    if (t.isCardPayment) { balance += t.amount; return; }  // pagos sí afectan cash
 
-    // Los pagos de tarjeta SÍ afectan el cash (siempre)
-    if (t.isCardPayment) {
-      balance += t.amount;
-      return;
-    }
-
-    // Para ingresos/gastos: solo si están completados o su fecha ya pasó
-    const tDate = parseDate(t.date);
-    const isPast = tDate <= today;
     const status = t.item ? getOccurrenceStatus(t.item, t.date) : 'pending';
+    if (status !== 'completed') return;            // ← solo completados, nada más
 
-    if (status === 'cancelled') return;
-
-    if (status === 'completed') {
-      // Usa el monto real (override o completedAmount)
-      const amount = t.amount > 0
-        ? getOccurrenceAmount(t.item, t.date, t.amount)
-        : -getOccurrenceAmount(t.item, t.date, Math.abs(t.amount));
-      balance += amount;
-    } else if (isPast) {
-      // Pendiente pero ya pasó la fecha: cuenta como si se hubiera hecho (para no romper el balance)
-      // Si prefieres que NO cuente, comenta esta línea
-      balance += t.amount;
-    }
+    const amount = t.amount > 0
+      ? getOccurrenceAmount(t.item, t.date, t.amount)
+      : -getOccurrenceAmount(t.item, t.date, Math.abs(t.amount));
+    balance += amount;
   });
 
   return balance;
@@ -2428,6 +2414,7 @@ function startEdit(type, id) {
     document.getElementById('incFreq').value = it.freq || 'monthly';
     toggleIncFields();
     if (it.freq === 'monthly') document.getElementById('incDay').value = it.day || '';
+document.getElementById('incStart').value = it.start || '';
     else document.getElementById('incStart').value = it.start || '';
     document.getElementById('incCategory').value = it.category;
     document.getElementById('incFormTitle').textContent = '✏️ ' + t('add_income');
@@ -2517,8 +2504,16 @@ function addIncome() {
   const category = document.getElementById('incCategory').value;
   if (!name || !amount) return alert(t('alert_fill'));
   const item = { name, amount, freq, category };
-  if (freq === 'monthly') { const day = parseInt(document.getElementById('incDay').value); if (!day) return alert(t('alert_fill')); item.day = day; }
-  else { const start = document.getElementById('incStart').value; if (!start) return alert(t('alert_fill')); item.start = start; }
+const start = document.getElementById('incStart').value;
+if (freq === 'monthly') {
+  const day = parseInt(document.getElementById('incDay').value);
+  if (!day || !start) return alert(t('alert_fill'));
+  item.day = day;
+  item.start = start;   // ← ahora también para mensuales
+} else {
+  if (!start) return alert(t('alert_fill'));
+  item.start = start;
+}
   if (editMode.income) {
     const idx = state.incomes.findIndex(i => i.id === editMode.income);
     if (idx !== -1) state.incomes[idx] = { ...state.incomes[idx], ...item };
@@ -3287,6 +3282,8 @@ render = function() {
   clearTimeout(renderTimeout);
   renderTimeout = setTimeout(originalRender, 50);
 };
+  document.getElementById('incStart').value = toDateStr(new Date());
+document.getElementById('expStart').value = toDateStr(new Date());
 </script>
 </body>
 </html>
