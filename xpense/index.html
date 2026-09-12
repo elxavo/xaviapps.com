@@ -1867,7 +1867,6 @@ function renderKPIs() {
   const balanceOnHand = getBalanceOnHand();
   document.getElementById('kpiGrid').innerHTML = `
   <div class="kpi clickable" onclick="openBreakdown('balanceOnHand')" style="border-left:3px solid var(--green);"><div class="kpi-label">💰 ${t('kpi_balance_on_hand')}</div><div class="kpi-value ${balanceOnHand >= 0 ? 'positive' : 'negative'}">${fmt(balanceOnHand)}</div><div class="kpi-sub">${t('sub_today')}</div></div>
-  <div class="kpi clickable" onclick="openBreakdown('endBalance')">... (resto igual)
   <div class="kpi clickable" onclick="openBreakdown('endBalance')"><div class="kpi-label">${t('kpi_end_balance')}</div><div class="kpi-value ${curMonth.endBalance >= 0 ? 'positive' : 'negative'}">${fmt(curMonth.endBalance)}</div><div class="kpi-sub">${t('sub_current')}</div></div>
   <div class="kpi clickable" onclick="openBreakdown('income')"><div class="kpi-label">${t('kpi_income')}</div><div class="kpi-value positive">${fmt(totalIncome)}</div><div class="kpi-sub">${curMonth.txns.filter(t => t.amount > 0).length} ${t('sub_movements')}</div></div>
   <div class="kpi clickable" onclick="openBreakdown('expense')"><div class="kpi-label">${t('kpi_expense')}</div><div class="kpi-value negative">${fmt(totalExpense)}</div><div class="kpi-sub">${curMonth.txns.filter(t => t.amount < 0 && t.type !== 'transfer').length} ${t('sub_movements')}</div></div>
