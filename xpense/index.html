@@ -977,7 +977,15 @@
       <div class="form-group"><label data-i18n="modal_date_actual">Fecha/hora</label><input id="modalDate" type="datetime-local"></div>
       <div class="form-group"><label data-i18n="modal_notes">Notas</label><textarea id="modalNotes" rows="2"></textarea></div>
     </div>
-    <!-- MODAL DE DESGLOSE -->
+    <div class="btn-row" style="margin-top:12px;">
+      <button type="button" class="success" onclick="saveModalStatus()" data-i18n="btn_save">Guardar</button>
+      <button type="button" class="secondary" onclick="closeModal()" data-i18n="btn_cancel">Cancelar</button>
+      <button type="button" class="danger" onclick="cancelTransaction()" data-i18n="cancel_transaction">Cancelar txn</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DE DESGLOSE -->
 <div class="modal-overlay" id="breakdownModal">
   <div class="modal" role="dialog" aria-modal="true">
     <div class="modal-title" id="breakdownTitle">Desglose</div>
