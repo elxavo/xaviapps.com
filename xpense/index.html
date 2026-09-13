@@ -1606,6 +1606,51 @@ function getCardPaymentOccurrences(year, month) {
   return results;
 }
 
+  function getCardChargeOccurrences(year, month) {
+  const results = [];
+  state.cardTransactions.forEach(tx => {
+    if (tx.type !== 'charge') return;
+    const d = parseDate(tx.date);
+    if (d.getFullYear() === year && d.getMonth() === month) {
+      const card = state.creditCards.find(c => c.id === tx.cardId);
+      results.push({
+        date: tx.date,
+        amount: -Math.abs(tx.amount),
+        name: (tx.desc || 'Compra') + ' 💳' + (card ? ' ' + card.name : ''),
+        type: 'expense',
+        category: tx.category || 'Otros gastos',
+        id: tx.id,
+        isCardCharge: true,
+        item: tx
+      });
+    }
+  });
+  return results;
+}
+
+function getCardPaymentOccurrences(year, month) {
+  const results = [];
+  state.cardTransactions.forEach(tx => {
+    if (tx.type !== 'payment') return;
+    const d = parseDate(tx.date);
+    if (d.getFullYear() === year && d.getMonth() === month) {
+      const card = state.creditCards.find(c => c.id === tx.cardId);
+      results.push({
+        date: tx.date,
+        amount: -Math.abs(tx.amount),
+        name: (card ? card.name : 'TC') + ' — Pago',
+        type: 'transfer',
+        category: null,
+        id: tx.id,
+        isCardPayment: true,
+        excludeFromBudget: true,
+        item: tx
+      });
+    }
+  });
+  return results;
+}
+  
 function getMonthTransactions(year, month) {
   const txns = [];
   state.incomes.forEach(inc => { txns.push(...getOccurrencesInMonth(inc, year, month, false)); });
