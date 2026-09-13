@@ -1559,24 +1559,17 @@ function getOccurrencesInMonth(item, year, month, isExpense) {
   }
 
   if (freq === 'monthly') {
-  const day = Math.min(item.day || 1, lastDay);
-  if (item.start) {                        // ← ahora también incomes
-    const start = parseDate(item.start);
-    const startYM = start.getFullYear() * 12 + start.getMonth();
-    const currentYM = year * 12 + month;
-    if (currentYM < startYM) return results;
-    if (isExpense && item.months > 0 && currentYM >= startYM + item.months) return results;
-  }
+    const day = Math.min(item.day || 1, lastDay);
+    if (item.start) {
       const start = parseDate(item.start);
       const startYM = start.getFullYear() * 12 + start.getMonth();
       const currentYM = year * 12 + month;
       if (currentYM < startYM) return results;
-      if (item.months > 0 && currentYM >= startYM + item.months) return results;
+      if (isExpense && item.months > 0 && currentYM >= startYM + item.months) return results;
     }
     const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     const base = { date: dateStr, amount, name: item.name, type, category: item.category, id: item.id, item };
     const occ = applyOverride(dateStr, base);
-    // Solo incluir si no está cancelada
     if (occ.status !== 'cancelled') results.push(occ);
     return results;
   }
@@ -1598,19 +1591,6 @@ function getOccurrencesInMonth(item, year, month, isExpense) {
     }
     cur = addDays(cur, interval);
   }
-  return results;
-}
-
-function getCardChargeOccurrences(year, month) {
-  const results = [];
-  state.cardTransactions.forEach(tx => {
-    if (tx.type !== 'charge') return;
-    const d = parseDate(tx.date);
-    if (d.getFullYear() === year && d.getMonth() === month) {
-      const card = state.creditCards.find(c => c.id === tx.cardId);
-      results.push({ date: tx.date, amount: -Math.abs(tx.amount), name: (tx.desc || 'Compra') + ' 💳' + (card ? ' ' + card.name : ''), type: 'expense', category: tx.category || 'Otros gastos', id: tx.id, isCardCharge: true, item: tx });
-    }
-  });
   return results;
 }
 function getCardPaymentOccurrences(year, month) {
@@ -1729,11 +1709,11 @@ function getBalanceOnHand() {
   let balance = state.initialBalance;
 
   txns.forEach(t => {
-    if (t.isCardCharge) return;                    // los cargos no afectan cash
-    if (t.isCardPayment) { balance += t.amount; return; }  // pagos sí afectan cash
+    if (t.isCardCharge) return;
+    if (t.isCardPayment) { balance += t.amount; return; }
 
     const status = t.item ? getOccurrenceStatus(t.item, t.date) : 'pending';
-    if (status !== 'completed') return;            // ← solo completados, nada más
+    if (status !== 'completed') return;   // ← solo completados
 
     const amount = t.amount > 0
       ? getOccurrenceAmount(t.item, t.date, t.amount)
@@ -2415,7 +2395,6 @@ function startEdit(type, id) {
     toggleIncFields();
     if (it.freq === 'monthly') document.getElementById('incDay').value = it.day || '';
 document.getElementById('incStart').value = it.start || '';
-    else document.getElementById('incStart').value = it.start || '';
     document.getElementById('incCategory').value = it.category;
     document.getElementById('incFormTitle').textContent = '✏️ ' + t('add_income');
     document.getElementById('incEditBadge').style.display = 'inline-block';
@@ -3275,15 +3254,15 @@ setLang(lang);
 toggleIncFields();
 toggleExpFields();
 setQuickRange('month');
-
+document.getElementById('incStart').value = toDateStr(new Date());
+document.getElementById('expStart').value = toDateStr(new Date());
 let renderTimeout;
 const originalRender = render;
 render = function() {
   clearTimeout(renderTimeout);
   renderTimeout = setTimeout(originalRender, 50);
 };
-  document.getElementById('incStart').value = toDateStr(new Date());
-document.getElementById('expStart').value = toDateStr(new Date());
+
 </script>
 </body>
 </html>
