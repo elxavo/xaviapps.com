@@ -1606,7 +1606,7 @@ function getCardPaymentOccurrences(year, month) {
   return results;
 }
 
-  function getCardChargeOccurrences(year, month) {
+function getCardChargeOccurrences(year, month) {
   const results = [];
   state.cardTransactions.forEach(tx => {
     if (tx.type !== 'charge') return;
@@ -1643,10 +1643,77 @@ function getCardPaymentOccurrences(year, month) {
         category: null,
         id: tx.id,
         isCardPayment: true,
+        isManualPayment: true,        // ← NUEVO: distingue pago real de mínimo proyectado
+        isCompleted: true,            // ← NUEVO: un pago registrado ya está realizado
         excludeFromBudget: true,
         item: tx
       });
     }
+  });
+  return results;
+}
+
+// ═══ NUEVA: Pago mínimo proyectado por cada tarjeta ═══
+function getCardMinPaymentOccurrences(year, month) {
+  const results = [];
+  const lastDay = daysInMonth(year, month);
+  const now = new Date();
+  const currentYM = now.getFullYear() * 12 + now.getMonth();
+  const targetYM = year * 12 + month;
+
+  state.creditCards.forEach(card => {
+    const balance = getCardBalance(card.id);
+    if (balance <= 0.01) return;                    // sin deuda → sin mínimo
+
+    const payDay = Math.min(card.paymentDay || 25, lastDay);
+    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(payDay).padStart(2, '0')}`;
+
+    // ¿Ya hay un pago MANUAL ese mes para esa tarjeta?
+    const manualPaid = state.cardTransactions.some(tx => {
+      if (tx.cardId !== card.id || tx.type !== 'payment') return false;
+      const d = parseDate(tx.date);
+      return d.getFullYear() === year && d.getMonth() === month;
+    });
+
+    const minPay = Math.min(card.minPayment, balance);
+    const occId = 'min-' + card.id;
+    const overrideKey = occId + '|' + dateStr;
+    const ov = state.overrides && state.overrides[overrideKey];
+
+    // Si el usuario canceló explícitamente este mínimo, no lo mostramos
+    if (ov && ov.status === 'cancelled') return;
+
+    // Estado: completed si ya se pagó manualmente o si hay override completed
+    let status = 'pending';
+    if (manualPaid) status = 'completed';
+    if (ov && ov.status === 'completed') status = 'completed';
+
+    // Solo mostramos meses presentes o futuros (no pasados sin pagar hace mucho)
+    if (targetYM < currentYM - 1) return;
+
+    results.push({
+      date: dateStr,
+      amount: -Math.abs(minPay),
+      name: `${card.name} — ${lang === 'es' ? 'Pago mínimo' : 'Minimum payment'}`,
+      type: 'transfer',
+      category: null,
+      id: occId,
+      isCardPayment: true,
+      isProjectedMin: true,          // ← bandera clave
+      isCompleted: status === 'completed',
+      excludeFromBudget: true,
+      item: {
+        id: occId,
+        cardId: card.id,
+        name: `${card.name} — ${lang === 'es' ? 'Pago mínimo' : 'Minimum payment'}`,
+        amount: minPay,
+        minPayment: card.minPayment,
+        status: status,
+        completedAmount: ov && ov.completedAmount !== undefined ? ov.completedAmount : null,
+        completedDate: ov ? ov.completedDate : null,
+        notes: ov ? ov.notes : ''
+      }
+    });
   });
   return results;
 }
@@ -1677,8 +1744,9 @@ function getMonthTransactions(year, month) {
     txns.push({ date: one.date, amount, name: one.name, type: 'expense', category: one.category, id: one.id, item: one, isCompleted: status === 'completed' });
   }
 });
-  txns.push(...getCardChargeOccurrences(year, month));
+    txns.push(...getCardChargeOccurrences(year, month));
   txns.push(...getCardPaymentOccurrences(year, month));
+  txns.push(...getCardMinPaymentOccurrences(year, month));   // ← NUEVO
   return txns.sort((a, b) => a.date.localeCompare(b.date));
 }
 
@@ -1753,12 +1821,23 @@ function getBalanceOnHand() {
 
   let balance = state.initialBalance;
 
-  txns.forEach(t => {
-    if (t.isCardCharge) return;
-    if (t.isCardPayment) { balance += t.amount; return; }
+    txns.forEach(t => {
+    if (t.isCardCharge) return;                    // compras no afectan cash
+    if (t.isCardPayment) {
+      // Un pago REAL (manual) siempre afecta el cash
+      if (t.isManualPayment) { balance += t.amount; return; }
+      // Un mínimo proyectado SOLO afecta si está marcado como completado
+      if (t.isProjectedMin) {
+        if (!t.isCompleted) return;
+        balance += t.amount;
+        return;
+      }
+      balance += t.amount;
+      return;
+    }
 
     const status = t.item ? getOccurrenceStatus(t.item, t.date) : 'pending';
-    if (status !== 'completed') return;   // ← solo completados
+    if (status !== 'completed') return;
 
     const amount = t.amount > 0
       ? getOccurrenceAmount(t.item, t.date, t.amount)
@@ -1999,7 +2078,13 @@ function renderCalendar() {
       <div class="cal-day-projected">${t('label_projected')}: ${fmt(projectedBal)}</div>
       <div class="cal-day-actual ${actualBal >= 0 ? 'positive' : 'negative'}">${t('label_actual')}: ${fmt(actualBal)}</div>
       ${hasGap ? `<div class="cal-day-gap">${t('label_gap')}: ${gap > 0 ? '+' : ''}${fmt(gap)}</div>` : ''}
-      ${dayTxns.map(tx => `<div class="cal-day-txn ${tx.amount > 0 ? 'positive' : 'negative'}">${tx.name} ${tx.amount > 0 ? '+' : ''}${fmt(tx.amount)}</div>`).join('')}
+      ${dayTxns.map(tx => {
+  const isMin = tx.isProjectedMin && !tx.isCompleted;
+  const isMinPaid = tx.isProjectedMin && tx.isCompleted;
+  const style = isMin ? 'opacity:0.6;font-style:italic;' : (isMinPaid ? 'opacity:0.85;' : '');
+  const check = isMinPaid ? ' ✓' : '';
+  return `<div class="cal-day-txn ${tx.amount > 0 ? 'positive' : 'negative'}" style="${style}" title="${tx.name}">${tx.name}${check} ${tx.amount > 0 ? '+' : ''}${fmt(tx.amount)}</div>`;
+}).join('')}
     </div>`;
   }
   document.getElementById('calendarGrid').innerHTML = html;
@@ -3181,7 +3266,19 @@ function openBreakdown(type) {
         </div>
         <span class="bd-amount negative">${fmt(bal)}</span>
       </div>`;
-    }).join('') + `<div class="breakdown-total"><span>${titleText}</span><span>${fmt(total)}</span></div>`;
+        }).join('') +
+    (() => {
+      const now = new Date();
+      const mins = getCardMinPaymentOccurrences(now.getFullYear(), now.getMonth());
+      const totalMins = mins.reduce((s, m) => s + Math.abs(m.amount), 0);
+      if (totalMins === 0) return '';
+      return `<div class="breakdown-row" style="background:var(--yellow-light);border-radius:6px;margin-top:6px;">
+        <div class="bd-left"><span class="bd-name">📅 ${lang==='es'?'Mínimos de este mes':'This month\'s minimums'}</span>
+        <span class="bd-meta">${lang==='es'?'Salida de cash proyectada':'Projected cash outflow'}</span></div>
+        <span class="bd-amount negative">-${fmt(totalMins)}</span>
+      </div>`;
+    })() +
+    `<div class="breakdown-total"><span>${titleText}</span><span>${fmt(total)}</span></div>`;
     if (cards.length === 0) body.innerHTML = `<div class="breakdown-empty">${t('empty_cards')}</div>`;
     title.textContent = titleText;
     modal.classList.add('active');
@@ -3256,17 +3353,21 @@ function openBreakdown(type) {
   }
 
   // Render lista genérica
-  const rows = list.map(tx => {
+    const rows = list.map(tx => {
     const catColor = tx.category ? getCatColor(tx.category) : '#94a3b8';
     const catChip = tx.category
       ? `<span class="breakdown-cat-chip" style="background:${catColor}22;color:${catColor}">${tx.category}</span>`
       : '';
+    const checkBtn = tx.isProjectedMin && !tx.isCompleted
+      ? `<button class="icon-btn success" style="margin-left:8px;" onclick="markMinPaid('${tx.item.cardId}','${tx.date}',${Math.abs(tx.amount)})" title="${lang==='es'?'Marcar como pagado':'Mark as paid'}">✓</button>`
+      : (tx.isProjectedMin && tx.isCompleted ? '<span style="color:var(--green);margin-left:6px;">✓</span>' : '');
     return `<div class="breakdown-row">
       <div class="bd-left">
-        <span class="bd-name">${tx.name}</span>
+        <span class="bd-name">${tx.name}${tx.isProjectedMin ? ' <em style="color:var(--text-dim);font-size:10px;">(' + (lang==='es'?'proyectado':'projected') + ')</em>' : ''}</span>
         <span class="bd-meta">${tx.date} ${catChip}</span>
       </div>
       <span class="bd-amount ${tx.amount > 0 ? 'positive' : 'negative'}">${fmt(tx.amount)}</span>
+      ${checkBtn}
     </div>`;
   }).join('');
 
@@ -3292,6 +3393,32 @@ document.addEventListener('click', (e) => {
   const bd = document.getElementById('breakdownModal');
   if (bd && e.target === bd) closeBreakdown();
 });
+  // Marca un pago mínimo proyectado como realizado
+function markMinPaid(cardId, dateStr, amount) {
+  const occId = 'min-' + cardId;
+  const key = occId + '|' + dateStr;
+  state.overrides = state.overrides || {};
+  state.overrides[key] = {
+    status: 'completed',
+    completedAmount: amount,
+    completedDate: new Date().toISOString().slice(0, 16),
+    notes: ''
+  };
+  saveState();
+  closeBreakdown();
+  render();
+  toast(lang === 'es' ? '✓ Pago mínimo marcado como realizado' : '✓ Minimum payment marked as paid');
+}
+
+// Toast helper (por si no lo tienes ya)
+function toast(msg) {
+  const el = document.getElementById('toast');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.opacity = '1';
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.style.opacity = '0'; }, 2200);
+}
 // ═══════════════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════════════
